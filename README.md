@@ -45,9 +45,13 @@ När koden är klar på din branch:
    - Gå till https://github.com/ithsjava26/grupp8-fangdjupet. Efter en push visas en gul ruta med **Compare & pull request** – klicka på den.
    - Syns ingen ruta: fliken **Pull requests** → **New pull request** → välj `base: main` och `compare: feature/<vad-du-gör>`.
    - Skriv en titel och kort beskrivning: vad du gjort och hur man testar det.
-   - Välj en gruppmedlem under **Reviewers** → **Create pull request**.
+   - Välj en gruppmedlem under **Reviewers**.
+   - **Assigna pull requesten till en person** under **Assignees** (högerspalten): den som ansvarar för PR:en, oftast du själv – klicka **assign yourself**. Utan assignee syns det inte vem som äger den i listan under [Pull requests](https://github.com/ithsjava26/grupp8-fangdjupet/pulls).
+   - Klicka **Create pull request**.
 
-   Alternativ i IntelliJ: *Git → GitHub → Create Pull Request*. Eller i terminalen med GitHub CLI: `gh pr create --base main --fill`.
+   Har du redan skapat PR:en utan assignee: öppna den under [Pull requests](https://github.com/ithsjava26/grupp8-fangdjupet/pulls) → kugghjulet vid **Assignees** → välj personen.
+
+   Alternativ i IntelliJ: *Git → GitHub → Create Pull Request*. Eller i terminalen med GitHub CLI: `gh pr create --base main --fill --assignee @me --reviewer <användarnamn>`.
 
 ### Granska och merga
 
@@ -129,3 +133,17 @@ Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` ut
 
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon("Sword", 1, 4)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
+
+## Kopplingspunkter
+
+Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en egen PR. **Förslag** = bestäms i PR:en där koden skrivs – skriv beslutet i PR-beskrivningen och uppdatera tabellen.
+
+| Koppling | Vem | Bestämt i kontraktet | Förslag – bestäms i |
+|---|---|---|---|
+| Utrustning påverkar striden | A ↔ B | `getAttackBonus()` och `getDefense()` i `Character`; `Weapon.damageBonus()`, `Armor.defense()` | `hero.equip(Weapon)` / `hero.equip(Armor)` – A:s PR 1 |
+| En dryck läker | A ↔ B | `Character.heal(int)`, `Potion.healAmount()` | `hero.drink(Potion)` anropar `heal(potion.healAmount())`, aldrig över max – A:s PR 1 |
+| Fiender skapas | B ↔ A | `Character(name, maxHp, attack)` är `protected` | `Enemy(name, maxHp, attack, level)`; B:s `EnemyFactory.create(type, level)` bygger den – A:s PR 1 och B:s PR 3 |
+| Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
+| Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3 |
+| Inventariet sparas | B ↔ C | alla föremål har `name()` och `level()` | sparas som `sword;3`, läses tillbaka med `ItemFactory.create("sword", 3)` – B:s PR 1 och C:s PR 2 |
+| Sparfilen | A, B, C | – | en rad per sak, fält åtskilda med `;`: `hero;<namn>;<hp>`, `room;<rummets namn>`, en rad per föremål – C:s PR 2, alla tre granskar |
