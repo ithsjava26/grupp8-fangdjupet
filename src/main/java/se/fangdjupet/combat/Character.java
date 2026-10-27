@@ -11,7 +11,7 @@ public abstract class Character {
 
     // protected = bara subklasserna anropar den, via super(name, maxHp, attack).
     protected Character(String name, int maxHp, AttackStrategy attack) {
-        // TODO (övning 2.4): maxHp måste vara större än 0 – annars IllegalArgumentException
+        // maxHp måste vara större än 0 – annars IllegalArgumentException
         if (maxHp <= 0)
             throw new IllegalArgumentException("maxHp must be greater than 0");
 
