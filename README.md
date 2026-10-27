@@ -65,6 +65,14 @@ När koden är klar på din branch:
    ```
    Ny uppgift = ny branch från uppdaterad `main`.
 
+## Ansvar
+
+| Modul              | Paket                  | Ansvarig                     |
+|--------------------|------------------------|------------------------------|
+| Strid & karaktärer | `se.fangdjupet.combat` | Robert (`elitrobban89`), A   |
+| Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
+| Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
+
 ## Planering
 
 | | Datum |
