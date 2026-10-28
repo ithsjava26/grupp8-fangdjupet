@@ -14,6 +14,8 @@ public abstract class Character {
         // maxHp måste vara större än 0 – annars IllegalArgumentException
         if (maxHp <= 0)
             throw new IllegalArgumentException("maxHp must be greater than 0");
+        if (attack == null)
+            throw new IllegalArgumentException("attack must not be null");
 
         this.name = name;
         this.maxHp = maxHp;
@@ -46,13 +48,16 @@ public abstract class Character {
     }
 
     public void heal(int amount) {
-        // (övning 1.3): lägg till – hp aldrig över maxHp
+        // (övning 1.3): lägg till – hp aldrig över maxHp. Döda kan inte helas.
+        if (!isAlive()) return;
         amount = Math.max(0, amount);
-        hp = Math.min(maxHp, hp + amount);
+        hp += Math.min(amount, maxHp - hp);              // räknar aldrig hp + amount – ingen overflow
     }
 
     public void setAttack(AttackStrategy attack) {
         // byt strategi mitt i striden
+        if (attack == null)
+            throw new IllegalArgumentException("attack must not be null");
         this.attack = attack;
     }
 
