@@ -41,12 +41,33 @@ class CombatTest {
     @Test
     void healAddsHp() {
         Character c = dummy(10);
-        System.out.println("Start: " + c.getHp());
         c.takeDamage(6);
-        System.out.println("Efter skada: " + c.getHp());
         c.heal(3);
-        System.out.println("Efter heal: " + c.getHp());
         assertEquals(7, c.getHp());
+    }
+
+    @Test
+    void healWithHugeAmountDoesNotOverflow() {
+        Character c = dummy(30);
+        c.takeDamage(20);
+        c.heal(Integer.MAX_VALUE);
+        assertEquals(30, c.getHp());
+        assertTrue(c.isAlive());
+    }
+
+    @Test
+    void deadCharacterCannotBeHealed() {
+        Character c = dummy(10);
+        c.takeDamage(10);
+        c.heal(5);
+        assertEquals(0, c.getHp());
+        assertFalse(c.isAlive());
+    }
+
+    @Test
+    void attackMustNotBeNull() {
+        assertThrows(IllegalArgumentException.class, () -> new Hero("Robin", 30, null));
+        assertThrows(IllegalArgumentException.class, () -> dummy(10).setAttack(null));
     }
 
     @Test
