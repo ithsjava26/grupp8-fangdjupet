@@ -152,7 +152,7 @@ Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklass
 Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleLogger` (skärm) och `FileLogger` (fil).
 
 ### Varför kontraktet finns
-Alla kan bygga parallellt från dag 1: B skriver `new Weapon("Sword", 1, 4)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
+Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
 
 ## Kopplingspunkter
 
@@ -165,6 +165,6 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Fiender skapas | B ↔ A | `Character(name, maxHp, attack)` är `protected` | `Enemy(name, maxHp, attack, level)`; B:s `EnemyFactory.create(type, level)` bygger den – A:s PR 1 och B:s PR 3 |
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3 |
-| Inventariet sparas | B ↔ C | alla föremål har `name()` och `level()` | sparas som `sword;3`, läses tillbaka med `ItemFactory.create("sword", 3)` – B:s PR 1 och C:s PR 2 |
+| Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
 | ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Finns i PR "ASCII-grafik"; rumskartan kommer med C:s `World` |
 | Sparfilen | A, B, C | – | en rad per sak, fält åtskilda med `;`: `hero;<namn>;<hp>`, `room;<rummets namn>`, en rad per föremål – C:s PR 2, alla tre granskar |

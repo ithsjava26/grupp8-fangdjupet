@@ -2,7 +2,9 @@ package se.fangdjupet.combat;
 
 import org.junit.jupiter.api.Test;
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
 
 import java.util.Random;
 
@@ -23,14 +25,14 @@ class RangedAttackTest {
     // Hjälte med pilbåge (styrka 5) och ett svärd som ger bonus 4
     private Hero archer(Random random) {
         Hero h = new Hero("Robin", 30, new RangedAttack(5, random));
-        h.equip(new Weapon("Sword", 1, 4));
+        h.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1));
         return h;
     }
 
     // Mål med rustning: försvar 2
     private Hero target() {
         Hero t = new Hero("Target", 30, new MeleeAttack(1));
-        t.equip(new Armor("Leather", 1, 2));
+        t.equip(new Armor(ItemType.SHIELD, "Leather", 2, 1));
         return t;
     }
 
@@ -48,7 +50,7 @@ class RangedAttackTest {
     @Test
     void hitDamageIsNeverNegative() {
         Hero t = new Hero("Tank", 30, new MeleeAttack(1));
-        t.equip(new Armor("Plate", 5, 20));                          // försvar 20
+        t.equip(new Armor(ItemType.SHIELD, "Plate", 20, 5));                          // försvar 20
         assertEquals(0, archer(alwaysRolls(50)).attack(t));          // 5 + 2 − 20 → 0
     }
 

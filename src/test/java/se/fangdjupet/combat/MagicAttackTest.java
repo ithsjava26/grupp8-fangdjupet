@@ -2,6 +2,7 @@ package se.fangdjupet.combat;
 
 import org.junit.jupiter.api.Test;
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.ItemType;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,7 +24,7 @@ class MagicAttackTest {
         Enemy w = witch();
         Hero h = new Hero("Robin", 30, new MeleeAttack(3));
         int withoutArmor = w.attack(h);
-        h.equip(new Armor("Plate", 5, 20));                    // jättetjock rustning
+        h.equip(new Armor(ItemType.SHIELD, "Plate", 20, 5));                    // jättetjock rustning
         int withArmor = w.attack(h);
         assertEquals(withoutArmor, withArmor);                 // samma skada ändå
     }
