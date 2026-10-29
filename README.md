@@ -55,10 +55,11 @@ När koden är klar på din branch:
 
 ### Granska och merga
 
-1. Granskaren läser koden under fliken **Files changed**, kommenterar vid behov och väljer **Review changes → Approve**.
-2. Ska något ändras: fixa på samma branch, committa och pusha igen – pull requesten uppdateras automatiskt.
-3. När den är godkänd: klicka **Merge pull request** → **Confirm merge** och sedan **Delete branch**.
-4. Efter merge, hämta senaste koden lokalt:
+1. GitHub Actions (`.github/workflows/tester.yml`) kör `mvn test` automatiskt på varje PR och varje push till `main`. Mergea bara när kontrollen **Tester** är grön.
+2. Granskaren läser koden under fliken **Files changed**, kommenterar vid behov och väljer **Review changes → Approve**.
+3. Ska något ändras: fixa på samma branch, committa och pusha igen – pull requesten uppdateras automatiskt.
+4. När den är godkänd: klicka **Merge pull request** → **Confirm merge** och sedan **Delete branch**.
+5. Efter merge, hämta senaste koden lokalt:
    ```
    git checkout main
    git pull
@@ -125,9 +126,9 @@ AttackStrategy (interface)          Character (abstrakt klass)
         └──── Character HAR en AttackStrategy (fältet `attack`)
 
 Item (sealed interface)             GameEventListener (interface)
- ├─ Weapon   record                  ├─ EventBus       C, PR 1
- ├─ Armor    record                  ├─ ConsoleLogger  C, PR 1
- └─ Potion   record                  └─ FileLogger     C, PR 1
+ ├─ Weapon   record                  ├─ EventBus            C, PR 1
+ ├─ Armor    record                  ├─ ConsoleEventLogger  C, PR 1
+ └─ Potion   record                  └─ FileLogger          C (inte klar)
 ```
 
 ### `combat/AttackStrategy` – hur man slåss
@@ -136,20 +137,20 @@ En metod, `calculateDamage(attacker, target)`, som varje strategi räknar på si
 - `MagicAttack` – fast kraft, rustningen påverkar inte.
 - `RangedAttack` – slumpar med `Random` (20 % miss), annars lägre skada.
 
-Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. Med bara en abstrakt metod räcker även en lambda: `(a, t) -> 5`. `name()` har en `default`-kropp och behöver inte skrivas.
+Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. `Hero.equip(Weapon)` gör just det utifrån vapnets räckvidd: båge (`RANGED`) ger `RangedAttack`, svärd (`MELEE`) ger `MeleeAttack` och spjut (`BOTH`) behåller attacken hjälten redan har. Med bara en abstrakt metod räcker även en lambda: `(a, t) -> 5`. `name()` har en `default`-kropp och behöver inte skrivas.
 
 ### `combat/Character` – vem som slåss
 Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklasserna måste skriva:
 - `getAttackBonus()` – Hero: från vapnet. Enemy: från nivån.
 - `getDefense()` – Hero: från rustningen. Enemy: från nivån.
 
-`Character` **är** ingen `AttackStrategy`, den **har** en (komposition). `attack(target)` frågar strategin om skadan. Logiken är `TODO` tills A:s PR 1.
+`Character` **är** ingen `AttackStrategy`, den **har** en (komposition). `attack(target)` frågar strategin om skadan.
 
 ### `items/Item` + `Weapon`, `Armor`, `Potion` – föremålen
 `sealed ... permits` betyder att exakt de tre recorden får vara ett `Item`; en fjärde stoppas av kompilatorn. Records är ren data – Java skriver konstruktor och getters. Här kopplas B:s föremål in i A:s strid: `Hero.equip(Weapon)` ger `getAttackBonus()`.
 
 ### `game/GameEventListener` – vem som får veta vad som händer
-Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleLogger` (skärm) och `FileLogger` (fil).
+Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och senare `FileLogger` (fil).
 
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
@@ -160,11 +161,11 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 
 | Koppling | Vem | Bestämt i kontraktet | Förslag – bestäms i |
 |---|---|---|---|
-| Utrustning påverkar striden | A ↔ B | `getAttackBonus()` och `getDefense()` i `Character`; `Weapon.damageBonus()`, `Armor.defense()` | `hero.equip(Weapon)` / `hero.equip(Armor)` – A:s PR 1 |
+| Utrustning påverkar striden | A ↔ B | `getAttackBonus()` och `getDefense()` i `Character`; `Weapon.damageBonus()`, `Armor.defense()` | `hero.equip(Weapon)` / `hero.equip(Armor)` – A:s PR 1. Vapnets räckvidd väljer attacken: `RANGED` → `RangedAttack`, `MELEE` → `MeleeAttack`, `BOTH` behåller den gamla – #12 |
 | En dryck läker | A ↔ B | `Character.heal(int)`, `Potion.healAmount()` | `hero.drink(Potion)` anropar `heal(potion.healAmount())`, aldrig över max – A:s PR 1 |
 | Fiender skapas | B ↔ A | `Character(name, maxHp, attack)` är `protected` | `Enemy(name, maxHp, attack, level)`; B:s `EnemyFactory.create(type, level)` bygger den – A:s PR 1 och B:s PR 3 |
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3 |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
-| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Finns i PR "ASCII-grafik"; rumskartan kommer med C:s `World` |
+| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
 | Sparfilen | A, B, C | – | en rad per sak, fält åtskilda med `;`: `hero;<namn>;<hp>`, `room;<rummets namn>`, en rad per föremål – C:s PR 2, alla tre granskar |
