@@ -17,7 +17,7 @@ public class EventBus {
     }
 
     public void publish(String message) {
-        for (GameEventListener listener : listeners) {
+        for (GameEventListener listener : new ArrayList<>(listeners)) {
             listener.onEvent(message);
         }
     }
