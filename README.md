@@ -3,7 +3,7 @@
 ## Kom igång
 
 ### 1. Installera
-- **JDK 25 eller nyare** (krävs av `pom.xml`). Enklast via IntelliJ: *File → Project Structure → SDK → Download JDK*.
+- **JDK 27 eller nyare** (krävs av `pom.xml`). Enklast via IntelliJ: *File → Project Structure → SDK → Download JDK*.
 - **Maven** behövs bara om du vill köra `mvn` i terminalen – IntelliJ har Maven inbyggt.
 
 ### 2. Klona och öppna
