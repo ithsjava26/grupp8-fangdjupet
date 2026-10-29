@@ -39,6 +39,7 @@ class MeleeAttackTest {
         Hero h = hero(new MeleeAttack(3));
         Enemy goblin = new Enemy("Goblin", 15, new MeleeAttack(2), 1);  // försvar 1 / 2 = 0
         h.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1));
+        h.setAttack(new MeleeAttack(3));                                // equip ger styrka 5 – testet vill ha 3
         assertEquals(7, h.attack(goblin));                              // 3 + 4 − 0
     }
 

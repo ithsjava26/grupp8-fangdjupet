@@ -54,6 +54,11 @@ public abstract class Character {
         hp += Math.min(amount, maxHp - hp);              // räknar aldrig hp + amount – ingen overflow
     }
 
+    // Strategin som används just nu – t.ex. för att visa attackens name() i loggen
+    public AttackStrategy getAttack() {
+        return attack;
+    }
+
     public void setAttack(AttackStrategy attack) {
         // byt strategi mitt i striden
         if (attack == null)

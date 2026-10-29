@@ -46,6 +46,41 @@ class HeroTest {
     }
 
     @Test
+    void bowGivesRangedAttack() {
+        Hero h = hero();
+        h.equip(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 3, 1));
+        assertInstanceOf(RangedAttack.class, h.getAttack());
+    }
+
+    @Test
+    void swordGivesMeleeAttack() {
+        Hero h = hero();
+        h.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1));
+        assertInstanceOf(MeleeAttack.class, h.getAttack());
+    }
+
+    @Test
+    void spearKeepsCurrentAttack() {
+        Hero h = hero();
+        AttackStrategy before = h.getAttack();
+        h.equip(new Weapon(ItemType.SPEAR, WeaponRange.BOTH, "Spear", 5, 1));
+        assertSame(before, h.getAttack());
+    }
+
+    @Test
+    void switchingFromBowToSwordGivesMeleeAttack() {
+        Hero h = hero();
+        h.equip(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 3, 1));
+        h.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1));
+        assertInstanceOf(MeleeAttack.class, h.getAttack());
+    }
+
+    @Test
+    void equipNullWeaponThrows() {
+        assertThrows(IllegalArgumentException.class, () -> hero().equip((Weapon) null));
+    }
+
+    @Test
     void drinkHeals() {
         Hero h = hero();
         h.takeDamage(10);

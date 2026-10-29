@@ -22,10 +22,11 @@ class RangedAttackTest {
         };
     }
 
-    // Hjälte med pilbåge (styrka 5) och ett svärd som ger bonus 4
+    // Hjälte med en pilbåge som ger bonus 4 och avståndsattack med styrka 5
     private Hero archer(Random random) {
-        Hero h = new Hero("Robin", 30, new RangedAttack(5, random));
-        h.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1));
+        Hero h = new Hero("Robin", 30, new MeleeAttack(1));
+        h.equip(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 4, 1));
+        h.setAttack(new RangedAttack(5, random));                    // efter equip, så testet styr slumpen
         return h;
     }
 
