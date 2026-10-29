@@ -11,7 +11,7 @@
 - IntelliJ känner igen `pom.xml` och laddar projektet som Maven-projekt. Klicka *Load Maven project* om den frågar.
 
 ### 3. Kontrollera att allt fungerar
-- Kör `Main` (gröna play-knappen) – den ska skriva ut "Fångdjupet".
+- Kör `Main` (gröna play-knappen) – den ska skriva ut startbilden "Fangdjupet" i ASCII.
 - Eller i terminalen:
   ```
   mvn test
