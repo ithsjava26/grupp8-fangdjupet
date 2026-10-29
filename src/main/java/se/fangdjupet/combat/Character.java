@@ -11,7 +11,12 @@ public abstract class Character {
 
     // protected = bara subklasserna anropar den, via super(name, maxHp, attack).
     protected Character(String name, int maxHp, AttackStrategy attack) {
-        // TODO (övning 2.4): maxHp måste vara större än 0 – annars IllegalArgumentException
+        // maxHp måste vara större än 0 – annars IllegalArgumentException
+        if (maxHp <= 0)
+            throw new IllegalArgumentException("maxHp must be greater than 0");
+        if (attack == null)
+            throw new IllegalArgumentException("attack must not be null");
+
         this.name = name;
         this.maxHp = maxHp;
         this.hp = maxHp;                                   // ny karaktär = fullt liv
@@ -19,38 +24,52 @@ public abstract class Character {
     }
 
     // Getters: läsa fälten utifrån. Inga setters för name/maxHp – de ska inte ändras.
-    public String getName()  { return name; }
-    public int getHp()       { return hp; }
-    public int getMaxHp()    { return maxHp; }
+    public String getName() {
+        return name;
+    }
+
+    public int getHp() {
+        return hp;
+    }
+
+    public int getMaxHp() {
+        return maxHp;
+    }
 
     public boolean isAlive() {
-        // TODO: lever så länge hp är över 0
-        throw new UnsupportedOperationException("TODO");
+        // Lever så länge hp är över 0
+        return hp > 0;
     }
 
     public void takeDamage(int amount) {
-        // TODO: dra av – hp aldrig under 0, negativ skada räknas som 0
-        throw new UnsupportedOperationException("TODO");
+        // Dra av – hp aldrig under 0, negativ skada räknas som 0
+        amount = Math.max(0, amount); //Begränsa skada till 0
+        hp = Math.max(0, hp - amount);
     }
 
     public void heal(int amount) {
-        // TODO (övning 1.3): lägg till – hp aldrig över maxHp
-        throw new UnsupportedOperationException("TODO");
+        // (övning 1.3): lägg till – hp aldrig över maxHp. Döda kan inte helas.
+        if (!isAlive()) return;
+        amount = Math.max(0, amount);
+        hp += Math.min(amount, maxHp - hp);              // räknar aldrig hp + amount – ingen overflow
     }
 
     public void setAttack(AttackStrategy attack) {
-        // TODO: byt strategi mitt i striden
-        throw new UnsupportedOperationException("TODO");
+        // byt strategi mitt i striden
+        if (attack == null)
+            throw new IllegalArgumentException("attack must not be null");
+        this.attack = attack;
     }
 
     // Karaktären frågar sin strategi om skadan och returnerar den – den drar inte av hp själv.
     public int attack(Character target) {
-        // TODO: låt strategin räkna ut skadan – vem är anfallaren?
-        throw new UnsupportedOperationException("TODO");
+        // låt strategin räkna ut skadan – vem är anfallaren?
+        return attack.calculateDamage(this, target);
     }
 
     // Abstrakta metoder: ingen kropp, varje subklass MÅSTE skriva dem – annars kompilerar det inte.
     // Här kopplas B:s föremål in i A:s strid.
     public abstract int getAttackBonus();   // Hero: vapnet. Enemy: nivån.
-    public abstract int getDefense();       // Hero: rustningen. Enemy: nivån.
+
+    public abstract int getDefense();       // Hero: rustningen. Enemy: halva nivån.
 }

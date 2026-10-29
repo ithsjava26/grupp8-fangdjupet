@@ -65,6 +65,26 @@ När koden är klar på din branch:
    ```
    Ny uppgift = ny branch från uppdaterad `main`.
 
+## Ansvar
+
+| Modul              | Paket                  | Ansvarig                     |
+|--------------------|------------------------|------------------------------|
+| Strid & karaktärer | `se.fangdjupet.combat` | Robert (`elitrobban89`), A   |
+| Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
+| Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
+
+## Användning av AI
+
+Kontraktet (interfaces, abstrakt klass och records i `combat`, `items` och `game`) togs fram
+med hjälp av AI dag 1. Målet var att komma igång snabbt: B och C bygger vidare på A:s kod,
+så de gemensamma typerna behövde ligga i main från start för att alla tre skulle kunna jobba
+parallellt.
+
+Därefter har vi skrivit koden i våra egna paket själva, med AI som handledare: den har
+förklarat begrepp (arv, `@Override`, Strategy, injicerad `Random`), pekat ut kompileringsfel
+och föreslagit lösningar som vi sedan skrivit in och förstått. AI har också hjälpt till att
+skriva tester och kommentarer. Varje PR har granskats av en gruppmedlem innan merge.
+
 ## Planering
 
 | | Datum |

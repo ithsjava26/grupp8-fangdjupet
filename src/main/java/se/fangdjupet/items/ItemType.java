@@ -7,4 +7,7 @@ public enum ItemType {
     HELMET,
     SPEAR,
     BOW
+// Alla föremål som ItemFactory kan skapa. Namnet i gemener ("sword") används i sparfilen.
+public enum ItemType {
+    SWORD, SPEAR, BOW, SHIELD, HELMET, POTION
 }
