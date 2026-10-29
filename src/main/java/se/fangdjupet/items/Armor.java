@@ -1,6 +1,6 @@
 package se.fangdjupet.items;
 
-public record Armor(ItemType type, String description, int defense) implements Item {
+public record Armor(ItemType type, String description, int defense, int level) implements Item {
 
     @Override
     public String info() {

@@ -8,8 +8,9 @@ class ItemFactoryTest {
 
     @Test
     public void testCreateWeaponSpear() {
-        Weapon weapon = ItemFactory.createWeapon(ItemType.SPEAR, "The celestial point");
+        Weapon weapon = ItemFactory.createWeapon(ItemType.SPEAR, "The celestial point", 42);
         assertNotNull(weapon);
+        assertEquals(42, weapon.level());
         assertEquals(ItemType.SPEAR, weapon.type());
         assertEquals("The celestial point", weapon.description());
         assertEquals(WeaponRange.BOTH, weapon.range());
@@ -18,8 +19,9 @@ class ItemFactoryTest {
 
     @Test
     public void testCreateWeaponSword() {
-        Weapon weapon = ItemFactory.createWeapon(ItemType.SWORD, "Big sword");
+        Weapon weapon = ItemFactory.createWeapon(ItemType.SWORD, "Big sword", 42);
         assertNotNull(weapon);
+        assertEquals(42, weapon.level());
         assertEquals(ItemType.SWORD, weapon.type());
         assertEquals("Big sword", weapon.description());
         assertEquals(WeaponRange.MELEE, weapon.range());
@@ -28,8 +30,9 @@ class ItemFactoryTest {
 
     @Test
     public void testCreateWeaponBow() {
-        Weapon weapon = ItemFactory.createWeapon(ItemType.BOW, "Magic bow");
+        Weapon weapon = ItemFactory.createWeapon(ItemType.BOW, "Magic bow", 42);
         assertNotNull(weapon);
+        assertEquals(42, weapon.level());
         assertEquals(ItemType.BOW, weapon.type());
         assertEquals("Magic bow", weapon.description());
         assertEquals(WeaponRange.RANGED, weapon.range());
@@ -38,13 +41,14 @@ class ItemFactoryTest {
 
     @Test
     public void shouldThrowWhenNotAWeapon() {
-        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createWeapon(ItemType.SHIELD, "Normal shield"));
+        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createWeapon(ItemType.SHIELD, "Normal shield", 42));
     }
 
     @Test
     public void testCreateArmorShield() {
-        Armor armor = ItemFactory.createArmor(ItemType.SHIELD, "The golden shield");
+        Armor armor = ItemFactory.createArmor(ItemType.SHIELD, "The golden shield", 42);
         assertNotNull(armor);
+        assertEquals(42, armor.level());
         assertEquals(ItemType.SHIELD, armor.type());
         assertEquals("The golden shield", armor.description());
         assertTrue(4 <= armor.defense() && 12 >= armor.defense());
@@ -52,8 +56,9 @@ class ItemFactoryTest {
 
     @Test
     public void testCreateArmorHelmet() {
-        Armor armor = ItemFactory.createArmor(ItemType.HELMET, "Viking helmet");
+        Armor armor = ItemFactory.createArmor(ItemType.HELMET, "Viking helmet", 42);
         assertNotNull(armor);
+        assertEquals(42, armor.level());
         assertEquals(ItemType.HELMET, armor.type());
         assertEquals("Viking helmet", armor.description());
         assertTrue(1 <= armor.defense() && 6 >= armor.defense());
@@ -61,13 +66,14 @@ class ItemFactoryTest {
 
     @Test
     public void shouldThrowWhenNotAArmor() {
-        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createArmor(ItemType.POTION, "A herbal potion"));
+        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createArmor(ItemType.POTION, "A herbal potion", 42));
     }
 
     @Test
     public void testCreatePotion() {
-        Potion potion = ItemFactory.createPotion(ItemType.POTION, "A herbal potion");
+        Potion potion = ItemFactory.createPotion(ItemType.POTION, "A herbal potion", 42);
         assertNotNull(potion);
+        assertEquals(42, potion.level());
         assertEquals(ItemType.POTION, potion.type());
         assertEquals("A herbal potion", potion.description());
         assertTrue(4 <= potion.healAmount() && 9 >= potion.healAmount());
@@ -75,6 +81,6 @@ class ItemFactoryTest {
 
     @Test
     public void shouldThrowWhenNotAPotion() {
-        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createPotion(ItemType.BOW, "Magic bow"));
+        assertThrows(IllegalArgumentException.class, () -> ItemFactory.createPotion(ItemType.BOW, "Magic bow", 42));
     }
 }

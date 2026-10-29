@@ -6,5 +6,7 @@ public sealed interface Item permits Weapon, Armor, Potion {
 
     String description();
 
+    int level();
+
     String info();
 }

@@ -1,8 +1,6 @@
 package se.fangdjupet.items;
 
-import java.util.logging.Level;
-
-public record Weapon(ItemType type, WeaponRange range, String description, int damageBonus) implements Item {
+public record Weapon(ItemType type, WeaponRange range, String description, int damageBonus, int level) implements Item {
 
     @Override
     public String info() {

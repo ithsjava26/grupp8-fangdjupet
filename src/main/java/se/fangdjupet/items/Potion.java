@@ -1,6 +1,6 @@
 package se.fangdjupet.items;
 
-public record Potion(ItemType type, String description, int healAmount) implements Item {
+public record Potion(ItemType type, String description, int healAmount, int level) implements Item {
 
     @Override
     public String info() {
