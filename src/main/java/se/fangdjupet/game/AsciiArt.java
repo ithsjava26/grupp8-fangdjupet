@@ -54,6 +54,6 @@ public final class AsciiArt {
 
     // Skickar en bild till lyssnaren, utan sista radbrytningen från text blocket.
     public static void show(GameEventListener out, String art) {
-        out.onEvent(art.stripTrailing());
+        out.onEvent(art.endsWith("\n") ? art.substring(0, art.length() - 1) : art);
     }
 }

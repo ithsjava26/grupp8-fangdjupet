@@ -11,7 +11,7 @@ public final class HpBar {
         if (c == null) throw new IllegalArgumentException("character must not be null");
         if (width < 1) throw new IllegalArgumentException("width must be at least 1");
 
-        int filled = c.getHp() * width / c.getMaxHp();
+        int filled = (int) ((long) c.getHp() * width / c.getMaxHp());
         if (c.isAlive() && filled == 0) filled = 1;     // lite liv kvar ska synas, inte se dött ut
         return "[" + "#".repeat(filled) + "-".repeat(width - filled) + "]";
     }

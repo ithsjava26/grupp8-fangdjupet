@@ -54,6 +54,16 @@ class AsciiArtTest {
     }
 
     @Test
+    void showRemovesOnlyOneTerminalNewline() {
+        List<String> screen = new ArrayList<>();
+        AsciiArt.show(screen::add, "art \t\n\n");
+        AsciiArt.show(screen::add, "art \t\n");
+        AsciiArt.show(screen::add, "art\n \t");
+        AsciiArt.show(screen::add, "");
+        assertEquals(List.of("art \t\n", "art \t", "art\n \t", ""), screen);
+    }
+
+    @Test
     void bannerRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> AsciiArt.banner(null));
     }

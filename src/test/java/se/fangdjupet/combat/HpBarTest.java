@@ -17,6 +17,15 @@ class HpBarTest {
     }
 
     @Test
+    void largeHpValuesRenderWithoutOverflow() {
+        Enemy t = new Enemy("Troll", Integer.MAX_VALUE, (attacker, target) -> 0, 1);
+        assertEquals("[##########]", HpBar.render(t, 10));
+
+        t.takeDamage(1_073_741_824);
+        assertEquals("[####------]", HpBar.render(t, 10));
+    }
+
+    @Test
     void halfHpGivesHalfBar() {
         Enemy t = troll();
         t.takeDamage(20);
