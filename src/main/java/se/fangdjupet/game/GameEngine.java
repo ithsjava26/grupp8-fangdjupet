@@ -1,5 +1,10 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.combat.*;
+
+import java.util.Random;
+
+
 public class GameEngine {
     private final GameEventListener output;
     private boolean running;
@@ -51,9 +56,26 @@ public class GameEngine {
         }
     }
 
+    private Hero hero;
+    private World world;
+
     private void startNewAdventure() {
         output.onEvent("Starta nytt äventyr.");
-        // Skapa hjälte och starta äventyret här.
+        IO.print("Vad heter hjälten? ");
+        String heroName = IO.readln().trim();
+
+        hero = new Hero(heroName, 40, new MeleeAttack(10));
+
+        Enemy doorEnemy = new Enemy("Dörrjäveln!", 20, new MeleeAttack(8), 1);
+        Enemy corridorEnemy = new Enemy("StädHäxan", 30, new MeleeAttack(8), 2);
+        Enemy coffeeEnemy = new Enemy("JavaFläcken", 25, new MeleeAttack(7), 1);
+        Enemy finalEnemy = new Enemy("Kapten Martin", 40, new MeleeAttack(10), 3);
+
+        world = new WorldBuilder().build(
+                doorEnemy, corridorEnemy, coffeeEnemy, finalEnemy);
+
+        output.onEvent("Äventyret börjar!");
+        showCurrentRoom();
     }
 
     private void continueAdventure() {
@@ -67,13 +89,60 @@ public class GameEngine {
     }
 
     private void fightRoomEnemy() {
-        output.onEvent("Strid mot rummets fiende.");
-        // Anropa stridslogiken här.
+        if (hero == null || world == null) {
+            output.onEvent("Starta ett äventyr först.");
+            return;
+        }
+
+        Enemy enemy = world.getCurrentRoom().getEnemy();
+
+        if (enemy == null || !enemy.isAlive()) {
+            output.onEvent("Det finns ingen fiende att slåss mot.");
+            return;
+        }
+
+        output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
+
+        while (hero.isAlive() && enemy.isAlive()) {
+            AttackStrategy attack = chooseAttack();
+            int damage = attack.calculateDamage(hero, enemy);
+            enemy.takeDamage(damage);
+
+            if (damage == 0) {
+                output.onEvent("Attacken träffade inte eller gjorde ingen skada.");
+            } else {
+                output.onEvent(hero.getName() + " gör " + damage
+                        + " i skada på " + enemy.getName());
+            }
+
+            if (!enemy.isAlive()) {
+                output.onEvent("Hjälten besegrade " + enemy.getName() + ".");
+                break;
+            }
+
+            damage = enemy.attack(hero);
+            hero.takeDamage(damage);
+            output.onEvent(enemy.getName() + " gör " + damage
+                    + " i skada på " + hero.getName()
+                    + " (" + hero.getHp() + "/" + hero.getMaxHp() + ")");
+        }
+
+        if (!hero.isAlive()) {
+            output.onEvent("Hjälten har blivit besegrad.");
+        }
     }
 
     private void moveToAnotherRoom() {
-        output.onEvent("Gå till ett annat rum.");
-        // Flytta till nästa rum här.
+        if (world == null) {
+            output.onEvent("Starta ett äventyr först.");
+            return;
+        }
+
+        if (world.moveForward()) {
+            showCurrentRoom();
+        } else {
+            output.onEvent("Det finns inga fler rum.");
+        }
     }
 
     private void pickUpItem() {
@@ -90,5 +159,31 @@ public class GameEngine {
         output.onEvent("Tack för att du spelade!");
         running = false;
     }
+
+    private void showCurrentRoom() {
+        Room room = world.getCurrentRoom();
+        output.onEvent(room.getName());
+        output.onEvent(room.getDescription());
+    }
+
+    private AttackStrategy chooseAttack() {
+        IO.println("Välj attack:");
+        IO.println("1. Närstrid");
+        IO.println("2. Magi");
+        IO.println("3. Avståndsattack");
+        IO.print("Ditt val: ");
+
+        String choice = IO.readln().trim();
+
+        return switch (choice) {
+            case "2" -> new MagicAttack(6);
+            case "3" -> new RangedAttack(5, new Random());
+            default -> new MeleeAttack(10);
+        };
 }
+
+}
+
+
+
 
