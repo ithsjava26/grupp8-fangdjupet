@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -36,8 +38,21 @@ public class GameSaveFileHandler {
         properties.setProperty("heroHp", Integer.toString(state.heroHp()));
         properties.setProperty("nextRoom", Integer.toString(state.nextRoom()));
 
-        try (OutputStream out = Files.newOutputStream(file)) {
-            properties.store(out, "Sparfil för Fangdjupet");
+        // Skriv först till en temporär fil, så att den gamla sparfilen finns kvar
+        // ända tills den nya är färdigskriven.
+        Path temp = Files.createTempFile(saveDirectory, "save-" + slot + "-", ".tmp");
+        try {
+            try (OutputStream out = Files.newOutputStream(temp)) {
+                properties.store(out, "Sparfil för Fangdjupet");
+            }
+            try {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
         }
     }
 
@@ -52,6 +67,9 @@ public class GameSaveFileHandler {
 
         try (InputStream in = Files.newInputStream(file)) {
             properties.load(in);
+        } catch (IllegalArgumentException e) {
+            // Properties.load kastar detta vid en trasig unicode-escape i filen
+            throw new IOException("Sparfilen innehåller ogiltiga data", e);
         }
 
         String version = required(properties, "version");
@@ -80,7 +98,7 @@ public class GameSaveFileHandler {
             return files
                     .map(path -> path.getFileName().toString())
                     .filter(this::isSaveFileName)
-                    .map(this::extractSlotNumber)
+                    .flatMap(this::extractSlotNumber)
                     .sorted()
                     .toList();
         }
@@ -95,13 +113,19 @@ public class GameSaveFileHandler {
     }
 
     private boolean isSaveFileName(String name) {
-        return name.matches("save-\\d+\\.properties");
+        // Bara positiva tal utan inledande nollor – samma form som getSaveFile skapar
+        return name.matches("save-[1-9]\\d*\\.properties");
     }
 
-    private int extractSlotNumber(String name) {
+    private Stream<Integer> extractSlotNumber(String name) {
         String number = name
                 .substring("save-".length(), name.length() - ".properties".length());
-        return Integer.parseInt(number);
+        try {
+            return Stream.of(Integer.parseInt(number));
+        } catch (NumberFormatException e) {
+            // För stort för en int: hoppa över filen i stället för att stoppa hela listningen
+            return Stream.empty();
+        }
     }
 
     private String required(Properties properties, String key) throws IOException {
