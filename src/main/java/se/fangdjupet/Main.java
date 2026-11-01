@@ -2,6 +2,7 @@ package se.fangdjupet;
 
 import se.fangdjupet.game.AsciiArt;
 import se.fangdjupet.game.ConsoleEventLogger;
+import se.fangdjupet.game.EventBus;
 import se.fangdjupet.game.GameEngine;
 
 public class Main {
@@ -10,7 +11,9 @@ public class Main {
         AsciiArt.show(new ConsoleEventLogger(), AsciiArt.TITLE);
         // C byter till: new Game().run();
 
-        GameEngine game = new GameEngine(System.out::println);
+        EventBus eventBus = new EventBus();
+        eventBus.register(new ConsoleEventLogger());
+        GameEngine game = new GameEngine(eventBus);
         game.run();
     }
 }
