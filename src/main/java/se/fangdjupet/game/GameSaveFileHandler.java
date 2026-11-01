@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -45,12 +44,12 @@ public class GameSaveFileHandler {
             try (OutputStream out = Files.newOutputStream(temp)) {
                 properties.store(out, "Sparfil för Fangdjupet");
             }
-            try {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING,
-                        StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-            }
+            // ATOMIC_MOVE byter sparplatsen i ett enda steg: antingen finns den gamla
+            // filen eller den nya, aldrig en halvskriven. Den temporära filen ligger i
+            // samma mapp, så det fungerar på vanliga filsystem. Går det ändå inte kastas
+            // ett IOException och den gamla sparningen finns kvar – hellre det än en
+            // icke-atomär ersättning som kan lämna en trasig fil.
+            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE);
         } finally {
             Files.deleteIfExists(temp);
         }
