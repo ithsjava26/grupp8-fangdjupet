@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //Todo: Tester
-public class EventBus {
-
+public class EventBus implements GameEventListener {
     private final List<GameEventListener> listeners = new ArrayList<>();
 
     public void register(GameEventListener listener) {
@@ -16,7 +15,8 @@ public class EventBus {
         listeners.remove(listener);
     }
 
-    public void publish(String message) {
+    @Override
+    public void onEvent(String message) {
         for (GameEventListener listener : new ArrayList<>(listeners)) {
             listener.onEvent(message);
         }
