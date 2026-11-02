@@ -200,7 +200,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 | Kapten Martin | 9/40 – **vinner Fångdjupet!** |
 
 #### Svårighet med slumpen
-1000 simulerade spel med samma val (närstrid, sedan StackOverflow mot Martin): **739 vinster**. Förlusterna: 117 mot trollet och trollkarlen, 92 mot Martin och 52 mot StädHäxan. Om man bara delar skärm mot Martin vinner man 294 av 1000.
+1000 simulerade spel med samma val (närstrid med vapnen i handen, sedan StackOverflow mot Martin): **795 vinster**. Förlusterna: 51 mot trollet och trollkarlen, 149 mot Martin (37 av dem av StackOverflows egen kostnad) och 5 mot StädHäxan. Om man bara delar skärm mot Martin vinner man 357 av 1000. Siffrorna varierar några procent mellan körningar.
 
 #### `combat/Frida` – hjälp före Martin
 Frida är den goda karaktären. Hon slåss inte och är därför ingen `Character`. `Frida.create()` skapar henne och `WorldBuilder` ställer henne i Korridoren och städskrubben med `room.withFrida(...)`. När rummets sista fiende (StädHäxan) är besegrad dyker hon upp:
