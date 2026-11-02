@@ -173,6 +173,8 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 - **Paus mellan vågorna:** `room.withRefreshment(replik, dryck)` ger något att dricka när första vågen är besegrad, bara en gång. `GameEngine.nextWaveIsReady` kollar att hela vågen verkligen är död – vid rundtaket kan hjälten vinna på mest hp fast fiender lever, och då kommer varken kaffet eller nästa våg. I Kafferummet: `Du ser dig om efter en kaffe... Där! Kannan på bänken är fortfarande varm.` och `Robert tar en kopp kaffe (+11 hp)`. Kaffet ger 30, men siffran är det hjälten faktiskt fick (aldrig över max).
 - **Belöning när rummet är rensat:** `room.withReward(replik, dryck)`, bara en gång. I Kafferummet: `På bänken bredvid kannan ligger en kanelbulle. Den har ingen tagit!` och `Robert tar en kanelbulle (+27 hp)`. Kanelbullen ger 35.
 - **Repliker:** `new Enemy(...).withLine("...")` ger fienden något att säga. Repliken skrivs ut när fienden dyker upp, t.ex. `Trollkarl: "Thou shall not pass!"`.
+- **Ingen "Prata med någon" i menyn:** karaktärerna pratar av sig själva när de dyker upp – fienderna med sina repliker och Frida när StädHäxan är besegrad. Menyn har därför valen 1–6 och e.
+- **Game over:** dör hjälten skriver `GameEngine` GAME OVER i stora röda bokstäver (`AsciiArt.GAME_OVER` i `AsciiArt.red(...)`, ANSI-färgkoden `ESC[31m`), vem som vann – eller att hjälten dog av sin egen attack – och att menyval 1 startar om. Äventyret nollställs. Färgen syns i IntelliJ och Windows Terminal; bilden i sig är ren ASCII.
 
 #### Rummen och fienderna
 

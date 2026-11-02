@@ -47,7 +47,6 @@ public class GameEngine {
                 4. Strid mot rummets fiende
                 5. Gå till ett annat rum
                 6. Plocka upp föremål
-                7. Prata med någon
                 e. Avsluta
                 """);
         IO.print("Välj ett alternativ: ");
@@ -62,7 +61,6 @@ public class GameEngine {
             case "4" -> fightRoomEnemy();
             case "5" -> moveToAnotherRoom();
             case "6" -> pickUpItem();
-            case "7" -> talkToSomeone();
             case "e" -> exitGame();
             default -> output.onEvent("Ogiltigt val. Försök igen.");
         }
@@ -129,6 +127,14 @@ public class GameEngine {
         // fullt namn på Character: java.lang.Character finns också
         se.fangdjupet.combat.Character winner = new Battle(output, this::chooseAttack, random).fight(hero, enemies);   // med slump: miss och ±1
 
+        // Hjälten är död: game over. Äventyret nollställs, så menyval 1 startar ett nytt.
+        if (!hero.isAlive()) {
+            gameOver(hero, winner).forEach(output::onEvent);
+            hero = null;
+            world = null;
+            return;
+        }
+
         // Bara den sista bossen (Martin i Lektionssalen) ger vinst i hela spelet
         Room room = world.getCurrentRoom();
         if (winner == hero && !room.hasLivingEnemy()) {
@@ -150,6 +156,18 @@ public class GameEngine {
     // då är vågen inte klar. (CodeRabbit-fynd i #18)
     static boolean nextWaveIsReady(List<Enemy> fought, Room room) {
         return fought.stream().noneMatch(Enemy::isAlive) && room.hasLivingEnemy();
+    }
+
+    // Raderna som visas när hjälten dör: GAME OVER i röda stora bokstäver, vem som vann, och hur man börjar om.
+    // Dör båda i samma slag vinner den som slog – då kan hjälten "vinna" fast hen är död.
+    static List<String> gameOver(Hero hero, se.fangdjupet.combat.Character winner) {
+        String how = (winner == hero)
+                ? hero.getName() + " vann striden men dog av sin egen attack."
+                : hero.getName() + " besegrades av " + winner.getName() + ".";
+        String art = AsciiArt.GAME_OVER.endsWith("\n")
+                ? AsciiArt.GAME_OVER.substring(0, AsciiArt.GAME_OVER.length() - 1)
+                : AsciiArt.GAME_OVER;
+        return List.of(AsciiArt.red(art), how, "Välj 1 för att börja om, eller e för att avsluta.");
     }
 
     // En paus i rummet: repliken, sedan dricker/äter hjälten (t.ex. kaffe +30 hp, kanelbulle +35 hp)
@@ -211,12 +229,6 @@ public class GameEngine {
                 output.onEvent("Du tar fram vapnet. Attack: " + hero.getAttack().name());
             }
         }
-    }
-
-    // Menyval 7: inte klar – ska visa dialog
-    private void talkToSomeone() {
-        output.onEvent("Prata med någon.");
-        // Visa dialog här.
     }
 
     // Menyval e: avslutar loopen i run()

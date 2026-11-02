@@ -166,6 +166,30 @@ public final class AsciiArt {
                  |
             """;
 
+    // ── Game over ──
+
+    // Visas i rött när hjälten dör – se red()
+    public static final String GAME_OVER = """
+               ____    _    __  __ _____    _____     _______ ____
+              / ___|  / \\  |  \\/  | ____|  / _ \\ \\   / / ____|  _ \\
+             | |  _  / _ \\ | |\\/| |  _|   | | | \\ \\ / /|  _| | |_) |
+             | |_| |/ ___ \\| |  | | |___  | |_| |\\ V / | |___|  _ <
+              \\____/_/   \\_\\_|  |_|_____|  \\___/  \\_/  |_____|_| \\_\\
+            """;
+
+    // ANSI-färgkoder: ESC[31m gör texten röd, ESC[0m går tillbaka till vanlig färg.
+    // Fungerar i IntelliJ och Windows Terminal. Koderna är också ren ASCII.
+    public static final String RED = "\u001B[31m";
+    public static final String RESET = "\u001B[0m";
+
+    // Gör texten röd, t.ex. red(GAME_OVER)
+    public static String red(String text) {
+        if (text == null) {
+            throw new IllegalArgumentException("text must not be null");
+        }
+        return RED + text + RESET;
+    }
+
     // Namnet på en fiende, ett föremål eller en person -> bilden.
     // Namnen måste vara exakt som i GameEngine/WorldBuilder (getName() eller description()).
     private static final Map<String, String> THINGS = Map.ofEntries(

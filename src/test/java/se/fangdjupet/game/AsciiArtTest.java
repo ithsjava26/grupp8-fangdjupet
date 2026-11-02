@@ -155,4 +155,24 @@ class AsciiArtTest {
     void bannerRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> AsciiArt.banner(null));
     }
+
+    // ── Game over: stora bokstäver i rött ──
+
+    @Test
+    void gameOverIsPlainAsciiAndFitsTheConsole() {
+        assertTrue(isPlainAscii(AsciiArt.GAME_OVER));
+        assertTrue(AsciiArt.GAME_OVER.lines().allMatch(line -> line.length() <= 70));
+        assertTrue(AsciiArt.GAME_OVER.lines().count() >= 4);   // stora bokstäver, inte en rad text
+    }
+
+    @Test
+    void redWrapsTextInAnsiColour() {
+        // ESC[31m = röd text, ESC[0m = tillbaka till vanlig färg
+        assertEquals("\u001B[31mGAME OVER\u001B[0m", AsciiArt.red("GAME OVER"));
+    }
+
+    @Test
+    void redRejectsNull() {
+        assertThrows(IllegalArgumentException.class, () -> AsciiArt.red(null));
+    }
 }
