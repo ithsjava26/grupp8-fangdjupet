@@ -1,6 +1,8 @@
 package se.fangdjupet.game;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 // All ASCII-grafik på ett ställe, så att menyloopen inte fylls med stora textblock.
 // Bara ren ASCII: tecken som █ och å blir ofta ? i Windows-konsolen.
@@ -32,10 +34,173 @@ public final class AsciiArt {
     public static final String FRIDA = """
                   .---.
                  ( ^_^ )     FRIDA
-                 /|   |\\     "You look tired,
-                  |___|       take this!"
+                 /|   |\\     "Du ser trott ut,
+                  |___|       ta de har!"
                   /   \\
             """;
+
+    // ── Rummen i WorldBuilder. Namnet i bilden är utan å/ä/ö, annars blir det ? i Windows-konsolen. ──
+
+    public static final String SCHOOL_DOOR = """
+               _______________
+              |    SKOLAN     |
+              |_______________|
+              |  ___________  |
+              | |     |     | |
+              | |     |   o | |      SKOLDORREN
+              | |_____|_____| |
+              |_______________|
+            """;
+
+    // Kafferummet: kaffeautomaten med JAVA-skylten, och en kopp på bänken
+    public static final String COFFEE_ROOM = """
+               ______________________
+              |    ~  J A V A  ~     |
+              |______________________|
+              |  .----------------.  |
+              |  |  KAFFE    [ON] |  |        ( (
+              |  |____________.___|  |         ) )
+              |   (1)  (2)  (3)  o   |       .-----.
+              |                      |       |     |]    KAFFERUMMET
+              |        _|  |_        |       '-----'
+              |       |      |       |
+            __|_______|______|_______|___________________
+            """;
+
+    public static final String CORRIDOR = """
+             ____________________     _______
+            |\\                  /|   |   |   |
+            | \\    ________    / |   |   |   |
+            |  |  |        |  |  |   |  /|\\  |    KORRIDOREN
+            | /    |______|    \\ |   | [___] |    & STADSKRUBBEN
+            |/__________________\\|   |_______|
+            """;
+
+    public static final String CLASSROOM = """
+              ________________________
+             | public static void     |
+             |  main(String[] args)   |
+             |________________________|
+                |                  |        LEKTIONSSALEN
+             [____]  [____]  [____]  [____]
+            """;
+
+    // ── Fienderna ──
+
+    public static final String JAVA_FLECK = """
+                .--.
+               ( :: )~      JAVAFLACKEN
+                '--'
+            """;
+
+    public static final String TROLL = """
+                ,   ,
+               (o . o)
+               /( - )\\      TROLL
+                /   \\
+            """;
+
+    public static final String WIZARD = """
+                  /\\
+                 /**\\
+                (o  o)      TROLLKARL
+                /|~~|\\      "Thou shall
+                 /  \\        not pass!"
+            """;
+
+    // StädHäxan: elak, med häxhatt, långt hår, arga ögonbryn och huggtänder. Svinto i ena handen, sprayflaskan i den andra.
+    public static final String WITCH = """
+                      /\\
+                     /  \\
+                 ___/____\\___
+                  ////||\\\\\\\\
+                 ///\\    /\\\\\\      STADHAXAN
+                 ||  O  O  ||
+                 ||   >    ||      tvattsvamp, Svinto
+                 ||  \\/\\/  ||      och kemikalier
+                  \\\\  __  //
+              _     _/|##|\\_
+             |S|===/  |##|  \\===<]=-  ~ ~ ~
+             |_|      |##|
+                     /    \\
+                    /_    _\\
+            """;
+
+    // ── Saker man hittar ──
+
+    public static final String COFFEE_CUP = """
+                ( (
+                 ) )
+               .-----.
+               |     |]     KAFFE
+               `-----'
+            """;
+
+    public static final String CINNAMON_BUN = """
+               .-~~~-.
+              ( @ @ @ )     KANELBULLE
+               '-...-'
+            """;
+
+    public static final String JAVA_BOOK = """
+               ________
+              | JAVA   |
+              | for    |    JAVA-BOKEN
+              | dummies|
+              |________|
+            """;
+
+    public static final String BOW = """
+               |\\
+               | \\
+               |--)---->    PILBAGE
+               | /
+               |/
+            """;
+
+    public static final String STAFF = """
+                 *
+                (o)
+                 |          TROLLSTAV
+                 |
+                 |
+            """;
+
+    // Namnet på en fiende, ett föremål eller en person -> bilden.
+    // Namnen måste vara exakt som i GameEngine/WorldBuilder (getName() eller description()).
+    private static final Map<String, String> THINGS = Map.ofEntries(
+            Map.entry("JavaFläcken", JAVA_FLECK),
+            Map.entry("Troll", TROLL),
+            Map.entry("Trollkarl", WIZARD),
+            Map.entry("StädHäxan", WITCH),
+            Map.entry("Kapten Martin", MARTIN),
+            Map.entry("Frida", FRIDA),
+            Map.entry("en kopp kaffe", COFFEE_CUP),
+            Map.entry("en kanelbulle", CINNAMON_BUN),
+            Map.entry("Java-bok", JAVA_BOOK),
+            Map.entry("Pilbåge", BOW),
+            Map.entry("Trollstav", STAFF));
+
+    // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
+    //   AsciiArt.forName(enemy.getName()).ifPresent(art -> AsciiArt.show(output, art));
+    public static Optional<String> forName(String name) {
+        if (name == null) return Optional.empty();
+        return Optional.ofNullable(THINGS.get(name));
+    }
+
+    // Rumsnamnet (Room.getName()) -> bilden. Namnen måste vara exakt som i WorldBuilder.
+    private static final Map<String, String> ROOMS = Map.of(
+            "Skoldörren", SCHOOL_DOOR,
+            "Kafferummet", COFFEE_ROOM,
+            "Korridoren och städskrubben", CORRIDOR,
+            "Lektionssalen", CLASSROOM);
+
+    // Bilden för ett rum, eller tomt om rummet saknar bild. Används så här i menyn:
+    //   AsciiArt.forRoom(room.getName()).ifPresent(art -> AsciiArt.show(output, art));
+    public static Optional<String> forRoom(String roomName) {
+        if (roomName == null) return Optional.empty();    // Map.of kastar NullPointerException på get(null)
+        return Optional.ofNullable(ROOMS.get(roomName));
+    }
 
     // Ram runt valfri text, t.ex. ett rumsnamn eller ett föremåls beskrivning.
     // Tar en String, så den fungerar oavsett hur föremålen ser ut (name() eller info()).

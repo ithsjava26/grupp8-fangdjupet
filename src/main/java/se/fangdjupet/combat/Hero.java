@@ -12,6 +12,7 @@ public class Hero extends Character {
 
     private Weapon weapon;   // null = inget vapen
     private Armor armor;     // null = ingen rustning
+    private boolean javaBook; //Plocka upp boken i sista rummet
 
     // Skickar vidare till Characters konstruktor
     public Hero(String name, int maxHp, AttackStrategy attack) {
@@ -19,7 +20,7 @@ public class Hero extends Character {
     }
 
     // Tar på ett vapen (ersätter det gamla) och byter attack efter vapnets räckvidd:
-    // båge = avståndsattack, svärd = närstrid, spjut (BOTH) behåller attacken man har.
+    // båge = avståndsattack, staff = magi, svärd = närstrid, spjut (BOTH) behåller attacken man har.
     public void equip(Weapon weapon) {
         if (weapon == null)
             throw new IllegalArgumentException("weapon must not be null");
@@ -27,6 +28,7 @@ public class Hero extends Character {
         switch (weapon.range()) {
             case RANGED -> setAttack(new RangedAttack(WEAPON_STRENGTH, new Random()));
             case MELEE  -> setAttack(new MeleeAttack(WEAPON_STRENGTH));
+            case MAGIC  -> setAttack(new MagicAttack(WEAPON_STRENGTH));
             case BOTH   -> { }
         }
     }
@@ -54,7 +56,20 @@ public class Hero extends Character {
         return armor.defense();
     }
 
+    // Dricker en dryck och helar så mycket den ger (aldrig över max)
     public void drink(Potion potion) {
         heal(potion.healAmount());
+    }
+
+    // Har hjälten tagit upp Java-boken? Då väljer hen bara bland KnowledgeAttack mot Martin.
+    public boolean hasJavaBook() {
+        return javaBook;
+    }
+
+    // Tar upp Java-boken i Lektionssalen och börjar med StackOverflow – som när en båge
+    // byter till RangedAttack. Två gånger gör ingen skillnad: fältet är redan true.
+    public void pickUpJavaBook() {
+        javaBook = true;
+        setAttack(KnowledgeAttack.STACKOVERFLOW);
     }
 }

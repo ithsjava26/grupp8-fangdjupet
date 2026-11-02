@@ -40,6 +40,17 @@ class ItemFactoryTest {
     }
 
     @Test
+    public void testCreateWeaponStaff() {
+        Weapon weapon = ItemFactory.createWeapon(ItemType.STAFF, "Staff of Java", 42);
+        assertNotNull(weapon);
+        assertEquals(42, weapon.level());
+        assertEquals(ItemType.STAFF, weapon.type());
+        assertEquals("Staff of Java", weapon.description());
+        assertEquals(WeaponRange.MAGIC, weapon.range());
+        assertTrue(2 <= weapon.damageBonus() && 7 >= weapon.damageBonus());
+    }
+
+    @Test
     public void shouldThrowWhenNotAWeapon() {
         assertThrows(IllegalArgumentException.class, () -> ItemFactory.createWeapon(ItemType.SHIELD, "Normal shield", 42));
     }

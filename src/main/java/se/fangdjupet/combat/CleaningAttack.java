@@ -1,0 +1,46 @@
+package se.fangdjupet.combat;
+
+import java.util.Random;
+
+// StädHäxans attacker: hon kastar och sprayar städgrejer på avstånd.
+// Det är en RangedAttack – samma uträkning som pilbågen (20 % miss, annars
+// styrka + halva bonusen − målets försvar) – men varje attack har eget namn och verb i loggen,
+// t.ex. "Enemy: StädHäxan kastar en tvättsvamp på Robert skada: 7".
+public class CleaningAttack extends RangedAttack {
+
+    public static final CleaningAttack SPONGE =
+            new CleaningAttack("Tvättsvamp", "kastar en tvättsvamp på", 6, new Random());
+    public static final CleaningAttack SVINTO =
+            new CleaningAttack("Svinto", "kastar Svinto på", 8, new Random());
+    // Kemikalierna (spolarvätska) – det hårdaste, tas fram vid halva livet
+    public static final CleaningAttack CHEMICALS =
+            new CleaningAttack("Kemikalier", "sprayar kemikalier på", 10, new Random());
+
+    private final String name;
+    private final String verb;
+
+    // Uträkningen och missen ärvs från RangedAttack – här läggs bara namn och verb till
+    public CleaningAttack(String name, String verb, int strength, Random random) {
+        super(strength, random);
+        if (name == null || name.isBlank())
+            throw new IllegalArgumentException("name must not be blank");
+        if (verb == null || verb.isBlank())
+            throw new IllegalArgumentException("verb must not be blank");
+        if (random == null)
+            throw new IllegalArgumentException("random must not be null");
+        this.name = name;
+        this.verb = verb;
+    }
+
+    // Namnet i stället för klassnamnet, t.ex. "Svinto"
+    @Override
+    public String name() {
+        return name;
+    }
+
+    // Ordet i loggen: "StädHäxan <verb> Robert skada: 9"
+    @Override
+    public String verb() {
+        return verb;
+    }
+}

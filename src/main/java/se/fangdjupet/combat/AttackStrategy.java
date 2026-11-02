@@ -10,4 +10,8 @@ public interface AttackStrategy {
     // default = metoden HAR en kropp, så strategierna behöver inte skriva den.
     // Ger klassens namn, t.ex. "MeleeAttack" – bra i stridsloggen.
     default String name() { return getClass().getSimpleName(); }
+    default int selfDamage() { return 0; } //Vad attackerna kostar en själv
+    default String verb(){
+        return "slår";
+    }
 }

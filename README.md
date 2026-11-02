@@ -121,9 +121,13 @@ Kontraktet är de gemensamma typerna som alla bygger mot – bara signaturer och
 AttackStrategy (interface)          Character (abstrakt klass)
  ├─ MeleeAttack    A, PR 2           ├─ Hero    A, PR 1
  ├─ MagicAttack    A, PR 2           └─ Enemy   A, PR 1
- └─ RangedAttack   A, PR 2                └─ Boss  (frivilligt)
+ ├─ RangedAttack   A, PR 2                └─ Boss  A – Martin.create(), CleaningWitch.create()
+ └─ KnowledgeAttack A, PR 3 (Dela skärm: 50/50)
         ▲
         └──── Character HAR en AttackStrategy (fältet `attack`)
+
+AttackChooser (interface)   A – spelaren väljer attack per runda
+Frida (ingen Character)     A – ger två drycker före Martin
 
 Item (sealed interface)             GameEventListener (interface)
  ├─ Weapon   record                  ├─ EventBus            C, PR 1
@@ -136,8 +140,88 @@ En metod, `calculateDamage(attacker, target)`, som varje strategi räknar på si
 - `MeleeAttack` – styrka + anfallarens bonus − målets försvar.
 - `MagicAttack` – fast kraft, rustningen påverkar inte.
 - `RangedAttack` – slumpar med `Random` (20 % miss), annars lägre skada.
+- `KnowledgeAttack` – fast kraft som ignorerar försvaret, som `MagicAttack`, men vissa attacker kostar anfallaren hp (`DOOMSCROLL`, `STACKOVERFLOW`). `SCREENSHARE` (Dela skärm) är en chansning: 50/50 mellan 1 och 6 i skada (konstruktorn `KnowledgeAttack(namn, låg, hög, Random)`).
+- `CleaningAttack extends RangedAttack` – StädHäxans kast. Samma uträkning som pilbågen (20 % miss, annars styrka + halva bonusen − försvaret), men med eget namn och verb: `SPONGE` *kastar en tvättsvamp på* (6), `SVINTO` *kastar Svinto på* (8) och `CHEMICALS` *sprayar kemikalier på* (10).
+- `RandomAttack(random, attacker...)` – en strategi gjord av andra strategier. Varje slag slumpar den fram en av dem, och `name()`, `verb()` och `selfDamage()` hör till den som valdes senast, så loggen stämmer med slaget.
 
-Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. `Hero.equip(Weapon)` gör just det utifrån vapnets räckvidd: båge (`RANGED`) ger `RangedAttack`, svärd (`MELEE`) ger `MeleeAttack` och spjut (`BOTH`) behåller attacken hjälten redan har. Med bara en abstrakt metod räcker även en lambda: `(a, t) -> 5`. `name()` har en `default`-kropp och behöver inte skrivas.
+Två `default`-metoder utöver `name()` gör att en strategi bara skriver det den vill ändra:
+- `selfDamage()` – hur mycket attacken kostar anfallaren. Förvalt 0. `Battle` drar av den efter varje slag.
+- `verb()` – ordet som loggen använder: förvalt `"slår"`, `RangedAttack` och `MagicAttack` skriver över det med `"skjuter"`.
+
+Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. `Hero.equip(Weapon)` gör just det utifrån vapnets räckvidd: båge (`RANGED`) ger `RangedAttack`, staff (`MAGIC`) ger `MagicAttack`, svärd (`MELEE`) ger `MeleeAttack` och spjut (`BOTH`) behåller attacken hjälten redan har. Med bara en abstrakt metod räcker även en lambda: `(a, t) -> 5`. `name()` har en `default`-kropp och behöver inte skrivas.
+
+### `combat/Battle` – hur en strid går till
+`new Battle(listener).fight(hero, enemy)` kör striden och returnerar vinnaren. Med `new Battle(listener, chooser)` frågar `Battle` en `AttackChooser` före varje hjältens slag; den returnerar en `AttackStrategy` (som blir hjältens nya attack) eller `null` för att behålla den nuvarande. Så väljer spelaren attack varje runda i `GameEngine`. Reglerna:
+- **Turordning:** hjälten slår först, sedan fienden. Den som är död slår inte tillbaka.
+- **Attackval:** valet görs i början av varje runda, före hjältens slag. Den valda attackens `selfDamage()` räknas som vanligt.
+- **Attackens kostnad:** efter varje slag dras `selfDamage()` av anfallaren. Hjälten kan alltså dö av sin egen attack.
+- **Dör båda i samma slag** vinner den som slog: dödar hjälten fienden (och dör själv) vinner hjälten, dödar fienden hjälten (och dör själv) vinner fienden.
+- **Rundtak:** efter 100 rundor avbryts striden. Då vinner den med mest hp kvar, och vid lika hp vinner fienden.
+- **Hp återställs inte** mellan strider.
+- **Slump:** med `new Battle(listener, chooser, random)` missar varje slag med 10 % chans (`Hero: Robert missar Troll!`), och en träff gör ±1 i skada, aldrig under 0. En miss (0 i skada) förblir 0. Det gäller både hjälten och fienderna. `GameEngine` kör striderna så. Utan `Random` blir skadan exakt, och så kör testerna.
+- **Flera fiender:** `fight(hero, List<Enemy>)`. Varje runda slår hjälten den första fienden som lever, sedan slår varje levande fiende.
+- **Loggen:** varje slag skickas som text till `GameEventListener.onEvent`, till exempel `Hero: Robin skjuter Troll skada: 5`, och sist `Robin vinner mot Troll!`. Ett slag som gör 0 i skada (ett bomkast, eller för bra försvar) skrivs som `Enemy: StädHäxan kastar Svinto på Robert men missar!`. `Battle` skriver aldrig direkt till konsolen. `Robin vinner Fångdjupet!` skriver `GameEngine` bara när hjälten besegrar Martin, den sista bossen i Lektionssalen.
+- **Grafik:** efter varje träff loggas den träffades hp som ASCII-mätare via `HpBar.status(character, 10)`, till exempel `Troll  [######----] 6/10`. Den som dör visar en tom mätare (`[----------] 0/10`). En attack som kostar anfallaren hp (`selfDamage`) ger också en mätare för anfallaren.
+
+### Rum, vapen och grafik i spelet
+- `GameEngine` kör striden med `Battle` (menyval 4) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller bara Martins fyra `KnowledgeAttack` när hjälten har Java-boken. `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
+- Menyval 6 plockar upp rummets föremål. Ett vapen tas fram direkt och väljer attack efter räckvidd: pilbåge → `RangedAttack`, staff (`ItemType.STAFF`, `WeaponRange.MAGIC`) → `MagicAttack`, svärd → `MeleeAttack`.
+- `AsciiArt.forRoom(rumsnamn)` ger en ASCII-bild för Skoldörren, Kafferummet (kaffeautomaten med JAVA-skylten), Korridoren och städskrubben och Lektionssalen (tom `Optional` för okända rum). `showCurrentRoom()` visar den, och dessutom det som ligger i rummet (`Här ligger: Pilbåge` med bild).
+- `AsciiArt.forName(namn)` ger en bild för fiender, saker och personer: JavaFläcken, Troll, Trollkarl, StädHäxan, Kapten Martin, Frida, kaffekoppen, kanelbullen, Java-boken, pilbågen och trollstaven. Den visas när fienden dyker upp, när man tar kaffet eller kanelbullen, när Frida kommer och när man plockar upp något.
+- **Flera fiender i ett rum:** `Room` kan ta en lista med fiender. `getEnemy()` ger den första som lever och `null` när rummet är rensat. Vinner hjälten och rummet har fler fiender skriver spelet `Men vänta... Troll har gömt sig i Kafferummet och hoppar fram!`, och nästa strid (menyval 4) är mot den.
+- **Flera fiender samtidigt:** `room.thenTogether(troll, wizard)` lägger till en våg där fienderna slåss tillsammans. `room.getEnemies()` ger den aktuella vågen och `Battle.fight(hero, List<Enemy>)` kör striden. Varje runda slår hjälten den första fienden som lever, och sedan slår varje levande fiende i tur och ordning. Slutraden blir `Robert vinner mot Troll och Trollkarl!`.
+- **Paus mellan vågorna:** `room.withRefreshment(replik, dryck)` ger något att dricka när första vågen är besegrad, bara en gång. I Kafferummet: `Du ser dig om efter en kaffe... Där! Kannan på bänken är fortfarande varm.` och `Robert tar en kopp kaffe (+11 hp)`. Kaffet ger 30, men siffran är det hjälten faktiskt fick (aldrig över max).
+- **Belöning när rummet är rensat:** `room.withReward(replik, dryck)`, bara en gång. I Kafferummet: `På bänken bredvid kannan ligger en kanelbulle. Den har ingen tagit!` och `Robert tar en kanelbulle (+27 hp)`. Kanelbullen ger 35.
+- **Repliker:** `new Enemy(...).withLine("...")` ger fienden något att säga. Repliken skrivs ut när fienden dyker upp, t.ex. `Trollkarl: "Thou shall not pass!"`.
+
+#### Rummen och fienderna
+
+| Rum | Fiender (i tur och ordning) | Föremål |
+|---|---|---|
+| Skoldörren | Entrédörren – liten fiende, 15 hp, närstrid 5 | – |
+| Kafferummet | JavaFläcken – liten fiende, 15 hp, närstrid 4. Sedan en **kaffe** från kaffeautomaten (+30 hp, aldrig över max). Sist de riktiga fienderna som gömt sig där, **samtidigt**: **Troll** (12 hp, närstrid 7, nivå 2) och **Trollkarl** (16 hp, magi 6, nivå 2, säger *"Thou shall not pass!"*). När rummet är rensat: en **kanelbulle** (+35 hp). | Pilbåge |
+| Korridoren och städskrubben | **StädHäxan** (`CleaningWitch.create(random)`, en `Boss`) – 30 hp, nivå 2. Kastar tvättsvamp eller Svinto (slumpas varje slag), och vid halva livet sprayar hon kemikalier. Alla tre är avståndsattacker. Hotar: *"Ett steg till mot lektionssalen och jag tar fram kemikalierna!"* När hon är besegrad dyker **Frida** upp (se nedan). | Trollstav (staff) |
+| Lektionssalen | **Kapten Martin** (`Martin.create()`, en `Boss`) – 40 hp, nivå 3. Förklarar 3 per slag, vid halva livet 5. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
+
+#### Hjältens hp genom spelet (körning utan slump i `Battle`, närstrid och StackOverflow mot Martin)
+
+| Efter | Robert |
+|---|---|
+| Entrédörren | 34/40 |
+| JavaFläcken | 29/40 |
+| Kaffe | 40/40 |
+| Troll och Trollkarl | 13/40 |
+| Kanelbulle | 40/40 |
+| StädHäxan | 9–11/40 om inget av hennes kast missar (i en riktig körning 18/40) |
+| Fridas två drycker | 40/40 – full hälsa mot Martin |
+| Kapten Martin | 9/40 – **vinner Fångdjupet!** |
+
+#### Svårighet med slumpen
+1000 simulerade spel med samma val (närstrid, sedan StackOverflow mot Martin): **739 vinster**. Förlusterna: 117 mot trollet och trollkarlen, 92 mot Martin och 52 mot StädHäxan. Om man bara delar skärm mot Martin vinner man 294 av 1000.
+
+#### `combat/Frida` – hjälp före Martin
+Frida är den goda karaktären. Hon slåss inte och är därför ingen `Character`. `Frida.create()` skapar henne och `WorldBuilder` ställer henne i Korridoren och städskrubben med `room.withFrida(...)`. När rummets sista fiende (StädHäxan) är besegrad dyker hon upp:
+
+```
+Frida dyker upp!
+Frida: "Du ser trött ut! Ta de här två innan du möter Martin."
+Robert dricker Fridas hälsodryck (+20 hp)
+Robert  [#######---] 30/40
+Robert dricker Fridas hälsodryck (+10 hp)
+Robert  [##########] 40/40
+```
+
+- `give()` ger två hälsodrycker (`Potion`, 20 hp var) första gången och en tom lista därefter. Gåvan kan alltså bara fås en gång.
+- Hjälten dricker dem direkt med `hero.drink(...)`. 2 × 20 hp räcker till full hälsa (40) även från 1 hp, och `heal` går aldrig över `maxHp`.
+
+### `combat/Boss`, `combat/CleaningWitch` och `combat/Martin` – bossarna
+- `Boss extends Enemy` börjar med en fas 1-attack och byter till en tyngre fas 2-attack när hp når halva livet, bara en gång. Bytet sker i `takeDamage`, och en `heal` byter inte tillbaka. `isInPhaseTwo()` visar om bytet skett.
+- `CleaningWitch.create(random)` ger StädHäxan som en `Boss`: fas 1 är en `RandomAttack` av `SPONGE` och `SVINTO`, och fas 2 (vid 15 hp) är `CHEMICALS`.
+- `Martin.create()` ger en `Boss`: Kapten Martin, 40 hp, nivå 3. Han förklarar med `KnowledgeAttack`: *Thoroughly explained the Hello World Java to you* (3), och under halva livet *Utterly explained* (5).
+- `Martin.heroChoices()` ger hjältens fyra val mot honom: `DOOMSCROLL`, `QUIZ`, `STACKOVERFLOW` och `SCREENSHARE`.
+- **Java-boken:** Lektionssalen har den (`room.withJavaBook()`, `takeJavaBook()` bara en gång). När man kommer in tar hjälten upp den med `hero.pickUpJavaBook()`, som byter attack till StackOverflow. `hero.hasJavaBook()` gör att `AttackMenu` bara visar de fyra.
+- Martins porträtt (`AsciiArt.MARTIN`) och repliken *"Let me explain Hello World to you..."* visas när han dyker upp.
+- Med full hp och StackOverflow går det att vinna. Går Dela skärm dåligt varje gång vinner Martin. `MartinTest` kollar båda.
 
 ### `combat/Character` – vem som slåss
 Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklasserna måste skriva:
@@ -165,7 +249,7 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | En dryck läker | A ↔ B | `Character.heal(int)`, `Potion.healAmount()` | `hero.drink(Potion)` anropar `heal(potion.healAmount())`, aldrig över max – A:s PR 1 |
 | Fiender skapas | B ↔ A | `Character(name, maxHp, attack)` är `protected` | `Enemy(name, maxHp, attack, level)`; B:s `EnemyFactory.create(type, level)` bygger den – A:s PR 1 och B:s PR 3 |
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
-| Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3 |
+| Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3. `Battle` loggar varje slag, hp-mätare efter varje träff och ett slutmeddelande (se avsnittet om `Battle`) |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
-| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
+| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
 | Sparfilen | A, B, C | – | en rad per sak, fält åtskilda med `;`: `hero;<namn>;<hp>`, `room;<rummets namn>`, en rad per föremål – C:s PR 2, alla tre granskar |

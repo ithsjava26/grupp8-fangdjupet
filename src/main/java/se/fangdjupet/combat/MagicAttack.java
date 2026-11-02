@@ -15,4 +15,9 @@ public class MagicAttack implements AttackStrategy {
     public int calculateDamage(Character attacker, Character target) {
         return power;   // skadan ÄR kraften – inget läggs till eller dras av
     }
-}
+        // Magi skjuts iväg, den slås inte
+        @Override
+        public String verb() {
+            return "skjuter"; //Magic attack
+        }
+    }

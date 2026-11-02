@@ -16,6 +16,36 @@ class HeroTest {
         return new Hero("Robin", 30, (a, t) -> 5);
     }
 
+    // ── Java-boken: med den kan hjälten använda KnowledgeAttack mot Martin ──
+
+    @Test
+    void heroStartsWithoutJavaBook() {
+        assertFalse(hero().hasJavaBook());
+    }
+
+    @Test
+    void heroCanPickUpTheJavaBook() {
+        Hero h = hero();
+        h.pickUpJavaBook();
+        assertTrue(h.hasJavaBook());
+    }
+
+    @Test
+    void pickingUpTheBookGivesAKnowledgeAttack() {
+        // Boken byter attack direkt – som när man tar upp en båge eller en staff
+        Hero h = hero();
+        h.pickUpJavaBook();
+        assertInstanceOf(KnowledgeAttack.class, h.getAttack());
+    }
+
+    @Test
+    void pickingUpTheBookTwiceIsHarmless() {
+        Hero h = hero();
+        h.pickUpJavaBook();
+        h.pickUpJavaBook();
+        assertTrue(h.hasJavaBook());
+    }
+
     @Test
     void heroWithoutGearHasNoBonusOrDefense() {
         Hero h = hero();
@@ -48,6 +78,21 @@ class HeroTest {
     @Test
     void bowGivesRangedAttack() {
         Hero h = hero();
+        h.equip(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 3, 1));
+        assertInstanceOf(RangedAttack.class, h.getAttack());
+    }
+
+    @Test
+    void staffGivesMagicAttack() {
+        Hero h = hero();
+        h.equip(new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Staff", 3, 1));
+        assertInstanceOf(MagicAttack.class, h.getAttack());
+    }
+
+    @Test
+    void switchingFromStaffToBowGivesRangedAttack() {
+        Hero h = hero();
+        h.equip(new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Staff", 3, 1));
         h.equip(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 3, 1));
         assertInstanceOf(RangedAttack.class, h.getAttack());
     }
