@@ -38,38 +38,62 @@ public class GameEngine {
     }
 
     private void showMenu() {
-        IO.println("""
-                Fangdjupet
-                ==========
-                1. Starta nytt äventyr
-                2. Fortsätt sparat äventyr
-                3. Visa hjältens utrustning
-                4. Strid mot rummets fiende
-                5. Gå till ett annat rum
-                6. Plocka upp föremål
-                e. Avsluta
-                """);
+        IO.println(menu(world == null ? null : world.getCurrentRoom()));
         IO.print("Välj ett alternativ: ");
     }
 
-    // Ett menyval → rätt metod
-    private void handleChoice(String choice) {
-        switch (choice) {
-            case "1" -> startNewAdventure();
-            case "2" -> continueAdventure();
-            case "3" -> showEquipment();
-            case "4" -> fightRoomEnemy();
-            case "5" -> moveToAnotherRoom();
-            case "6" -> pickUpItem();
-            case "e" -> exitGame();
-            default -> output.onEvent("Ogiltigt val. Försök igen.");
+    // Två menyer. Utan äventyr (room == null): huvudmenyn, där man startar eller fortsätter.
+    // I spelet: spelmenyn med rummets namn som rubrik – där ska man inte se "Starta nytt äventyr".
+    static String menu(Room room) {
+        if (room == null) {
+            return """
+                    Fangdjupet
+                    ==========
+                    1. Starta nytt äventyr
+                    2. Fortsätt sparat äventyr
+                    e. Avsluta
+                    """;
         }
+        return room.getName() + "\n"
+                + "=".repeat(room.getName().length()) + "\n"
+                + """
+                1. Strid mot rummets fiende
+                2. Gå till ett annat rum
+                3. Visa hjältens utrustning
+                e. Avsluta
+                """;
+    }
+
+    // Ett menyval → rätt metod. Vilken meny som gäller beror på om ett äventyr pågår.
+    private void handleChoice(String choice) {
+        if (world == null) {
+            switch (choice) {
+                case "1" -> startNewAdventure();
+                case "2" -> continueAdventure();
+                case "e" -> exitGame();
+                default -> output.onEvent("Ogiltigt val. Försök igen.");
+            }
+        } else {
+            switch (choice) {
+                case "1" -> fightRoomEnemy();
+                case "2" -> moveToAnotherRoom();
+                case "3" -> showEquipment();
+                case "e" -> exitGame();
+                default -> output.onEvent("Ogiltigt val. Försök igen.");
+            }
+        }
+    }
+
+    // Äventyret är slut (game over eller vinst): tillbaka till huvudmenyn
+    private void endAdventure() {
+        hero = null;
+        world = null;
     }
 
     private Hero hero;
     private World world;
 
-    // Menyval 1: skapar hjälten, fienderna och rummen och visar det första rummet
+    // Huvudmenyn 1: skapar hjälten, fienderna och rummen och visar det första rummet
     private void startNewAdventure() {
         output.onEvent("Starta nytt äventyr.");
         IO.print("Vad heter hjälten? ");
@@ -89,19 +113,19 @@ public class GameEngine {
         showCurrentRoom();
     }
 
-    // Menyval 2: inte klar – ska läsa in sparfilen
+    // Huvudmenyn 2: inte klar – ska läsa in sparfilen
     private void continueAdventure() {
         output.onEvent("Fortsätt sparat äventyr.");
         // Läs in sparfilen här.
     }
 
-    // Menyval 3: inte klar – ska visa hjältens föremål
+    // Spelmenyn 3: inte klar – ska visa hjältens föremål
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         // Skriv ut hjältens föremål här.
     }
 
-    // Menyval 4: striden mot rummets fiender (en våg i taget).
+    // Spelmenyn 1: striden mot rummets fiender (en våg i taget).
     // Efter en vunnen strid: kaffet mellan vågorna, kanelbullen och Frida när rummet är rensat,
     // och "vinner Fångdjupet!" när Martin i sista rummet är besegrad.
     private void fightRoomEnemy() {
@@ -127,11 +151,10 @@ public class GameEngine {
         // fullt namn på Character: java.lang.Character finns också
         se.fangdjupet.combat.Character winner = new Battle(output, this::chooseAttack, random).fight(hero, enemies);   // med slump: miss och ±1
 
-        // Hjälten är död: game over. Äventyret nollställs, så menyval 1 startar ett nytt.
+        // Hjälten är död: game over och tillbaka till huvudmenyn, där 1 startar ett nytt äventyr
         if (!hero.isAlive()) {
             gameOver(hero, winner).forEach(output::onEvent);
-            hero = null;
-            world = null;
+            endAdventure();
             return;
         }
 
@@ -148,6 +171,7 @@ public class GameEngine {
         }
         if (winner == hero && world.isAtFinalRoom() && !room.hasLivingEnemy()) {
             output.onEvent(hero.getName() + " vinner Fångdjupet!");
+            endAdventure();   // spelet är vunnet: tillbaka till huvudmenyn
         }
     }
 
@@ -195,7 +219,7 @@ public class GameEngine {
         }
     }
 
-    // Menyval 5: går till nästa rum (kollar inte om det finns fiender kvar)
+    // Spelmenyn 2: går till nästa rum (kollar inte om det finns fiender kvar)
     private void moveToAnotherRoom() {
         if (world == null) {
             output.onEvent("Starta ett äventyr först.");
@@ -209,45 +233,42 @@ public class GameEngine {
         }
     }
 
-    // Menyval 6: plockar upp allt i rummet. Ett vapen tas fram direkt och byter attack.
-    private void pickUpItem() {
-        if (hero == null || world == null) {
-            output.onEvent("Starta ett äventyr först.");
-            return;
-        }
-        Room room = world.getCurrentRoom();
-        if (room.getItems().isEmpty()) {
-            output.onEvent("Det finns inget att plocka upp här.");
-            return;
-        }
-        for (Item item : room.getItems()) {
-            room.removeItem(item);
-            output.onEvent("Du plockar upp: " + item.description());
-            showArt(item.description());
-            if (item instanceof Weapon weapon) {
-                hero.equip(weapon);   // vapnet byter attack: båge = avstånd, staff = magi
-                output.onEvent("Du tar fram vapnet. Attack: " + hero.getAttack().name());
-            }
-        }
-    }
-
     // Menyval e: avslutar loopen i run()
     private void exitGame() {
         output.onEvent("Tack för att du spelade!");
         running = false;
     }
 
-    // Visar rummets namn, beskrivning och bild, det som ligger där – och tar Java-boken i Lektionssalen
+    // Plockar upp allt i rummet och ger tillbaka det som togs. Ett vapen hamnar i handen (bonus i skada),
+    // men attacken är kvar: pilbågen (avstånd 5) är svagare än närstrid (10), och den som bara trycker
+    // Enter i attackmenyn ska inte få sämre attack. Bågen och staven väljs i attackmenyn.
+    static List<Item> pickUpAll(Hero hero, Room room) {
+        List<Item> items = room.getItems();   // en kopia – säker att ta bort ur rummet medan vi går igenom den
+        for (Item item : items) {
+            room.removeItem(item);
+            if (item instanceof Weapon weapon) {
+                AttackStrategy attack = hero.getAttack();
+                hero.equip(weapon);       // equip byter attack efter vapnet ...
+                hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
+            }
+        }
+        return items;
+    }
+
+    // Visar rummets namn, beskrivning och bild, plockar upp det som ligger där – och tar Java-boken i Lektionssalen
     private void showCurrentRoom() {
         Room room = world.getCurrentRoom();
         output.onEvent(room.getName());
         output.onEvent(room.getDescription());
         AsciiArt.forRoom(room.getName()).ifPresent(art -> AsciiArt.show(output, art));
 
-        // Det som ligger i rummet syns i grafiken – plocka upp med menyval 6
-        for (Item item : room.getItems()) {
-            output.onEvent("Här ligger: " + item.description());
+        // Det som ligger i rummet plockar hjälten upp direkt, som Java-boken
+        for (Item item : pickUpAll(hero, room)) {
+            output.onEvent("Du hittar och plockar upp: " + item.description());
             showArt(item.description());
+            if (item instanceof Weapon weapon) {
+                output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+            }
         }
 
         // I Lektionssalen tar hjälten upp Java-boken direkt: mot Martin hjälper bara kunskap

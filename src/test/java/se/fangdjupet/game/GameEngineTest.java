@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test;
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.Hero;
 import se.fangdjupet.combat.MeleeAttack;
+import se.fangdjupet.items.ItemType;
+import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
 
 import java.util.List;
 
@@ -91,4 +95,72 @@ class GameEngineTest {
         assertTrue(GameEngine.gameOver(robert(), enemy("Troll")).stream().anyMatch(line -> line.contains("1")));
     }
 
+
+    // ── Föremål plockas upp automatiskt när hjälten kommer in i rummet ──
+
+    private final Weapon bow = new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1);
+
+    @Test
+    void everythingInTheRoomIsPickedUp() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow));
+        assertEquals(List.of(bow), GameEngine.pickUpAll(robert(), room));
+        assertTrue(room.getItems().isEmpty());
+    }
+
+    @Test
+    void anEmptyRoomGivesNothing() {
+        Room room = new Room("Skoldörren", "Du står utanför skolan.", enemy("Entrédörren"), List.of());
+        assertTrue(GameEngine.pickUpAll(robert(), room).isEmpty());
+    }
+
+    @Test
+    void aWeaponEndsUpInTheHeroesHand() {
+        Hero robert = robert();
+        GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
+        assertEquals(3, robert.getAttackBonus());
+    }
+
+    @Test
+    void aWeaponDoesNotChangeTheAttack() {
+        // Pilbågen ska inte byta närstrid mot en svagare avståndsattack – den väljs i attackmenyn
+        Hero robert = robert();
+        var melee = robert.getAttack();
+        GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
+        assertSame(melee, robert.getAttack());
+    }
+
+    @Test
+    void aPotionIsPickedUpButNotEquipped() {
+        Hero robert = robert();
+        Potion potion = new Potion(ItemType.POTION, "Hälsodryck", 10, 1);
+        assertEquals(List.of(potion), GameEngine.pickUpAll(robert, new Room("Korridoren", "Lång.", enemy("StädHäxan"), List.of(potion))));
+        assertEquals(0, robert.getAttackBonus());
+    }
+
+    // ── Två menyer: huvudmenyn utan äventyr, spelmenyn i rummet ──
+
+    @Test
+    void mainMenuStartsOrContinuesAnAdventure() {
+        String menu = GameEngine.menu(null);
+        assertTrue(menu.contains("1. Starta nytt äventyr"));
+        assertTrue(menu.contains("2. Fortsätt sparat äventyr"));
+        assertTrue(menu.contains("e. Avsluta"));
+        assertFalse(menu.contains("Strid"), "ingen strid utan äventyr");
+    }
+
+    @Test
+    void gameMenuDoesNotOfferANewAdventure() {
+        String menu = GameEngine.menu(new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of()));
+        assertFalse(menu.contains("Starta nytt äventyr"));
+        assertTrue(menu.contains("1. Strid mot rummets fiende"));
+        assertTrue(menu.contains("2. Gå till ett annat rum"));
+        assertTrue(menu.contains("3. Visa hjältens utrustning"));
+        assertTrue(menu.contains("e. Avsluta"));
+    }
+
+    @Test
+    void gameMenuShowsWhereTheHeroIs() {
+        String menu = GameEngine.menu(new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of()));
+        assertTrue(menu.startsWith("Kafferummet\n==========="), menu);
+    }
 }
