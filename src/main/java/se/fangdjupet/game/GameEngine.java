@@ -135,7 +135,7 @@ public class GameEngine {
             room.takeReward().ifPresent(this::drinkRefreshment);   // rummet rensat: t.ex. en kanelbulle
             room.getFrida().ifPresent(this::meetFrida);           // rummet rensat: Frida kan dyka upp
         }
-        if (winner == hero && room.hasLivingEnemy()) {
+        if (winner == hero && nextWaveIsReady(enemies, room)) {
             room.takeRefreshment().ifPresent(this::drinkRefreshment);   // t.ex. kaffe innan nästa våg
             String next = room.getEnemies().stream().map(Enemy::getName).collect(Collectors.joining(" och "));
             output.onEvent("Men vänta... " + next + " har gömt sig i " + room.getName() + " och hoppar fram!");
@@ -145,7 +145,14 @@ public class GameEngine {
         }
     }
 
-    // En paus i rummet: repliken, sedan dricker/äter hjälten (t.ex. kaffe +20 hp, kanelbulle +30 hp)
+    // Får nästa våg hoppa fram (och kaffet delas ut)? Bara om hela vågen hjälten slogs mot är besegrad
+    // och rummet har fler fiender. Vid rundtaket kan hjälten vinna på mest hp fast fiender lever –
+    // då är vågen inte klar. (CodeRabbit-fynd i #18)
+    static boolean nextWaveIsReady(List<Enemy> fought, Room room) {
+        return fought.stream().noneMatch(Enemy::isAlive) && room.hasLivingEnemy();
+    }
+
+    // En paus i rummet: repliken, sedan dricker/äter hjälten (t.ex. kaffe +30 hp, kanelbulle +35 hp)
     private void drinkRefreshment(Room.Refreshment refreshment) {
         output.onEvent(refreshment.line());
         showArt(refreshment.potion().description());   // kaffekoppen eller kanelbullen
