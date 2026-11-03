@@ -35,16 +35,23 @@ public class AnimatedConsoleLogger implements GameEventListener {
     private final IntConsumer pause;        // väntar så många millisekunder
     private Supplier<Optional<AttackStrategy>> heroAttack = Optional::empty;   // magi eller pil? (båda "skjuter")
     private final Map<String, Integer> lastHp = new HashMap<>();              // för hp-mätarens film
+    private final boolean style;            // tydligare grafik med färger och block (ConsoleStyle) – av i testerna
 
     public AnimatedConsoleLogger() {
-        this(IO::print, AnimatedConsoleLogger::sleep);
+        this(IO::print, AnimatedConsoleLogger::sleep, true);
     }
 
     // För testerna: fånga utskriften och pauserna i stället för att vänta på riktigt
     AnimatedConsoleLogger(Consumer<String> print, IntConsumer pause) {
+        this(print, pause, false);
+    }
+
+    // style = true: raderna färgas och hp-mätarna ritas med block (ConsoleStyle)
+    AnimatedConsoleLogger(Consumer<String> print, IntConsumer pause, boolean style) {
         if (print == null || pause == null) throw new IllegalArgumentException("print and pause must not be null");
         this.print = print;
         this.pause = pause;
+        this.style = style;
     }
 
     // Vilken attack hjälten har i handen just nu (GameEngine.heroAttack): pilen och magin ser olika ut
@@ -91,26 +98,29 @@ public class AnimatedConsoleLogger implements GameEventListener {
         } else if (t.contains("klämmer stressbollen")) {
             play(squeeze());
         }
-        print.accept(message + "\n");
+        print.accept((style ? ConsoleStyle.line(message) : message) + "\n");
     }
 
     // ── Bilder och repliker ──
 
     private void drawLineByLine(String art) {
         for (String line : art.split("\n", -1)) {
-            print.accept(line + "\n");
+            print.accept((style ? ConsoleStyle.art(line) : line) + "\n");
             pause.accept(LINE_MS);
         }
     }
 
     private void typeSpeech(String message) {
         int start = message.indexOf('"') + 1;
-        print.accept(message.substring(0, start));
+        String who = message.substring(0, start);              // "Lektor Martin: \""
+        if (style) who = ConsoleStyle.MAGENTA + ConsoleStyle.BOLD + who.substring(0, who.length() - 3) + ":"
+                + ConsoleStyle.RESET + " " + ConsoleStyle.WHITE + "\"";
+        print.accept(who);
         for (int i = start; i < message.length() - 1; i++) {
             print.accept(String.valueOf(message.charAt(i)));
             pause.accept(CHAR_MS);
         }
-        print.accept("\"\n");
+        print.accept("\"" + (style ? ConsoleStyle.RESET : "") + "\n");
     }
 
     private void searchDots(String message) {
@@ -249,7 +259,8 @@ public class AnimatedConsoleLogger implements GameEventListener {
         int steps = Math.min(8, Math.abs(before - hp));
         for (int i = 1; i < steps; i++) {
             int now = before + (hp - before) * i / steps;
-            frames.add((hp < before ? RED : GREEN) + name + "  " + bar(now, max, width) + " " + now + "/" + max);
+            String frame = name + "  " + bar(now, max, width) + " " + now + "/" + max;
+            frames.add(style ? ConsoleStyle.line(frame) : (hp < before ? RED : GREEN) + frame);
         }
         play(frames);
     }

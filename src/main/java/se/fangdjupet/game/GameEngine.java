@@ -78,10 +78,10 @@ public class GameEngine {
     }
 
     private void showMenu() {
-        if (world != null) IO.println(roomMap(world));   // kartan över rummen syns hela tiden i spelet
+        if (world != null) IO.println(ConsoleStyle.map(roomMap(world)));   // kartan över rummen syns hela tiden i spelet
         else IO.println(AsciiArt.SCHOOL.stripTrailing()); // skolbyggnaden, bara ovanför huvudmenyn
-        IO.println(menu(world == null ? null : world.getCurrentRoom()));
-        IO.print("Välj ett alternativ: ");
+        IO.println(ConsoleStyle.menu(menu(world == null ? null : world.getCurrentRoom())));   // färger bara i en riktig konsol
+        IO.print(ConsoleStyle.prompt("Välj ett alternativ: "));
     }
 
     // Två menyer. Utan äventyr (room == null): huvudmenyn, där man startar eller fortsätter.
@@ -155,7 +155,7 @@ public class GameEngine {
     // Huvudmenyn 1: skapar hjälten, fienderna och rummen och visar det första rummet
     private void startNewAdventure() {
         output.onEvent("Starta nytt äventyr.");
-        IO.print("Vad heter hjälten? ");
+        IO.print(ConsoleStyle.prompt("Vad heter hjälten? "));
         String heroName = readln().trim();
         if (heroName.isBlank()) heroName = "Hjälten";   // ett tomt namn går inte att spara
 
@@ -426,9 +426,9 @@ public class GameEngine {
         }
 
         // Spelaren väljer själv: kartan och rummen med siffror, Enter = stanna kvar
-        IO.println(roomMap(world));
-        IO.println(roomChoices(world));
-        IO.print("Välj rum (Enter = stanna kvar): ");
+        IO.println(ConsoleStyle.map(roomMap(world)));
+        IO.println(ConsoleStyle.menu(roomChoices(world)));
+        IO.print(ConsoleStyle.prompt("Välj rum (Enter = stanna kvar): "));
         goTo(readln().trim());
     }
 
@@ -731,9 +731,9 @@ public class GameEngine {
     // Menyn kommer från AttackMenu: med Java-boken bara Martins fyra, annars närstrid/magi/avstånd
     private AttackStrategy chooseAttack(Hero hero) {
         List<AttackStrategy> options = AttackMenu.options(hero);
-        IO.println("Välj attack (Enter = behåll):");
-        AttackMenu.lines(hero, options).forEach(IO::println);   // pilbågens och stavens attack gulmarkerade
-        IO.print("Ditt val: ");
+        IO.println(ConsoleStyle.prompt("Välj attack (Enter = behåll):"));
+        AttackMenu.lines(hero, options).forEach(line -> IO.println(ConsoleStyle.menu(line)));   // pilbågens och stavens attack gulmarkerade
+        IO.print(ConsoleStyle.prompt("Ditt val: "));
         return AttackMenu.choose(options, readln());
     }
 }

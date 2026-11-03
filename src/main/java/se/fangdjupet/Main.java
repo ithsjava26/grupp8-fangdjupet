@@ -18,6 +18,7 @@ public class Main {
         // Konsolen: bilderna ritas fram rad för rad, repliker skrivs bokstav för bokstav och striden får små
         // filmer på en rad – om inte animationen är avstängd (-Dfangdjupet.animation=av, som webben gör)
         AnimatedConsoleLogger animated = AnimatedConsoleLogger.enabled() ? new AnimatedConsoleLogger() : null;
+        se.fangdjupet.game.ConsoleStyle.enable(animated != null);   // tydligare grafik med färger, bara i en riktig konsol
         GameEventListener console = animated != null ? animated : new ConsoleEventLogger();
         AsciiArt.show(console, AsciiArt.TITLE);
 
