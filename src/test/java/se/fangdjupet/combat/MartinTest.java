@@ -12,7 +12,7 @@ class MartinTest {
     void martinIsABoss() {
         Boss martin = Martin.create();
         assertEquals("Lektor Martin", martin.getName());
-        assertEquals(50, martin.getMaxHp());
+        assertEquals(75, martin.getMaxHp());
     }
 
     @Test
@@ -25,7 +25,7 @@ class MartinTest {
     @Test
     void martinExplainsHarderAtHalfHp() {
         Boss martin = Martin.create();
-        martin.takeDamage(25);                                   // 25 av 50 kvar
+        martin.takeDamage(38);                                   // 37 av 75 kvar: halva livet
         assertInstanceOf(KnowledgeAttack.class, martin.getAttack());
         assertEquals("Utterly explained", martin.getAttack().name());
     }
@@ -35,7 +35,7 @@ class MartinTest {
         Boss martin = Martin.create();
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         int before = martin.attack(h);
-        martin.takeDamage(25);
+        martin.takeDamage(38);
         assertTrue(martin.attack(h) > before);
     }
 
@@ -54,19 +54,26 @@ class MartinTest {
     @Test
     void eachCreateGivesANewMartin() {
         Boss first = Martin.create();
-        first.takeDamage(50);
+        first.takeDamage(Martin.HP);
         assertTrue(Martin.create().isAlive());                   // en ny Martin har full hp
     }
 
     @Test
-    void heroWithFullHpBeatsMartinWithTheJavaBook() {
-        // Efter Fridas drycker har hjälten 40 hp. Boken (14) utan slump: 4 citat mot Martins 50 hp.
+    void theJavaBookAloneIsNotEnoughAgainst75Hp() {
+        // Utan slump: boken (14) behöver 6 citat mot 75 hp, och Martin hinner förklara 7 + 7 + 10 + 10 + 10 = 44 > 40
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
-        Boss martin = Martin.create();
-        Battle b = new Battle(message -> { }, hero -> hero.getJavaBookAttack());
-        assertSame(h, b.fight(h, martin));
-        assertEquals(40 - 7 - 10 - 10, h.getHp());               // Martin hann förklara 3 gånger: 7, sedan 10 från halva livet
+        assertNotSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
+    }
+
+    @Test
+    void theBookAndTheStressBallBeatMartin() {
+        // Stressbollen ger +5 hp i början av varje runda: då räcker boken (utan slump)
+        Hero h = new Hero("Robert", 40, new MeleeAttack(10));
+        h.pickUpJavaBook();
+        h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 5, 3));
+        assertSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
+        assertEquals(21, h.getHp(), "40 − 7 − 7 − 10 − 10 − 10 + 5 × 5");
     }
 
     @Test
@@ -98,7 +105,7 @@ class MartinTest {
         Martin.enrage(martin);
         assertTrue(martin.isEnraged());
         assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 8 i stället för 7
-        martin.takeDamage(25);                                                      // halva livet: fas 2
+        martin.takeDamage(38);                                                      // halva livet: fas 2
         assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 10
     }
 
@@ -121,7 +128,7 @@ class MartinTest {
     @Test
     void enrageInPhaseTwoUsesTheNewPhaseTwoAttack() {
         Boss martin = Martin.create();
-        martin.takeDamage(30);
+        martin.takeDamage(40);
         Martin.enrage(martin);
         assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));
     }

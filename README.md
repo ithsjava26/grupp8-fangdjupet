@@ -312,7 +312,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 | Skoldörren | Entrédörren – liten fiende, 15 hp, närstrid 5 | – |
 | Kafferummet | JavaFläcken – liten fiende, 15 hp, närstrid 4. Sedan en **kaffe** från kaffeautomaten (+30 hp, aldrig över max). Sist de riktiga fienderna som gömt sig där, **samtidigt**: **Troll** (12 hp, närstrid 7, nivå 2) och **Trollkarl** (16 hp, magi 6, nivå 2, säger *"Thou shall not pass!"*). När rummet är rensat: en **kanelbulle** (+35 hp). | Pilbåge |
 | Korridoren och städskrubben | **StädHäxan** (`CleaningWitch.create(random)`, en `Boss`) – 30 hp, nivå 2. Kastar tvättsvamp eller Svinto (slumpas varje slag), och vid halva livet sprayar hon kemikalier. Alla tre är avståndsattacker. Hotar: *"Ett steg till mot lektionssalen och jag tar fram kemikalierna!"* När hon är besegrad dyker **Frida** upp (se nedan). | Trollstav (staff) |
-| Lektionssalen | **Lektor Martin** (`Martin.create()`, en `Boss`) – 50 hp, nivå 3. Förklarar 7 per slag, vid halva livet 10. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
+| Lektionssalen | **Lektor Martin** (`Martin.create()`, en `Boss`) – 75 hp, nivå 3. Förklarar 7 per slag, vid halva livet 10. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
 
 #### Hjältens hp genom spelet (körning utan slump i `Battle`, närstrid och StackOverflow mot Martin – från före vapenbalansen, då närstriden var 10)
 
@@ -348,7 +348,7 @@ Robert  [##########] 40/40
 ### `combat/Boss`, `combat/CleaningWitch` och `combat/Martin` – bossarna
 - `Boss extends Enemy` börjar med en fas 1-attack och byter till en tyngre fas 2-attack när hp når halva livet, bara en gång. Bytet sker i `takeDamage`, och en `heal` byter inte tillbaka. `isInPhaseTwo()` visar om bytet skett.
 - `CleaningWitch.create(random)` ger StädHäxan som en `Boss`: fas 1 är en `RandomAttack` av `SPONGE` och `SVINTO`, och fas 2 (vid 15 hp) är `CHEMICALS`.
-- `Martin.create()` ger en `Boss`: Lektor Martin, **50 hp**, nivå 3. Han förklarar med `KnowledgeAttack`: *Thoroughly explained the Hello World Java to you* (**7**), och under halva livet *Utterly explained* (**10**). I Städrustningen blir fas 1 8.
+- `Martin.create()` ger en `Boss`: Lektor Martin, **75 hp**, nivå 3. Han förklarar med `KnowledgeAttack`: *Thoroughly explained the Hello World Java to you* (**7**), och under halva livet *Utterly explained* (**10**). I Städrustningen blir fas 1 8.
 - `Martin.heroChoices()` ger hjältens fyra val mot honom, och boken är det femte. Attackmenyn visar vad varje val gör (`AttackMenu.effect`):
 
   | Val | Mot Martin |
@@ -363,7 +363,7 @@ Robert  [##########] 40/40
 - **Java-boken:** Lektionssalen har den (`room.withJavaBook()`, `takeJavaBook()` bara en gång). När man kommer in tar hjälten upp den med `hero.pickUpJavaBook()`, som byter attack till StackOverflow. `hero.hasJavaBook()` gör att `AttackMenu` bara visar de fyra.
 - Martins porträtt (`AsciiArt.MARTIN`) och repliken *"Let me explain Hello World to you..."* visas när han dyker upp.
 - **Martin förhör dig** (`Martin.QUESTIONS`, `Enemy.withTaunts` / `nextTaunt`): varje runda innan han förklarar ställer han en Java- eller databasfråga, i tur och ordning – *"Kan du första normalformen? Inga upprepade grupper i tabellen!"*, *"Vad är skillnaden mellan == och equals()?"*, *"Varför är String immutable?"*, *"Interface eller abstrakt klass? Motivera!"*, *"Checked eller unchecked exception?"* … (tolv frågor, sedan från början). `Battle` skriver ut den som `Lektor Martin: "..."`, och på webben blir den en pratbubbla.
-- Simulerat 20 000 gånger från full hp: bara boken vinner **64 %**, boken och Dela skärm när hp är 12 eller lägre **91 %**, bara StackOverflow 9 %, JavaQuizet 5 %, DoomScrolla 3 %. Det går fram och tillbaka: båda missar ibland. Martin slår 10 i fas 2, så att Dela skärm (+10) bara köper tid och inte går att vinna med ensam (`MartinTest`, `BattleAgainstMartinTest`).
+- Martin har **75 hp** (`Martin.HP`), så striden blir lång och man behöver mer än boken. Simulerat 20 000 gånger per sätt från full hp (riktiga `Battle` och `Martin.create()`): bara boken vinner **9 %**, boken och Dela skärm när hp är 12 eller lägre **80 %** (15 eller lägre **94 %**), stressbollen i fickan och boken **91 %**, stressbollen, boken och Dela skärm **100 %**, stressbollen kastad i första rundan i stället **84 %**, bara StackOverflow 0 %. Utan slump räcker boken inte (Martin hinner förklara 44 > 40), men med stressbollen vinner hjälten med 21 hp kvar (`MartinTest`). Det går fram och tillbaka: båda missar ibland. Martin slår 10 i fas 2, så att Dela skärm (+10) bara köper tid och inte går att vinna med ensam (`MartinTest`, `BattleAgainstMartinTest`).
 
 ### `combat/Character` – vem som slåss
 Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklasserna måste skriva:

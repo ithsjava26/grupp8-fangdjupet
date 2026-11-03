@@ -18,7 +18,7 @@ class AttackArtTest {
     private static List<AttackStrategy> allAttacks() {
         Boss martin = Martin.create();
         AttackStrategy phaseOne = martin.getAttack();
-        martin.takeDamage(martin.getMaxHp() / 2);                  // halva livet: fas 2
+        martin.takeDamage((martin.getMaxHp() + 1) / 2);   // halva livet (75 → 37)                  // halva livet: fas 2
         AttackStrategy phaseTwo = martin.getAttack();
         return List.of(
                 new MeleeAttack(10), new MagicAttack(6), new RangedAttack(5, new Random()),
@@ -60,7 +60,7 @@ class AttackArtTest {
     void martinsTwoPhasesHaveDifferentPictures() {
         Boss martin = Martin.create();
         assertEquals(AttackArt.MARTIN_EXPLAINS, AttackArt.forAttack(martin.getAttack()).orElseThrow());
-        martin.takeDamage(martin.getMaxHp() / 2);
+        martin.takeDamage((martin.getMaxHp() + 1) / 2);   // halva livet (75 → 37)
         assertEquals(AttackArt.MARTIN_UTTERLY, AttackArt.forAttack(martin.getAttack()).orElseThrow());
     }
 

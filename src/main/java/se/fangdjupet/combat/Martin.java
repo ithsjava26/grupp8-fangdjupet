@@ -11,11 +11,11 @@ public final class Martin {
     public static final String ANGRY = NAME + " ser Städrustningen och blir arg! Han förklarar hårdare.";
 
     // Martins styrka: hp och förklaringarna (fas 1, och fas 2 från halva livet). Arg = i Städrustningen.
-    public static final int HP = 50;
+    public static final int HP = 75;
     static final int EXPLAIN = 7, EXPLAIN_HARDER = 10;
     static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 10;
 
-    // En ny Martin varje gång: 50 hp, nivå 3. Han förklarar med KnowledgeAttack och
+    // En ny Martin varje gång: 75 hp, nivå 3. Han förklarar med KnowledgeAttack och
     // byter till den tyngre förklaringen vid halva livet (Boss sköter bytet).
     public static Boss create() {
         Boss martin = new Boss(NAME, HP,
