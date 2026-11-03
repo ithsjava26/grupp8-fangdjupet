@@ -20,6 +20,7 @@ public class WorldBuilder {
     // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
     public static final String STADRUSTNING = "Städrustning";
     public static final String STRESSBOLL = "Stressboll";
+    public static final int STRESS_BALL_HEAL = 6;   // stressbollen i fickan: så mycket hp ger den varje runda mot Martin
 
     public World build(
             Enemy doorEnemy,
@@ -77,9 +78,9 @@ public class WorldBuilder {
                 finalEnemy,
                 List.of()
         ).withJavaBook()    // hjälten tar upp Java-boken när hen kommer in
-         // Gömd i Lektionssalen: hittas bara om man letar (spelmenyn 5). +5 hp varje runda i striden mot Martin,
+         // Gömd i Lektionssalen: hittas bara om man letar (spelmenyn 5). +6 hp varje runda i striden mot Martin,
          // eller kasta den på honom (10 i skada) – men då är den borta.
-         .withHiddenItem(new StressBall(ItemType.STRESSBALL, STRESSBOLL, 5, 3));
+         .withHiddenItem(new StressBall(ItemType.STRESSBALL, STRESSBOLL, STRESS_BALL_HEAL, 3));
 
         return new World(List.of(door, coffeeRoom, corridor, classroom));
     }

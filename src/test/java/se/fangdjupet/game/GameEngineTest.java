@@ -322,7 +322,8 @@ class GameEngineTest {
         world.moveForward();                                   // Lektionssalen
         se.fangdjupet.items.StressBall ball = (se.fangdjupet.items.StressBall) world.getCurrentRoom().search().getFirst();
         assertEquals(WorldBuilder.STRESSBOLL, ball.description());
-        assertEquals(5, ball.hpPerTurn());
+        assertEquals(WorldBuilder.STRESS_BALL_HEAL, ball.hpPerTurn());
+        assertEquals(6, ball.hpPerTurn());
         assertTrue(AsciiArt.forItem(ball).isPresent(), "stressbollen har en bild");
     }
 
@@ -330,10 +331,10 @@ class GameEngineTest {
     void equipmentShowsTheStressBallAndTheMenuCanThrowIt() {
         Hero robert = robert();
         robert.pickUpJavaBook();
-        robert.pickUp(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, WorldBuilder.STRESSBOLL, 5, 3));
-        assertTrue(GameEngine.equipment(robert).contains("Stressboll: i fickan (+5 hp per runda, eller kasta den på Martin)"));
+        robert.pickUp(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, WorldBuilder.STRESSBOLL, 6, 3));
+        assertTrue(GameEngine.equipment(robert).contains("Stressboll: i fickan (+6 hp per runda, eller kasta den på Martin)"));
         List<String> menu = AttackMenu.lines(AttackMenu.options(robert));
-        assertEquals("6. Kasta stressbollen  (10 i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)", menu.get(5));
+        assertEquals("6. Kasta stressbollen  (10 i skada om den träffar – sedan är bollen borta: ingen +6 hp per runda)", menu.get(5));
         assertEquals("Här ligger: Stressboll (+5 hp per runda)",
                 GameEngine.itemHere(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, "Stressboll", 5, 3)));
     }

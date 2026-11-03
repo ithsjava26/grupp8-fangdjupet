@@ -91,7 +91,7 @@ public final class AttackMenu {
         return lines;
     }
 
-    // Vad attacken gör mot Martin, i menyn: "(14 i skada, 30 % risk att du slinter på sidan)", "(+10 hp till dig, ingen skada)"
+    // Vad attacken gör mot Martin, i menyn: "(14 i skada, 30 % risk att du slinter på sidan)", "(+12 hp till dig, ingen skada)"
     static String effect(AttackStrategy attack) {
         return switch (attack) {
             case KnowledgeAttack k when k.selfHeal() > 0 -> "  (+" + k.selfHeal() + " hp till dig, ingen skada, missar aldrig)";
@@ -99,7 +99,7 @@ public final class AttackMenu {
             case KnowledgeAttack k -> "  (" + k.power() + " i skada" + (k.selfDamage() > 0 ? ", kostar dig " + k.selfDamage() + " hp" : "") + ")";
             case JavaBookAttack b -> "  (" + JavaBookAttack.POWER + " i skada, " + JavaBookAttack.SLIP_PERCENT + " % risk att du slinter på sidan)";
             case UsbVirusAttack u -> "  (" + UsbVirusAttack.SUCCESS_PERCENT + " % chans: viruset tar över datorn och du vinner direkt – annars tar Martin USB-minnet)";
-            case StressBallThrow t -> "  (" + StressBallThrow.POWER + " i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)";
+            case StressBallThrow t -> "  (" + StressBallThrow.POWER + " i skada om den träffar – sedan är bollen borta: ingen +" + WorldBuilder.STRESS_BALL_HEAL + " hp per runda)";
             default -> "";
         };
     }

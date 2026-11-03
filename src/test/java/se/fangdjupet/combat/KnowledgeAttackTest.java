@@ -102,12 +102,12 @@ class KnowledgeAttackTest {
         assertEquals(0, KnowledgeAttack.SCREENSHARE.selfDamage());
     }
 
-    // ── Dela skärm: +10 hp till hjälten, ingen skada, missar aldrig ──
+    // ── Dela skärm: +12 hp till hjälten, ingen skada, missar aldrig ──
 
     @Test
     void screenshareHealsInsteadOfHurting() {
         assertEquals(KnowledgeAttack.SCREENSHARE_HEAL, KnowledgeAttack.SCREENSHARE.selfHeal());
-        assertEquals(10, KnowledgeAttack.SCREENSHARE_HEAL);
+        assertEquals(12, KnowledgeAttack.SCREENSHARE_HEAL);
         assertEquals(0, KnowledgeAttack.SCREENSHARE.calculateDamage(student(), martin()));
         assertEquals(0, KnowledgeAttack.SCREENSHARE.missPercent());
         assertEquals(0, KnowledgeAttack.QUIZ.selfHeal());

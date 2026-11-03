@@ -29,8 +29,8 @@ class BattleAgainstMartinTest {
         Boss martin = Martin.create();
         int[] round = {0};
         new Battle(log::add, h -> round[0]++ == 0 ? KnowledgeAttack.SCREENSHARE : h.getJavaBookAttack()).fight(hero, martin);
-        assertTrue(log.contains("Hero: Robert delar skärmen och tar över lektionen: +10 hp, ingen skada på Lektor Martin"), log.toString());
-        assertTrue(log.contains("Robert  [######----] 25/40"), "15 + 10 = 25: " + log);
+        assertTrue(log.contains("Hero: Robert delar skärmen och tar över lektionen: +12 hp, ingen skada på Lektor Martin"), log.toString());
+        assertTrue(log.contains("Robert  [######----] 27/40"), "15 + 12 = 27: " + log);
     }
 
     @Test

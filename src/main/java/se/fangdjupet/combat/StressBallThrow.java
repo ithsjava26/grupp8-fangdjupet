@@ -1,7 +1,7 @@
 package se.fangdjupet.combat;
 
 // Kasta stressbollen på Martin: 10 i skada om den träffar, rakt igenom försvaret. Men sedan är bollen borta –
-// hjälten klämmer den inte längre och får inte +5 hp varje runda. Missar kastet studsar bollen tillbaka.
+// hjälten klämmer den inte längre och får inte +6 hp varje runda. Missar kastet studsar bollen tillbaka.
 // Finns i attackmenyn bara när hjälten har bollen (AttackMenu.options).
 public final class StressBallThrow implements AttackStrategy {
     public static final int POWER = 10;

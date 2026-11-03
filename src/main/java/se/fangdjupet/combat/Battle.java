@@ -81,7 +81,7 @@ public class Battle {
         // Så länge hjälten och minst en fiende lever och taket inte nåtts – slåss
         while (hero.isAlive() && anyAlive(enemies) && round < MAX_ROUNDS) {
             round++;
-            int squeezed = hero.squeezeStressBall();        // stressbollen i fickan: +5 hp varje runda
+            int squeezed = hero.squeezeStressBall();        // stressbollen i fickan: +6 hp varje runda
             if (squeezed > 0) {
                 listener.onEvent(hero.getName() + " klämmer stressbollen: +" + squeezed + " hp");
                 listener.onEvent(HpBar.status(hero, 10));

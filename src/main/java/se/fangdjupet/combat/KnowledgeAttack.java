@@ -4,7 +4,7 @@ import java.util.Random;
 
 // Kunskap som vapen – det enda som biter på Martin i Lektionssalen.
 // Skadan är en fast kraft som ignorerar försvaret (som MagicAttack). Vissa attacker kostar
-// anfallaren hp (selfDamage). Dela skärm gör ingen skada alls: den ger hjälten tid att andas (+10 hp)
+// anfallaren hp (selfDamage). Dela skärm gör ingen skada alls: den ger hjälten tid att andas (+12 hp)
 // och missar aldrig. En chansning mellan två värden går också (konstruktorn med Random).
 // Martin själv förklarar också med KnowledgeAttack (se Martin.create()).
 public class KnowledgeAttack implements AttackStrategy {
@@ -13,8 +13,8 @@ public class KnowledgeAttack implements AttackStrategy {
     public static final KnowledgeAttack DOOMSCROLL = new KnowledgeAttack("DoomScrolla", 9, 2);
     public static final KnowledgeAttack QUIZ = new KnowledgeAttack("Citera från JavaQuizet. Ställ en jobbig fråga.", 7);
     public static final KnowledgeAttack STACKOVERFLOW = new KnowledgeAttack("Citera StackOverflow. Ställ jobbig fråga.", 11, 3);
-    // Dela skärm: hjälten tar över lektionen och får tid – +10 hp, ingen skada på Martin, missar aldrig
-    public static final int SCREENSHARE_HEAL = 10;
+    // Dela skärm: hjälten tar över lektionen och får tid – +12 hp, ingen skada på Martin, missar aldrig
+    public static final int SCREENSHARE_HEAL = 12;
     public static final KnowledgeAttack SCREENSHARE = healing("Dela skärm och ta över lektionen", SCREENSHARE_HEAL);
 
     private final String name;       // syns i attackmenyn och loggen
@@ -91,7 +91,7 @@ public class KnowledgeAttack implements AttackStrategy {
         return selfHeal > 0 ? 0 : AttackStrategy.super.missPercent();
     }
 
-    // I loggen: "Robert delar skärmen och tar över lektionen: +10 hp, ingen skada på Lektor Martin"
+    // I loggen: "Robert delar skärmen och tar över lektionen: +12 hp, ingen skada på Lektor Martin"
     @Override
     public String verb() {
         return selfHeal > 0 ? "delar skärmen och tar över lektionen" : AttackStrategy.super.verb();

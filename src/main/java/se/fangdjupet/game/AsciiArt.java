@@ -193,12 +193,12 @@ public final class AsciiArt {
               |________|
             """;
 
-    // Stressbollen från Lektionssalen: kläm den (+5 hp varje runda) eller kasta den på Martin
+    // Stressbollen från Lektionssalen: kläm den (+6 hp varje runda) eller kasta den på Martin
     public static final String STRESS_BALL = """
                .-''''-.
               / ~    ~ \\
              |  (o)(o)  |    STRESSBOLL
-              \\  \\__/  /     kläm: +5 hp per runda
+              \\  \\__/  /     kläm: +6 hp per runda
                '-....-'      kasta: 10 i skada
             """;
 

@@ -67,14 +67,14 @@ class MartinTest {
     }
 
     @Test
-    void screenSharingAndTheStressBallNoLongerWinOnTheirOwn() {
-        // Utan slump: boken, stressbollen (+5 varje runda) och Dela skärm (+10) när hp är 15 eller lägre.
-        // Bollen och skärmen läker 15 – lika mycket som Martins 15 i fas 2 – så hjälten kommer aldrig framåt.
+    void theBookTheStressBallAndScreenSharingBeatMartin() {
+        // Utan slump: boken, stressbollen (+6 varje runda) och Dela skärm (+12) när hp är 15 eller lägre.
+        // Bollen och skärmen läker 18 – lite mer än Martins 15 i fas 2 – så hjälten hinner citera klart.
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
-        h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 5, 3));
+        h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 6, 3));
         AttackChooser tactic = hero -> hero.getHp() <= 15 ? KnowledgeAttack.SCREENSHARE : hero.getJavaBookAttack();
-        assertNotSame(h, new Battle(message -> { }, tactic).fight(h, Martin.create()));
+        assertSame(h, new Battle(message -> { }, tactic).fight(h, Martin.create()));
     }
 
     @Test

@@ -96,7 +96,7 @@ class AttackMenuTest {
         assertEquals(6, lines.size());
         assertEquals("1. " + KnowledgeAttack.DOOMSCROLL.name() + "  (9 i skada, kostar dig 2 hp)", lines.get(0));
         assertEquals("2. " + KnowledgeAttack.QUIZ.name() + "  (7 i skada)", lines.get(1));
-        assertEquals("4. " + KnowledgeAttack.SCREENSHARE.name() + "  (+10 hp till dig, ingen skada, missar aldrig)", lines.get(3));
+        assertEquals("4. " + KnowledgeAttack.SCREENSHARE.name() + "  (+12 hp till dig, ingen skada, missar aldrig)", lines.get(3));
         assertEquals("5. Citera från Java-boken, kapitel 18: Polymorphism  (14 i skada, 30 % risk att du slinter på sidan)", lines.get(4));
         assertEquals("6. Smyg in USB-minnet  (20 % chans: viruset tar över datorn och du vinner direkt – annars tar Martin USB-minnet)", lines.get(5));
     }
