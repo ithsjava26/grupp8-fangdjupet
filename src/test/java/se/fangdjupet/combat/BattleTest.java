@@ -655,6 +655,54 @@ class BattleTest {
         assertEquals(20, h.getHp());
     }
 
+    // ── Bilder för attackerna (withAttackArt) ──
+
+    @Test
+    void noAttackArtUnlessTurnedOn() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> KnowledgeAttack.DOOMSCROLL).fight(hero(50, 5), enemy(10, 1));
+        assertFalse(log.contains(AttackArt.DOOMSCROLL.stripTrailing()));
+    }
+
+    @Test
+    void chosenAttackIsShownBeforeTheHit() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> KnowledgeAttack.DOOMSCROLL).withAttackArt().fight(hero(50, 5), enemy(10, 1));
+        int art = log.indexOf(AttackArt.DOOMSCROLL.stripTrailing());
+        assertTrue(art >= 0, log.toString());
+        assertTrue(log.get(art + 1).startsWith("Hero: Robin"), "bilden kommer före slaget");
+    }
+
+    @Test
+    void enterKeepsAttackWithoutArt() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> null).withAttackArt().fight(hero(50, 5), enemy(10, 1));
+        assertTrue(log.stream().noneMatch(l -> l.contains("NARSTRID") || l.contains("DOOMSCROLLA")), log.toString());
+    }
+
+    @Test
+    void ordinaryEnemyAttacksHaveNoArt() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add).withAttackArt()
+                .fight(hero(50, 5), new Enemy("Troll", 10, new MeleeAttack(3), 1));
+        assertFalse(log.contains(AttackArt.MELEE.stripTrailing()));
+    }
+
+    @Test
+    void eachBossAttackIsShownOncePerFight() {
+        // Martin: 40 hp, hjälten gör 5 per runda = 8 rundor. Fas 1 och fas 2 visas en gång var.
+        List<String> log = new ArrayList<>();
+        new Battle(log::add).withAttackArt().fight(hero(500, 5), Martin.create());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_EXPLAINS.stripTrailing()::equals).count());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_UTTERLY.stripTrailing()::equals).count());
+    }
+
+    @Test
+    void withAttackArtReturnsTheSameBattle() {
+        Battle b = battle();
+        assertSame(b, b.withAttackArt());
+    }
+
     @Test
     void zeroDamageIsLoggedAsAMiss() {
         List<String> log = new ArrayList<>();

@@ -247,7 +247,9 @@ public class GameEngine {
 
         // Battle sköter striden och loggen; spelaren väljer attack inför varje runda
         // fullt namn på Character: java.lang.Character finns också
-        se.fangdjupet.combat.Character winner = new Battle(output, this::chooseAttack, random).fight(hero, enemies);   // med slump: miss och ±1
+        se.fangdjupet.combat.Character winner = new Battle(output, this::chooseAttack, random)
+                .withAttackArt()                              // bilder för attackerna (AttackArt)
+                .fight(hero, enemies);                        // med slump: miss och ±1
 
         // Hjälten är död: game over och tillbaka till huvudmenyn, där 1 startar ett nytt äventyr
         if (!hero.isAlive()) {
@@ -268,6 +270,7 @@ public class GameEngine {
             output.onEvent("Men vänta... " + next + " har gömt sig i " + room.getName() + " och hoppar fram!");
         }
         if (winner == hero && world.isAtFinalRoom() && !room.hasLivingEnemy()) {
+            AsciiArt.show(output, AsciiArt.VICTORY);
             output.onEvent(hero.getName() + " vinner Fångdjupet!");
             endAdventure();   // spelet är vunnet: tillbaka till huvudmenyn
         }

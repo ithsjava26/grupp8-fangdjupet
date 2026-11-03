@@ -87,6 +87,16 @@ public final class AsciiArt {
 
     // ── Fienderna ──
 
+    // Entrédörren: en sur skoldörr som inte släpper in någon utan passerkort
+    public static final String ENTRANCE_DOOR = """
+                .---------.
+                | o     o |     ENTREDORREN
+                |    ^    |     "Har du passerkort?"
+                |  \\___/  |
+                |       o |
+                |_________|
+            """;
+
     public static final String JAVA_FLECK = """
                 .--.
                ( :: )~      JAVAFLACKEN
@@ -177,6 +187,21 @@ public final class AsciiArt {
               \\____/_/   \\_\\_|  |_|_____|  \\___/  \\_/  |_____|_| \\_\\
             """;
 
+    // ── Vinst: Martin är besegrad ──
+
+    public static final String VICTORY = """
+                  ___________
+                 '._==_==_=_.'
+                 .-\\:      /-.        D U   V A N N !
+                | (|:.     |) |
+                 '-|:.     |-'        Martin ar besegrad och
+                   \\::.    /          Fangdjupet ar klarat.
+                    '::. .'
+                      ) (
+                    _.' '._
+                   '-------'
+            """;
+
     // ANSI-färgkoder: ESC[31m gör texten röd, ESC[0m går tillbaka till vanlig färg.
     // Fungerar i IntelliJ och Windows Terminal. Koderna är också ren ASCII.
     public static final String RED = "\u001B[31m";
@@ -193,6 +218,7 @@ public final class AsciiArt {
     // Namnet på en fiende, ett föremål eller en person -> bilden.
     // Namnen måste vara exakt som i GameEngine/WorldBuilder (getName() eller description()).
     private static final Map<String, String> THINGS = Map.ofEntries(
+            Map.entry("Entrédörren", ENTRANCE_DOOR),
             Map.entry("JavaFläcken", JAVA_FLECK),
             Map.entry("Troll", TROLL),
             Map.entry("Trollkarl", WIZARD),

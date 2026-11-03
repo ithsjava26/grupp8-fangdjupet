@@ -24,7 +24,7 @@ class AsciiArtTest {
     // ── Bilder för fiender, saker och personer (namnen i GameEngine och WorldBuilder) ──
 
     private static final List<String> THING_NAMES = List.of(
-            "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Kapten Martin", "Frida",
+            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Kapten Martin", "Frida",
             "en kopp kaffe", "en kanelbulle", "Java-bok", "Pilbåge", "Trollstav");
 
     @Test
@@ -163,6 +163,19 @@ class AsciiArtTest {
         assertTrue(isPlainAscii(AsciiArt.GAME_OVER));
         assertTrue(AsciiArt.GAME_OVER.lines().allMatch(line -> line.length() <= 70));
         assertTrue(AsciiArt.GAME_OVER.lines().count() >= 4);   // stora bokstäver, inte en rad text
+    }
+
+    @Test
+    void victoryIsPlainAsciiAndFitsTheConsole() {
+        assertTrue(isPlainAscii(AsciiArt.VICTORY));
+        assertTrue(AsciiArt.VICTORY.lines().allMatch(line -> line.length() <= 60));
+        assertTrue(AsciiArt.VICTORY.contains("V A N N"));
+    }
+
+    @Test
+    void entranceDoorHasItsOwnFace() {
+        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTREDORREN"));
+        assertNotEquals(AsciiArt.SCHOOL_DOOR, AsciiArt.forName("Entrédörren").orElseThrow());   // inte rummets bild
     }
 
     @Test
