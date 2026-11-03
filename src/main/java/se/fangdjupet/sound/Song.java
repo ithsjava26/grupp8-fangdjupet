@@ -51,7 +51,12 @@ public record Song(int[] scale, int root, int bpm, String lead, double vol, doub
             "boss", song(INSEN, 62, 168, "sawtooth", 0.7, 0, false,
                     "0 1 0 -1 0 _ 3 _ 2 1 2 3 4 _ _ . 5 4 3 4 3 _ 2 _ 1 _ 0 _ -1 _ _ .",
                     "-5 . -5 -5 . -5 -4 . -5 . -5 -5 . -3 -4 .",
-                    "k.hsk.hsk.hskkss"));
+                    "k.hsk.hsk.hskkss"),
+            // Martins fas 2 (Utterly explained): samma låt, men snabbare och en ton högre
+            "bossFast", song(INSEN, 64, 228, "sawtooth", 0.75, 0, false,
+                    "0 1 0 -1 0 _ 3 _ 2 1 2 3 4 _ _ . 5 4 3 4 3 _ 2 _ 1 _ 0 _ -1 _ _ .",
+                    "-5 . -5 -5 . -5 -4 . -5 . -5 -5 . -3 -4 .",
+                    "kkhskkhskkhskkss"));
 
     // Korta slingor som spelas en gång
     public static final Map<String, Song> JINGLES = Map.of(

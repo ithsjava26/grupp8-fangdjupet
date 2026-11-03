@@ -74,6 +74,8 @@ public final class SoundListener implements GameEventListener {
         } else if (t.matches(".+ vinner mot .+!")) {
             inFight = false;
             speaker.jingle("win", roomSong);
+        } else if (t.contains("UTTERLY EXPLAINED")) {
+            speaker.music("bossFast");   // Martins fas 2: musiken går upp i tempo (samma låt spelas inte om)
         } else if (t.startsWith("Fiende ") && t.endsWith(" dyker upp!")) {
             speaker.sfx("alert");
             speaker.music(t.contains("Martin") ? "boss" : roomSong.equals("sticky") ? "stickyFight" : "battle");

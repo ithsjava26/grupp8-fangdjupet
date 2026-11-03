@@ -300,9 +300,14 @@ public class GameEngine {
         }
 
         for (Enemy enemy : enemies) {
-            // Har hjälten hittat Städrustningen blir Martin lite svårare (bara en gång)
-            if (enemy instanceof Boss boss && !boss.isEnraged() && wearsCleaningArmor(hero)) {
-                reactToCleaningArmor(boss);
+            // Har hjälten stressbollen (Martin) eller Städrustningen blir bossen lite svårare (bara en gång)
+            if (enemy instanceof Boss boss && !boss.isEnraged()) {
+                if (Martin.NAME.equals(boss.getName()) && hero.getStressBall().isPresent()) {
+                    Martin.enrage(boss, Martin.STRESS_BALL_LINE);
+                    output.onEvent(Martin.STRESS_BALL_ANGRY);
+                } else if (wearsCleaningArmor(hero)) {
+                    reactToCleaningArmor(boss);
+                }
             }
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
@@ -602,7 +607,7 @@ public class GameEngine {
         switch (boss.getName()) {
             case Martin.NAME -> {
                 Martin.enrage(boss);
-                output.onEvent(Martin.ANGRY);
+                output.onEvent(Martin.angryLine(random));   // en Java-sak hjälten inte kan, slumpad
             }
             case CleaningWitch.NAME -> {
                 CleaningWitch.enrage(boss);

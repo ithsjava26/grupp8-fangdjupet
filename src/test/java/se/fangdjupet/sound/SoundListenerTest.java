@@ -235,4 +235,13 @@ class SoundListenerTest {
         assertThrows(IllegalArgumentException.class, () -> new SoundListener(null, Optional::empty));
         assertThrows(IllegalArgumentException.class, () -> new SoundListener(speaker, null));
     }
+
+    @Test
+    void theMusicSpeedsUpInMartinsPhaseTwo() {
+        sound.onEvent("Fiende Lektor Martin dyker upp!");
+        assertTrue(speaker.played.contains("music boss"));
+        sound.onEvent(se.fangdjupet.combat.AttackArt.MARTIN_UTTERLY);
+        assertEquals("music bossFast", speaker.last());
+        assertTrue(Song.SONGS.get("bossFast").bpm() > Song.SONGS.get("boss").bpm(), "snabbare");
+    }
 }

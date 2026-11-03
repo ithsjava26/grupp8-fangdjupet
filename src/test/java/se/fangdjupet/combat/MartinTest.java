@@ -12,7 +12,7 @@ class MartinTest {
     void martinIsABoss() {
         Boss martin = Martin.create();
         assertEquals("Lektor Martin", martin.getName());
-        assertEquals(75, martin.getMaxHp());
+        assertEquals(100, martin.getMaxHp());
     }
 
     @Test
@@ -25,7 +25,7 @@ class MartinTest {
     @Test
     void martinExplainsHarderAtHalfHp() {
         Boss martin = Martin.create();
-        martin.takeDamage(38);                                   // 37 av 75 kvar: halva livet
+        martin.takeDamage(50);                                   // 50 av 100 kvar: halva livet
         assertInstanceOf(KnowledgeAttack.class, martin.getAttack());
         assertEquals("Utterly explained", martin.getAttack().name());
     }
@@ -35,7 +35,7 @@ class MartinTest {
         Boss martin = Martin.create();
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         int before = martin.attack(h);
-        martin.takeDamage(38);
+        martin.takeDamage(50);
         assertTrue(martin.attack(h) > before);
     }
 
@@ -59,21 +59,23 @@ class MartinTest {
     }
 
     @Test
-    void theJavaBookAloneIsNotEnoughAgainst75Hp() {
-        // Utan slump: boken (14) behöver 6 citat mot 75 hp, och Martin hinner förklara 7 + 7 + 10 + 10 + 10 = 44 > 40
+    void theJavaBookAloneIsNotEnoughAgainst100Hp() {
+        // Utan slump: boken (14) behöver 8 citat mot 100 hp, och Martin hinner förklara 7 + 7 + 7 + 14 + 14 = 49 > 40
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         assertNotSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
     }
 
     @Test
-    void theBookAndTheStressBallBeatMartin() {
-        // Stressbollen ger +5 hp i början av varje runda: då räcker boken (utan slump)
+    void theBookTheStressBallAndScreenSharingBeatMartin() {
+        // Utan slump: boken, stressbollen (+5 varje runda) och Dela skärm (+10) när hp är 15 eller lägre.
+        // Bollen och skärmen läker 15 – mer än Martins 14 i fas 2 – så hjälten hinner citera klart.
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 5, 3));
-        assertSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
-        assertEquals(21, h.getHp(), "40 − 7 − 7 − 10 − 10 − 10 + 5 × 5");
+        AttackChooser tactic = hero -> hero.getHp() <= 15 ? KnowledgeAttack.SCREENSHARE : hero.getJavaBookAttack();
+        assertSame(h, new Battle(message -> { }, tactic).fight(h, Martin.create()));
+        assertTrue(h.getHp() > 0);
     }
 
     @Test
@@ -105,8 +107,8 @@ class MartinTest {
         Martin.enrage(martin);
         assertTrue(martin.isEnraged());
         assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 8 i stället för 7
-        martin.takeDamage(38);                                                      // halva livet: fas 2
-        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 10
+        martin.takeDamage(50);                                                      // halva livet: fas 2
+        assertEquals(14, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 14
     }
 
     @Test
@@ -128,9 +130,9 @@ class MartinTest {
     @Test
     void enrageInPhaseTwoUsesTheNewPhaseTwoAttack() {
         Boss martin = Martin.create();
-        martin.takeDamage(40);
+        martin.takeDamage(60);
         Martin.enrage(martin);
-        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));
+        assertEquals(14, martin.getAttack().calculateDamage(martin, dummy));
     }
 
     @Test
@@ -144,6 +146,34 @@ class MartinTest {
     @Test
     void enrageRejectsNullAttacks() {
         assertThrows(IllegalArgumentException.class, () -> Martin.create().enrage(null, KnowledgeAttack.QUIZ));
+    }
+
+    @Test
+    void angryMartinSeesSomethingInJavaYouCannotDo() {
+        String line = Martin.angryLine(new java.util.Random(1));
+        assertTrue(line.startsWith("Lektor Martin ser att du ") && line.endsWith(" och blir arg! Han förklarar hårdare."), line);
+        assertFalse(line.contains("Städrustning"), "det handlar om Java, inte rustningen");
+        assertTrue(Martin.CANT.stream().anyMatch(line::contains));
+    }
+
+    @Test
+    void theAngryLineVaries() {
+        java.util.Random random = new java.util.Random(3);
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 200; i++) seen.add(Martin.angryLine(random));
+        assertEquals(Martin.CANT.size(), seen.size(), "alla varianter kommer någon gång");
+        assertTrue(Martin.CANT.contains("inte kan skriva en konstruktor"));
+        assertThrows(IllegalArgumentException.class, () -> Martin.angryLine(null));
+    }
+
+    @Test
+    void theStressBallMakesHimAngryWithItsOwnLine() {
+        Boss martin = Martin.create();
+        Martin.enrage(martin, Martin.STRESS_BALL_LINE);
+        assertTrue(martin.isEnraged());
+        assertEquals(Martin.STRESS_BALL_LINE, martin.getLine().orElseThrow());
+        assertTrue(Martin.STRESS_BALL_ANGRY.contains("ser stressbollen och blir arg!"));
+        assertEquals(8, martin.getAttack().calculateDamage(martin, dummy), "lika arg som i rustningen");
     }
 
     @Test
