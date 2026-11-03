@@ -57,6 +57,7 @@ public class GameEngine {
 
     private void showMenu() {
         if (world != null) IO.println(roomMap(world));   // kartan över rummen syns hela tiden i spelet
+        else IO.println(AsciiArt.SCHOOL.stripTrailing()); // skolbyggnaden, bara ovanför huvudmenyn
         IO.println(menu(world == null ? null : world.getCurrentRoom()));
         IO.print("Välj ett alternativ: ");
     }
@@ -379,17 +380,35 @@ public class GameEngine {
             output.onEvent("Ogiltigt val. Försök igen.");
         } else if (index == world.getCurrentRoomIndex()) {
             output.onEvent("Du är redan i " + here.getName() + ".");
-        } else if (world.moveTo(index)) {
-            output.onEvent("Du går till " + world.getCurrentRoom().getName() + ".");
+        } else if (moveAndLock(index)) {
             showCurrentRoom();
         } else {
             output.onEvent(lockedMessage(world, index));
         }
     }
 
+    static final String LOCKED_IN =
+            "Du är nu inlåst i Fångdjupet och behöver besegra slutbossen innan du kan ta dig ut.";
+
+    // Går till rummet. Första gången hjälten går in i skolan slår Entrédörren igen bakom hen.
+    private boolean moveAndLock(int index) {
+        boolean wasLocked = world.isEntranceLocked();
+        if (!world.moveTo(index)) return false;
+        output.onEvent("Du går till " + world.getCurrentRoom().getName() + ".");
+        if (!wasLocked && world.isEntranceLocked()) {
+            AsciiArt.show(output, AsciiArt.LOCKED_DOOR);
+            output.onEvent("Entrédörren slår igen bakom dig!");
+            output.onEvent(LOCKED_IN);
+        }
+        return true;
+    }
+
     // Varför ett rum är låst: rummet längst fram har en fiende som lever, eller rummet ligger längre bort
     static String lockedMessage(World world, int index) {
         String name = world.getRooms().get(index).getName();
+        if (index == 0 && world.isEntranceLocked()) {
+            return name + " är låst. " + LOCKED_IN;
+        }
         Room front = world.getRooms().get(world.getFurthestRoomIndex());
         if (index == world.getFurthestRoomIndex() + 1) {
             String blocker = blockedBy(front).map(m -> m.substring(0, m.indexOf(" står i vägen"))).orElse("någon");

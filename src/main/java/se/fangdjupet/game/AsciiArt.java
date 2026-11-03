@@ -42,6 +42,36 @@ public final class AsciiArt {
                   /   \\
             """;
 
+    // Skolbyggnaden ovanför huvudmenyn (starta, fortsätt, avsluta) – bara där, inte i spelmenyn
+    public static final String SCHOOL = """
+                                        |>>>
+                                        |
+                                    ____|____
+                                   /  .---.  \\
+                                  /  ( XII )  \\
+                                 /    '---'    \\
+                   ______________/_______________\\______________
+                   |                                           |
+                   |     F A N G D J U P E T S   S K O L A     |
+                   |  _____   _____   _______   _____   _____  |
+                   | |_|_|_| |_|_|_| |  ___  | |_|_|_| |_|_|_| |
+                   | |_|_|_| |_|_|_| | |   | | |_|_|_| |_|_|_| |
+                   |  _____   _____  | |   | |  _____   _____  |
+                   | |_|_|_| |_|_|_| | |  o| | |_|_|_| |_|_|_| |
+                   | |_|_|_| |_|_|_| | |   | | |_|_|_| |_|_|_| |
+               ____|_________________|_|___|_|_________________|____
+            """;
+
+    // Entrédörren slår igen bakom hjälten: inlåst tills Martin är besegrad
+    public static final String LOCKED_DOOR = """
+                .-----------.
+                | .-------. |      K L I C K !
+                | |#######| |
+                | |###o###| |      Dorren ar last.
+                | |#######| |
+                |_|_______|_|
+            """;
+
     // ── Rummen i WorldBuilder. Namnet i bilden är utan å/ä/ö, annars blir det ? i Windows-konsolen. ──
 
     public static final String SCHOOL_DOOR = """

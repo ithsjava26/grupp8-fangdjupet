@@ -185,6 +185,8 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
   ```
   `@` = här, `x` = rensat, `!` = varit där och fiender lever, `?` = öppet men nytt, `#` = låst. Kartan skrivs med `IO.println` som menyn, så den hamnar inte i loggfilen.
 - **Spara när man gått tillbaka:** sparningen tar rummet **längst fram** som hjälten har nått (`World.getFurthestRoomIndex()`), inte det hen står i. Rummen före är ju rensade.
+- **Inlåst i Fångdjupet:** när hjälten går in i skolan (från Skoldörren till Kafferummet) slår Entrédörren igen bakom hen (`AsciiArt.LOCKED_DOOR`): `Entrédörren slår igen bakom dig!` och `Du är nu inlåst i Fångdjupet och behöver besegra slutbossen innan du kan ta dig ut.` Skoldörren är sedan låst på kartan (`#`) och i rumsvalet tills Martin i sista rummet är besegrad (`World.isEntranceLocked`). Det gäller också när en sparning läses in.
+- **Skolbyggnaden ovanför huvudmenyn:** `AsciiArt.SCHOOL` – Fångdjupets skola med klocktorn, flagga, fönster och entrédörr – visas bara ovanför huvudmenyn (starta, fortsätt, avsluta), inte i spelmenyn.
 - **Gulmarkerade menyval:** lever en fiende i rummet blir `1. Strid mot rummets fiende  (Entrédörren väntar!)` gult (`GameEngine.fightOption`), och finns något att hitta – något man lämnat kvar eller något gömt – blir `5. Leta i rummet  (något finns här!)` gult (`GameEngine.searchOption`, `Room.hasSomethingToFind`). Att leta erbjuder först det som ligger kvar (j/n), sedan det gömda.
 - **Visa hjältens utrustning** (spelmenyn 3, `GameEngine.equipment(hero)`): hp-mätaren, vapnet, rustningen, attacken och Java-boken – och sedan bilder på vapnet och rustningen hjälten bär. Till exempel:
   ```

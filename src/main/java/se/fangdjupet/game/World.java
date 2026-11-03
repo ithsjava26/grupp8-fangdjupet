@@ -9,6 +9,7 @@ public class World {
     private final List<Room> rooms;
     private int currentRoomIndex;
     private int furthestRoomIndex;   // det rum längst fram som hjälten har nått
+    private boolean entranceLocked;  // dörren ut (första rummet) slår igen när hjälten går in i skolan
 
     public World(List<Room> rooms) {
         if (rooms == null || rooms.isEmpty()) {
@@ -41,12 +42,21 @@ public class World {
 
         currentRoomIndex++;
         furthestRoomIndex = Math.max(furthestRoomIndex, currentRoomIndex);
+        entranceLocked = true;
         return true;
     }
 
+    // Inlåst: när hjälten har gått in i skolan går det inte att gå ut genom första rummet (Skoldörren)
+    // förrän slutbossen i sista rummet är besegrad
+    public boolean isEntranceLocked() {
+        return entranceLocked && rooms.getLast().hasLivingEnemy();
+    }
+
     // Är rummet öppet? Alla rum hjälten har varit i, och nästa nya rum om rummet längst fram är rensat.
+    // Undantag: första rummet är låst när hjälten är inlåst.
     public boolean isOpen(int index) {
         if (index < 0 || index >= rooms.size()) return false;
+        if (index == 0 && isEntranceLocked()) return false;
         if (index <= furthestRoomIndex) return true;
         return index == furthestRoomIndex + 1 && !rooms.get(furthestRoomIndex).hasLivingEnemy();
     }
@@ -63,6 +73,7 @@ public class World {
         }
         currentRoomIndex = index;
         furthestRoomIndex = Math.max(furthestRoomIndex, index);
+        if (index > 0) entranceLocked = true;   // in i skolan: dörren slår igen bakom hjälten
         return true;
     }
 

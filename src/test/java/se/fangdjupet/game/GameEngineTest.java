@@ -369,12 +369,14 @@ class GameEngineTest {
         World world = GameEngine.newWorld(new Random(1));
         clearCurrent(world);                       // Entrédörren besegrad
         assertTrue(GameEngine.roomMap(world).contains("[@] Skoldorren    -- [?] Kafferummet"));
-        world.moveTo(1);                           // Kafferummet, JavaFläcken lever
-        world.moveTo(0);                           // tillbaka till Skoldörren
+        world.moveTo(1);                           // Kafferummet – dörren ut slår igen
+        clearCurrent(world);                       // alla vågor i Kafferummet
+        world.moveTo(2);                           // Korridoren, StädHäxan lever
+        world.moveTo(1);                           // tillbaka till Kafferummet
         String map = GameEngine.roomMap(world);
-        assertTrue(map.contains("[@] Skoldorren"));
-        assertTrue(map.contains("[!] Kafferummet"), map);
-        assertTrue(map.contains("[#] Korridoren"));
+        assertTrue(map.contains("[#] Skoldorren"), map);
+        assertTrue(map.contains("[@] Kafferummet"), map);
+        assertTrue(map.contains("[!] Korridoren"), map);
     }
 
     @Test
@@ -401,7 +403,11 @@ class GameEngineTest {
         World world = GameEngine.newWorld(new Random(1));
         clearCurrent(world);
         world.moveTo(1);
-        assertTrue(GameEngine.roomChoices(world).contains("1. Skoldörren  (rensat)"));
+        clearCurrent(world);
+        world.moveTo(2);
+        String choices = GameEngine.roomChoices(world);
+        assertTrue(choices.contains("2. Kafferummet  (rensat)"), choices);
+        assertTrue(choices.contains("1. Skoldörren  (låst)"), choices);
     }
 
     @Test
@@ -423,8 +429,41 @@ class GameEngineTest {
         World world = GameEngine.newWorld(new Random(1));
         clearCurrent(world);
         world.moveTo(1);
-        world.moveTo(0);
-        assertEquals(1, GameEngine.stateOf(robert(), world).nextRoom());
+        clearCurrent(world);
+        world.moveTo(2);
+        world.moveTo(1);
+        assertEquals(2, GameEngine.stateOf(robert(), world).nextRoom());
+    }
+
+    // ── Inlåst: Entrédörren slår igen när hjälten går in ──
+
+    @Test
+    void theEntranceLocksWhenYouGoInside() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);
+        assertFalse(world.isEntranceLocked(), "ute på skolgården är dörren inte låst än");
+        world.moveTo(1);
+        assertTrue(world.isEntranceLocked());
+        assertFalse(world.moveTo(0));
+        assertEquals("Skoldörren är låst. Du är nu inlåst i Fångdjupet och behöver besegra slutbossen innan du kan ta dig ut.",
+                GameEngine.lockedMessage(world, 0));
+    }
+
+    @Test
+    void theEntranceOpensWhenTheFinalBossIsDefeated() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);
+        world.moveTo(1);
+        world.getRooms().getLast().getEnemies().forEach(e -> e.takeDamage(999));   // Martin besegrad
+        assertFalse(world.isEntranceLocked());
+        assertTrue(world.isOpen(0));
+    }
+
+    @Test
+    void loadingASaveAlsoLocksTheEntrance() {
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.fastForward(robert(), world, 1));
+        assertTrue(world.isEntranceLocked());
     }
 
     // ── Föremål i rummet: gulmarkerat, spelaren väljer ──

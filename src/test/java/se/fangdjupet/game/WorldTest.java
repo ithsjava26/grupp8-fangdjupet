@@ -43,10 +43,12 @@ class WorldTest {
         World world = fourRooms();
         clear(world.getCurrentRoom());
         assertTrue(world.moveTo(1));
-        assertTrue(world.moveTo(0));
-        assertEquals(0, world.getCurrentRoomIndex());
-        assertEquals(1, world.getFurthestRoomIndex(), "längst fram är fortfarande B");
-        assertTrue(world.hasVisited(1));
+        clear(world.getCurrentRoom());
+        assertTrue(world.moveTo(2));
+        assertTrue(world.moveTo(1));
+        assertEquals(1, world.getCurrentRoomIndex());
+        assertEquals(2, world.getFurthestRoomIndex(), "längst fram är fortfarande C");
+        assertTrue(world.hasVisited(2));
     }
 
     @Test
@@ -63,9 +65,11 @@ class WorldTest {
     void goingBackDoesNotOpenMoreRooms() {
         World world = fourRooms();
         clear(world.getCurrentRoom());
-        world.moveTo(1);          // B har en levande fiende
-        world.moveTo(0);
-        assertFalse(world.isOpen(2));
+        world.moveTo(1);
+        clear(world.getCurrentRoom());
+        world.moveTo(2);          // C har en levande fiende
+        world.moveTo(1);
+        assertFalse(world.isOpen(3));
     }
 
     @Test
@@ -74,7 +78,27 @@ class WorldTest {
         world.moveForward();
         world.moveForward();
         assertEquals(2, world.getFurthestRoomIndex());
+        assertTrue(world.moveTo(1));
+    }
+
+    @Test
+    void theFirstRoomLocksBehindYouUntilTheLastRoomIsCleared() {
+        World world = fourRooms();
+        clear(world.getCurrentRoom());
+        world.moveTo(1);
+        assertTrue(world.isEntranceLocked());
+        assertFalse(world.isOpen(0));
+        assertFalse(world.moveTo(0));
+        clear(world.getRooms().getLast());
+        assertFalse(world.isEntranceLocked());
         assertTrue(world.moveTo(0));
+    }
+
+    @Test
+    void theEntranceIsOpenBeforeYouGoInside() {
+        World world = fourRooms();
+        assertFalse(world.isEntranceLocked());
+        assertTrue(world.isOpen(0));
     }
 
     @Test

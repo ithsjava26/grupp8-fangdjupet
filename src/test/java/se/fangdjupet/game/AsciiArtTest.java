@@ -232,4 +232,14 @@ class AsciiArtTest {
         assertEquals("\u001B[33mPilbåge\u001B[0m", AsciiArt.yellow("Pilbåge"));
         assertThrows(IllegalArgumentException.class, () -> AsciiArt.yellow(null));
     }
+
+    @Test
+    void schoolAndLockedDoorArePlainAsciiAndFitTheConsole() {
+        for (String art : List.of(AsciiArt.SCHOOL, AsciiArt.LOCKED_DOOR)) {
+            assertTrue(isPlainAscii(art));
+            assertTrue(art.lines().allMatch(line -> line.length() <= 60));
+        }
+        assertTrue(AsciiArt.SCHOOL.contains("S K O L A"));
+        assertTrue(AsciiArt.LOCKED_DOOR.contains("K L I C K"));
+    }
 }
