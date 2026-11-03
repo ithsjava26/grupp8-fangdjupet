@@ -46,6 +46,7 @@ public final class ConsoleStyle {
         if (t.contains("blir arg!") || t.contains("skrattar elakt")) return MAGENTA + BOLD + t + RESET;
         if (t.startsWith("Du hittar") && !t.startsWith("Du hittar inget")) return YELLOW + BOLD + "✦ " + t + RESET;
         if (t.contains(" klämmer stressbollen") || t.matches(".*\\(\\+\\d+ hp\\).*")) return GREEN + t + RESET;
+        if (t.startsWith("Lavalampan bubblar") || t.contains("tar fram en lavalampa")) return MAGENTA + BOLD + "~ " + t + RESET;
         Matcher say = SPEECH.matcher(t);
         if (say.matches()) return MAGENTA + BOLD + say.group(1) + ":" + RESET + " " + WHITE + say.group(2) + RESET;
         if (t.startsWith("Du går till ")) return CYAN + "→ " + t + RESET;
@@ -71,7 +72,7 @@ public final class ConsoleStyle {
 
     // ── Menyerna och kartan (GameEngine skriver dem direkt) ──
 
-    // Varje rad i en meny: "1. Strid" → "[1] Strid" med siffran i gult, rubriken och "=====" i cyan
+    // Varje rad i en meny: "1. Strid" med siffran i fet gul (ingen ruta), rubriken och "=====" i cyan
     public static String menu(String block) {
         if (!enabled || block == null) return block;
         StringBuilder out = new StringBuilder();
@@ -82,7 +83,7 @@ public final class ConsoleStyle {
             Matcher opt = OPTION.matcher(line);
             if (line.matches("=+")) out.append(CYAN).append(line).append(RESET);
             else if (header) out.append(CYAN).append(BOLD).append(line).append(RESET);
-            else if (opt.matches()) out.append(YELLOW).append(BOLD).append("[").append(opt.group(1)).append("]").append(RESET)
+            else if (opt.matches()) out.append(YELLOW).append(BOLD).append(opt.group(1)).append(".").append(RESET)
                     .append(" ").append(opt.group(2));
             else out.append(line);
             if (i + 1 < lines.length) out.append("\n");

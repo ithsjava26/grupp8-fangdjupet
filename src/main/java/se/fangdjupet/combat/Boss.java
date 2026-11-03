@@ -6,6 +6,8 @@ public class Boss extends Enemy {
     private AttackStrategy phaseTwoAttack;         // den tyngre attacken, sparas tills bossen har halva livet kvar
     private boolean phaseTwo;                      // false tills bytet skett – då blir den true och stannar så
     private boolean enraged;                       // true när bossen har blivit argare (se enrage)
+    private int lavaLampHeal;                      // 0 = ingen lavalampa; annars hp varje runda i fas 2 (Martin)
+    private boolean lavaLampBroken;                // true när hjälten har krossat lampan
 
     // Bossen börjar med fas 1-attacken – den skickas vidare till Enemy som vanlig attack
     public Boss(String name, int maxHp, AttackStrategy phaseOneAttack, AttackStrategy phaseTwoAttack, int level) {
@@ -33,6 +35,29 @@ public class Boss extends Enemy {
 
     public boolean isEnraged() {
         return enraged;
+    }
+
+    // I fas 2 ställer bossen fram en lavalampa som ger den så här mycket hp varje runda – tills hjälten krossar den
+    public Boss withLavaLamp(int healPerRound) {
+        if (healPerRound <= 0) throw new IllegalArgumentException("healPerRound must be positive");
+        this.lavaLampHeal = healPerRound;
+        return this;
+    }
+
+    // Står lampan på katedern? Bara i fas 2, bara om bossen har en, och bara tills den är krossad
+    public boolean lavaLampStanding() {
+        return phaseTwo && lavaLampHeal > 0 && !lavaLampBroken && isAlive();
+    }
+
+    public int lavaLampHeal() {
+        return lavaLampHeal;
+    }
+
+    // Hjälten krossar lampan. true om den stod där, false om det inte fanns någon att krossa
+    public boolean smashLavaLamp() {
+        if (!lavaLampStanding()) return false;
+        lavaLampBroken = true;
+        return true;
     }
 
     // Skadan dras av som vanligt. Vid halva livet byter bossen till fas 2-attacken – bara en gång.

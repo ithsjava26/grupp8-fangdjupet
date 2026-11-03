@@ -92,6 +92,19 @@ public final class AttackArt {
                    _|___|_
             """.formatted();
 
+    // Martins lavalampa i fas 2: den bubblar och ger honom hp varje runda, tills hjälten krossar den
+    public static final String LAVA_LAMP = """
+                   ___
+                  /   \\        LAVALAMPA
+                 / ( ) \\       blubb ... blubb ...
+                |  o    |      +%d hp till Martin
+                | (  )  |      varje runda
+                |    () |
+                 \\ (_) /       krossa den!
+                  |___|
+                 /_____\\
+            """.formatted(Martin.LAVA_LAMP_HEAL);
+
     // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
     public static final String POLYMORPHISM = """
                 ______________ ______________

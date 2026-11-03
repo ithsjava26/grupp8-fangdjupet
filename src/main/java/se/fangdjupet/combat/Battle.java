@@ -56,6 +56,21 @@ public class Battle {
         return this;
     }
 
+    // Lavalampan i fas 2: första gången tar bossen fram den (med bild), sedan bubblar den och ger hp varje runda
+    private void lavaLamp(Boss boss, Set<Boss> shown) {
+        if (shown.add(boss)) {
+            listener.onEvent(boss.getName() + " tar fram en lavalampa och ställer den på katedern! Den ger honom +"
+                    + boss.lavaLampHeal() + " hp varje runda – krossa den!");
+            if (attackArt) listener.onEvent(AttackArt.LAVA_LAMP);
+        }
+        int before = boss.getHp();
+        boss.heal(boss.lavaLampHeal());
+        if (boss.getHp() > before) {
+            listener.onEvent("Lavalampan bubblar: " + boss.getName() + " +" + (boss.getHp() - before) + " hp");
+            listener.onEvent(HpBar.status(boss, 10));
+        }
+    }
+
     // Kör hela striden, berättar vem som vann och returnerar vinnaren
     public Character fight(Hero hero, Enemy enemy) {
         return fight(hero, List.of(enemy));                // en vanlig strid = en grupp med en fiende
@@ -78,6 +93,7 @@ public class Battle {
     private Character runFight(Hero hero, List<Enemy> enemies) {
         int round = 0;
         Set<String> bossAttacksShown = new HashSet<>();   // varje bossattack visas med bild bara en gång per strid
+        Set<Boss> lavaLampsShown = new HashSet<>();       // lavalampan tas fram en gång (fas 2)
         // Så länge hjälten och minst en fiende lever och taket inte nåtts – slåss
         while (hero.isAlive() && anyAlive(enemies) && round < MAX_ROUNDS) {
             round++;
@@ -94,7 +110,14 @@ public class Battle {
             Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
             AttackStrategy attack = hero.getAttack();
             int damage = 0;
-            if (attack.selfHeal() > 0) {
+            if (attack instanceof LavaLampSmash) {
+                // Lavalampan: ingen skada på bossen, men den slutar ge hp. Hjältens tur går åt.
+                boolean smashed = target instanceof Boss boss && boss.smashLavaLamp();
+                listener.onEvent("Hero: " + hero.getName() + (smashed
+                        ? " krossar lavalampan! Lavan rinner ut över katedern – " + target.getName() + " får inga fler hp av den."
+                        : " letar efter en lavalampa att krossa, men det finns ingen."));
+                attack.used(hero);                                  // sedan tillbaka till boken
+            } else if (attack.selfHeal() > 0) {
                 // T.ex. Dela skärm: hjälten tar över lektionen och får tid – hp i stället för skada, missar aldrig
                 int before = hero.getHp();
                 hero.heal(attack.selfHeal());
@@ -121,6 +144,7 @@ public class Battle {
             if (!anyAlive(enemies) || !hero.isAlive()) break;   // ingen av de döda slår mer
             for (Enemy enemy : enemies) {                     // fiendernas tur, en i taget
                 if (!enemy.isAlive()) continue;                // döda fiender slår inte
+                if (enemy instanceof Boss boss && boss.lavaLampStanding()) lavaLamp(boss, lavaLampsShown);   // Martin i fas 2
                 enemy.nextTaunt().ifPresent(taunt -> listener.onEvent(enemy.getName() + ": \"" + taunt + "\""));   // t.ex. Martins Java-fråga
                 boolean enemyMisses = misses(enemy.getAttack().missPercent());
                 damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut

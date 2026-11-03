@@ -28,6 +28,7 @@ public class GameEngine {
     private final GameEventListener output;
     private final GameSaveFileHandler saves;      // sparar och läser in äventyret
     private final Random random = new Random();   // slumpen i striderna
+    private List<Enemy> currentFoes = List.of();   // fienderna i striden just nu (attackmenyn: Martins lavalampa)
     private boolean running;
 
     // output = dit allt skrivs, i spelet en EventBus med konsolen. Sparfilerna hamnar i mappen saves.
@@ -316,6 +317,7 @@ public class GameEngine {
 
         // Battle sköter striden och loggen; spelaren väljer attack inför varje runda
         // fullt namn på Character: java.lang.Character finns också
+        currentFoes = enemies;                                // attackmenyn ser Martins lavalampa
         se.fangdjupet.combat.Character winner = new Battle(output, this::chooseAttack, random)
                 .withAttackArt()                              // bilder för attackerna (AttackArt)
                 .fight(hero, enemies);                        // med slump: miss och ±1
@@ -730,7 +732,8 @@ public class GameEngine {
     // null = behåll nuvarande attack (vapnet väljer: båge = avstånd, staff = magi, svärd = närstrid)
     // Menyn kommer från AttackMenu: med Java-boken bara Martins fyra, annars närstrid/magi/avstånd
     private AttackStrategy chooseAttack(Hero hero) {
-        List<AttackStrategy> options = AttackMenu.options(hero);
+        Enemy foe = currentFoes.stream().filter(Enemy::isAlive).findFirst().orElse(null);
+        List<AttackStrategy> options = AttackMenu.options(hero, foe);
         IO.println(ConsoleStyle.prompt("Välj attack (Enter = behåll):"));
         AttackMenu.lines(hero, options).forEach(line -> IO.println(ConsoleStyle.menu(line)));   // pilbågens och stavens attack gulmarkerade
         IO.print(ConsoleStyle.prompt("Ditt val: "));

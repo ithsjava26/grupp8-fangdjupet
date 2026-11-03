@@ -138,6 +138,11 @@ public class Hero extends Character {
     }
 
     // Försöket är gjort: USB-minnet är borta. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.
+    // Efter en attack som bara används en gång (lavalampan): tillbaka till boken, eller StackOverflow utan bok
+    void stopUsing(AttackStrategy attack) {
+        if (getAttack() == attack) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);
+    }
+
     void loseUsbStick() {
         usbStick = false;
         if (getAttack() instanceof UsbVirusAttack) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);

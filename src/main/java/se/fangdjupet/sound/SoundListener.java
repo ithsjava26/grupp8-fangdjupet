@@ -126,6 +126,7 @@ public final class SoundListener implements GameEventListener {
 
     // Hjältens rad: boken bläddrar (eller slinter), Dela skärm klingar, stressbollen säger boing – annars attackens ljud
     private String heroSound(String t) {
+        if (t.contains("krossar lavalampan")) return "club";      // KRASCH: lampan går sönder
         if (t.contains("blir påkommen av")) return "buzz";          // USB-minnet: påkommen, Martin tar det
         if (t.contains("smyger in ett USB-minne")) return "zap";    // viruset tar över datorn
         if (t.contains("slinter på sidan")) return "slip";

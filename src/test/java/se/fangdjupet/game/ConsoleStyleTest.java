@@ -58,7 +58,9 @@ class ConsoleStyleTest {
         assertEquals(menu, ConsoleStyle.menu(menu), "av: webben får vanlig text");
         assertEquals("[@] Kafferummet", ConsoleStyle.map("[@] Kafferummet"));
         ConsoleStyle.enable(true);
-        assertEquals("Kafferummet\n===========\n[1] Strid mot rummets fiende\n[e] Avsluta", plain(ConsoleStyle.menu(menu)));
+        String styled = ConsoleStyle.menu(menu);
+        assertEquals(menu, plain(styled), "samma text, utan ruta runt siffrorna");
+        assertTrue(styled.contains(ConsoleStyle.YELLOW + ConsoleStyle.BOLD + "1." + ConsoleStyle.RESET), "siffran i fet gul");
         assertTrue(ConsoleStyle.map("[@] Kafferummet -- [#] Korridoren").contains(ConsoleStyle.YELLOW + ConsoleStyle.BOLD + "[@]"));
         assertEquals("Ditt val: ", plain(ConsoleStyle.prompt("Ditt val: ")));
     }

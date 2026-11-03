@@ -16,6 +16,13 @@ public final class AttackMenu {
 
     // Med Java-boken: Martins fyra KnowledgeAttack och citat ur boken. Annars närstrid – och magi och
     // avstånd först när hjälten har plockat upp staven eller pilbågen. I början finns bara svärdet.
+    // Mot en fiende: står Martins lavalampa (fas 2) kommer "Krossa lavalampan" sist i menyn
+    public static List<AttackStrategy> options(Hero hero, Enemy foe) {
+        List<AttackStrategy> options = new ArrayList<>(options(hero));
+        if (foe instanceof Boss boss && boss.lavaLampStanding()) options.add(LavaLampSmash.SMASH);
+        return List.copyOf(options);
+    }
+
     public static List<AttackStrategy> options(Hero hero) {
         if (hero.hasJavaBook()) {
             List<AttackStrategy> knowledge = new ArrayList<>(Martin.heroChoices());
@@ -55,7 +62,9 @@ public final class AttackMenu {
 
     // Gulmarkeras attacken i menyn? Ja för pilbågens och stavens attack när hjälten håller vapnet –
     // de slår mycket hårdare än svärdet, och utan dem klarar man inte trollen och StädHäxan.
+    // Lavalampan är alltid gulmarkerad: den finns bara i menyn när den står och ger Martin hp.
     static boolean highlighted(Hero hero, AttackStrategy attack) {
+        if (attack instanceof LavaLampSmash) return true;
         return hero.getWeapon()
                 .filter(w -> w.range() == WeaponRange.MAGIC || w.range() == WeaponRange.RANGED)
                 .map(w -> belongsTo(w.range(), attack))
@@ -99,6 +108,7 @@ public final class AttackMenu {
             case KnowledgeAttack k -> "  (" + k.power() + " i skada" + (k.selfDamage() > 0 ? ", kostar dig " + k.selfDamage() + " hp" : "") + ")";
             case JavaBookAttack b -> "  (" + JavaBookAttack.POWER + " i skada, " + JavaBookAttack.SLIP_PERCENT + " % risk att du slinter på sidan)";
             case UsbVirusAttack u -> "  (" + UsbVirusAttack.SUCCESS_PERCENT + " % chans: viruset tar över datorn och du vinner direkt – annars tar Martin USB-minnet)";
+            case LavaLampSmash s -> "  (Martin får +" + Martin.LAVA_LAMP_HEAL + " hp varje runda så länge den står – ingen skada, det tar din tur)";
             case StressBallThrow t -> "  (" + StressBallThrow.POWER + " i skada om den träffar – sedan är bollen borta: ingen +" + WorldBuilder.STRESS_BALL_HEAL + " hp per runda)";
             default -> "";
         };

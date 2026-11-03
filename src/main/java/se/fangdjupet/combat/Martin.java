@@ -44,10 +44,13 @@ public final class Martin {
         // withLine returnerar en Enemy, inte en Boss – därför sparas bossen i en variabel först
         martin.withLine("Let me explain Hello World to you...");
         martin.withTaunts(QUESTIONS);
+        martin.withLavaLamp(LAVA_LAMP_HEAL);   // i fas 2: lavalampan på katedern, +3 hp varje runda tills den krossas
         return martin;
     }
 
     // Martin förhör hjälten: en fråga per runda innan han förklarar (Battle skriver ut den), sedan från början
+    public static final int LAVA_LAMP_HEAL = 3;   // lavalampan i fas 2: så mycket hp får Martin varje runda
+
     public static final List<String> QUESTIONS = List.of(
             "Kan du första normalformen? Inga upprepade grupper i tabellen!",
             "Vad är skillnaden mellan == och equals()?",
