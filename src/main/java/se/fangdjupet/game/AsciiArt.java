@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 // All ASCII-grafik på ett ställe, så att menyloopen inte fylls med stora textblock.
-// Bara ren ASCII: tecken som █ och å blir ofta ? i Windows-konsolen.
+// Streck och tecken i ren ASCII (# - | / \), men texterna har å, ä och ö som resten av spelet.
 // Grafiken skickas via en GameEventListener (t.ex. EventBus), aldrig direkt till System.out,
 // så att testerna kan läsa den.
 public final class AsciiArt {
@@ -17,7 +17,7 @@ public final class AsciiArt {
 
     // Text block ("""): radbrytningarna följer med. Backslash måste skrivas \\.
     public static final String TITLE = """
-             _____                   _  _                  _
+             _____  o                _  _                  _
             |  ___|_ _ _ __   __ _  __| |(_)_   _ _ __   ___| |_
             | |_ / _` | '_ \\ / _` |/ _` || | | | | '_ \\ / _ \\ __|
             |  _| (_| | | | | (_| | (_| || | |_| | |_) |  __/ |_
@@ -37,8 +37,8 @@ public final class AsciiArt {
     public static final String FRIDA = """
                   .---.
                  ( ^_^ )     FRIDA
-                 /|   |\\     "Du ser trott ut,
-                  |___|       ta de har!"
+                 /|   |\\     "Du ser trött ut,
+                  |___|       ta de här!"
                   /   \\
             """;
 
@@ -52,7 +52,7 @@ public final class AsciiArt {
                                  /    '---'    \\
                    ______________/_______________\\______________
                    |                                           |
-                   |     F A N G D J U P E T S   S K O L A     |
+                   |     F Å N G D J U P E T S   S K O L A     |
                    |  _____   _____   _______   _____   _____  |
                    | |_|_|_| |_|_|_| |  ___  | |_|_|_| |_|_|_| |
                    | |_|_|_| |_|_|_| | |   | | |_|_|_| |_|_|_| |
@@ -67,7 +67,7 @@ public final class AsciiArt {
                 .-----------.
                 | .-------. |      K L I C K !
                 | |#######| |
-                | |###o###| |      Dorren ar last.
+                | |###o###| |      Dörren är låst.
                 | |#######| |
                 |_|_______|_|
             """;
@@ -80,7 +80,7 @@ public final class AsciiArt {
               |_______________|
               |  ___________  |
               | |     |     | |
-              | |     |   o | |      SKOLDORREN
+              | |     |   o | |      SKOLDÖRREN
               | |_____|_____| |
               |_______________|
             """;
@@ -105,7 +105,7 @@ public final class AsciiArt {
             |\\                  /|   |   |   |
             | \\    ________    / |   |   |   |
             |  |  |        |  |  |   |  /|\\  |    KORRIDOREN
-            | /    |______|    \\ |   | [___] |    & STADSKRUBBEN
+            | /    |______|    \\ |   | [___] |    & STÄDSKRUBBEN
             |/__________________\\|   |_______|
             """;
 
@@ -123,7 +123,7 @@ public final class AsciiArt {
     // Entrédörren: en sur skoldörr som inte släpper in någon utan passerkort
     public static final String ENTRANCE_DOOR = """
                 .---------.
-                | o     o |     ENTREDORREN
+                | o     o |     ENTRÉDÖRREN
                 |    ^    |     "Har du passerkort?"
                 |  \\___/  |
                 |       o |
@@ -132,7 +132,7 @@ public final class AsciiArt {
 
     public static final String JAVA_FLECK = """
                 .--.
-               ( :: )~      JAVAFLACKEN
+               ( :: )~      JAVAFLÄCKEN
                 '--'
             """;
 
@@ -205,7 +205,7 @@ public final class AsciiArt {
     public static final String BOW = """
                |\\
                | \\
-               |--)---->    PILBAGE
+               |--)---->    PILBÅGE
                | /
                |/
             """;
@@ -222,7 +222,7 @@ public final class AsciiArt {
     public static final String CLEANING_ARMOR = """
                  _______
                 |_HINK__|
-                 (o   o)          STADRUSTNING
+                 (o   o)          STÄDRUSTNING
                .-'-----'-.        +20 i forsvar
               /|  _____  |\\
              | | |GUMMI| | |#
@@ -237,7 +237,7 @@ public final class AsciiArt {
                    /\\
                    ||
                    ||
-                   ||        SVARD
+                   ||        SVÄRD
                  o=||=o
                    ##
                    ()
@@ -256,7 +256,7 @@ public final class AsciiArt {
     public static final String SHIELD = """
                .--------.
                | \\    / |
-               |  \\  /  |    SKOLD
+               |  \\  /  |    SKÖLD
                |   ><   |
                 \\  /\\  /
                  '----'
@@ -265,7 +265,7 @@ public final class AsciiArt {
     public static final String HELMET = """
                 .------.
                /  ____  \\
-              |  |____|  |   HJALM
+              |  |____|  |   HJÄLM
               |__________|
             """;
 
@@ -295,8 +295,8 @@ public final class AsciiArt {
                  '._==_==_=_.'
                  .-\\:      /-.        D U   V A N N !
                 | (|:.     |) |
-                 '-|:.     |-'        Martin ar besegrad och
-                   \\::.    /          Fangdjupet ar klarat.
+                 '-|:.     |-'        Martin är besegrad och
+                   \\::.    /          Fångdjupet är klarat.
                     '::. .'
                       ) (
                     _.' '._

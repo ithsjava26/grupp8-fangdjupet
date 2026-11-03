@@ -395,8 +395,8 @@ class GameEngineTest {
     void mapAtTheStart() {
         World world = GameEngine.newWorld(new Random(1));
         assertEquals("""
-                KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last
-                [@] Skoldorren    -- [#] Kafferummet
+                KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst
+                [@] Skoldörren    -- [#] Kafferummet
                                       |
                 [#] Lektionssalen -- [#] Korridoren""", GameEngine.roomMap(world));
     }
@@ -405,13 +405,13 @@ class GameEngineTest {
     void mapShowsClearedNewAndCurrentRooms() {
         World world = GameEngine.newWorld(new Random(1));
         clearCurrent(world);                       // Entrédörren besegrad
-        assertTrue(GameEngine.roomMap(world).contains("[@] Skoldorren    -- [?] Kafferummet"));
+        assertTrue(GameEngine.roomMap(world).contains("[@] Skoldörren    -- [?] Kafferummet"));
         world.moveTo(1);                           // Kafferummet – dörren ut slår igen
         clearCurrent(world);                       // alla vågor i Kafferummet
         world.moveTo(2);                           // Korridoren, StädHäxan lever
         world.moveTo(1);                           // tillbaka till Kafferummet
         String map = GameEngine.roomMap(world);
-        assertTrue(map.contains("[#] Skoldorren"), map);
+        assertTrue(map.contains("[#] Skoldörren"), map);
         assertTrue(map.contains("[@] Kafferummet"), map);
         assertTrue(map.contains("[!] Korridoren"), map);
     }
@@ -419,7 +419,7 @@ class GameEngineTest {
     @Test
     void mapIsPlainAsciiAndFitsTheConsole() {
         String map = GameEngine.roomMap(GameEngine.newWorld(new Random(1)));
-        assertTrue(map.chars().allMatch(c -> c < 128));
+        assertTrue(map.chars().allMatch(c -> c < 128 || "åäöÅÄÖé".indexOf(c) >= 0));
         assertTrue(map.lines().allMatch(l -> l.length() <= 60));
     }
 
@@ -457,7 +457,7 @@ class GameEngineTest {
 
     @Test
     void shortNamesAreAsciiWithoutTheSecondPart() {
-        assertEquals("Skoldorren", GameEngine.shortName("Skoldörren"));
+        assertEquals("Skoldörren", GameEngine.shortName("Skoldörren"));
         assertEquals("Korridoren", GameEngine.shortName("Korridoren och städskrubben"));
     }
 

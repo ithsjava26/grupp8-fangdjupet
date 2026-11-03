@@ -15,7 +15,7 @@ public final class AttackArt {
 
     public static final String MELEE = """
                    |\\
-              o====|=>================-      NARSTRID
+              o====|=>================-      NÄRSTRID
                    |/
             """;
 
@@ -30,7 +30,7 @@ public final class AttackArt {
     public static final String RANGED = """
                 |\\
                 | \\
-              >>|--)------------>    AVSTANDSATTACK
+              >>|--)------------>    AVSTÅNDSATTACK
                 | /
                 |/
             """;
@@ -50,7 +50,7 @@ public final class AttackArt {
     public static final String QUIZ = """
                .--------------------.
                |  JAVAQUIZ      ?   |
-               |  [A]   [B]   [C]   |    CITERA FRAN JAVAQUIZET
+               |  [A]   [B]   [C]   |    CITERA FRÅN JAVAQUIZET
                |  "Vad gor static?" |
                '--------------------'
             """;
@@ -69,7 +69,7 @@ public final class AttackArt {
                | > java  |  ==>  | > java  |
                | Hello!_ |       | Hello!_ |
                '----+----'       '----+----'
-                   _|_               _|_      DELA SKARM
+                   _|_               _|_      DELA SKÄRM
             """;
 
     // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
@@ -108,7 +108,7 @@ public final class AttackArt {
                | System.out.println("Hello");   |
                |  // ...och sa en gang till...  |
                '--------------------------------'
-                   blah  blah  blah  blah          MARTIN FORKLARAR
+                   blah  blah  blah  blah          MARTIN FÖRKLARAR
             """;
 
     public static final String MARTIN_UTTERLY = """
@@ -124,7 +124,7 @@ public final class AttackArt {
 
     public static final String SPONGE = """
                 .--------.
-               ( o  o  o  )  ~ ~ >     TVATTSVAMP
+               ( o  o  o  )  ~ ~ >     TVÄTTSVAMP
                 '--------'
             """;
 

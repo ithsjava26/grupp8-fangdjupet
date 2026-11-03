@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AttackArtTest {
 
-    // Sant om alla tecken är vanlig ASCII (0–127) – annars kan Windows-konsolen visa ?
+    // Sant om alla tecken är vanlig ASCII (0–127) eller svenska å, ä, ö och é (som resten av spelets text)
     private static boolean isPlainAscii(String s) {
-        return s.chars().allMatch(ch -> ch < 128);
+        return s.chars().allMatch(ch -> ch < 128 || "åäöÅÄÖéÉ".indexOf(ch) >= 0);
     }
 
     // Alla attacker som finns i spelet: hjältens, Martins två faser och StädHäxans tre kast

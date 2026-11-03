@@ -89,7 +89,7 @@ public class GameEngine {
     static String menu(Room room) {
         if (room == null) {
             return """
-                    Fangdjupet
+                    Fångdjupet
                     ==========
                     1. Starta nytt äventyr
                     2. Fortsätt sparat äventyr
@@ -484,12 +484,12 @@ public class GameEngine {
 
     // ── Kartan över rummen ──
     // Två rader som en slinga: Skoldörren → Kafferummet överst, Korridoren → Lektionssalen nederst (åt vänster).
-    //   KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last
+    //   KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst
     //   [x] Skoldorren -- [@] Kafferummet
     //                       |
     //   [#] Lektionssalen -- [?] Korridoren
     // Bara ren ASCII, som all annan grafik.
-    static final String MAP_LEGEND = "KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last";
+    static final String MAP_LEGEND = "KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst";
 
     static String roomMap(World world) {
         List<Room> rooms = world.getRooms();
@@ -549,10 +549,10 @@ public class GameEngine {
         return sb.toString();
     }
 
-    // Kort namn utan å/ä/ö till kartan: "Korridoren och städskrubben" → "Korridoren", "Skoldörren" → "Skoldorren"
+    // Kort namn till kartan: "Korridoren och städskrubben" → "Korridoren", "Skoldörren" blir kvar
     static String shortName(String roomName) {
         String first = roomName.split(" och ")[0];
-        return java.text.Normalizer.normalize(first, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return first;
     }
 
     private static String pad(String s, int width) {

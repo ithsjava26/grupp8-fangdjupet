@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AsciiArtTest {
 
-    // Sant om alla tecken är vanlig ASCII (0–127) – annars kan Windows-konsolen visa ?
+    // Sant om alla tecken är vanlig ASCII (0–127) eller svenska å, ä, ö och é (som resten av spelets text)
     private boolean isPlainAscii(String s) {
-        return s.chars().allMatch(ch -> ch < 128);
+        return s.chars().allMatch(ch -> ch < 128 || "åäöÅÄÖéÉ".indexOf(ch) >= 0);
     }
 
     @Test
@@ -90,10 +90,10 @@ class AsciiArtTest {
 
     @Test
     void eachRoomShowsItsOwnLabel() {
-        assertTrue(AsciiArt.SCHOOL_DOOR.contains("SKOLDORREN"));
+        assertTrue(AsciiArt.SCHOOL_DOOR.contains("SKOLDÖRREN"));
         assertTrue(AsciiArt.COFFEE_ROOM.contains("KAFFERUMMET"));
         assertTrue(AsciiArt.CORRIDOR.contains("KORRIDOREN"));
-        assertTrue(AsciiArt.CORRIDOR.contains("STADSKRUBBEN"));
+        assertTrue(AsciiArt.CORRIDOR.contains("STÄDSKRUBBEN"));
         assertTrue(AsciiArt.CLASSROOM.contains("LEKTIONSSALEN"));
     }
 
@@ -174,7 +174,7 @@ class AsciiArtTest {
 
     @Test
     void entranceDoorHasItsOwnFace() {
-        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTREDORREN"));
+        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTRÉDÖRREN"));
         assertNotEquals(AsciiArt.SCHOOL_DOOR, AsciiArt.forName("Entrédörren").orElseThrow());   // inte rummets bild
     }
 
