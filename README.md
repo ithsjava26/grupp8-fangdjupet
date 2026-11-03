@@ -210,7 +210,12 @@ AttackStrategy (interface)          Character (abstrakt klass)
  ├─ MeleeAttack    A, PR 2           ├─ Hero    A, PR 1
  ├─ MagicAttack    A, PR 2           └─ Enemy   A, PR 1
  ├─ RangedAttack   A, PR 2                └─ Boss  A – Martin.create(), CleaningWitch.create()
- └─ KnowledgeAttack A, PR 3 (Dela skärm: +12 hp)
+ │   └─ CleaningAttack  StädHäxans kast (Vanish går igenom rustningen)
+ ├─ KnowledgeAttack A, PR 3 (Dela skärm: +12 hp)
+ ├─ JavaBookAttack  citera kapitel 18 / 20 (14, slinter 30 %)
+ ├─ StressBallThrow kasta stressbollen (10)
+ ├─ UsbVirusAttack  20 % chans att vinna direkt, ett försök
+ └─ LavaLampSmash   krossa Martins lavalampa (ingen skada)
         ▲
         └──── Character HAR en AttackStrategy (fältet `attack`)
 
@@ -221,6 +226,7 @@ Item (sealed interface)             GameEventListener (interface)
  ├─ Weapon   record                  ├─ EventBus            C, PR 1
  ├─ Armor    record                  ├─ ConsoleEventLogger  C, PR 1
  └─ Potion   record                  ├─ FileLogger          C – fangdjupet.log
+                                     ├─ AnimatedConsoleLogger  konsolen: filmer och färger (ConsoleStyle)
                                      └─ SoundListener       sound/ – musik och ljud (Speaker → RetroSpeaker)
 ```
 
