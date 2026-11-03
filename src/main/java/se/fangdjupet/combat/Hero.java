@@ -5,6 +5,7 @@ import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Weapon;
 import se.fangdjupet.items.WeaponRange;
 
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Random;
 
@@ -15,6 +16,7 @@ public class Hero extends Character {
     private Weapon weapon;   // null = inget vapen
     private Armor armor;     // null = ingen rustning
     private boolean javaBook; //Plocka upp boken i sista rummet
+    private final EnumSet<WeaponRange> pickedUp = EnumSet.noneOf(WeaponRange.class);   // räckvidderna hjälten har haft i handen
     private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
 
     // Skickar vidare till Characters konstruktor
@@ -28,6 +30,7 @@ public class Hero extends Character {
         if (weapon == null)
             throw new IllegalArgumentException("weapon must not be null");
         this.weapon = weapon;
+        pickedUp.add(weapon.range());   // låser upp attacken: pilbågen avstånd, staven magi
         switch (weapon.range()) {
             case RANGED -> setAttack(new RangedAttack(WEAPON_STRENGTH, new Random()));
             case MELEE  -> setAttack(new MeleeAttack(WEAPON_STRENGTH));
@@ -65,6 +68,12 @@ public class Hero extends Character {
     // Håller hjälten ett vapen med den räckvidden? T.ex. pilbågen = RANGED
     public boolean holds(WeaponRange range) {
         return weapon != null && weapon.range() == range;
+    }
+
+    // Har hjälten någon gång haft ett vapen med den räckvidden i handen? Då finns attacken i attackmenyn,
+    // även när ett annat vapen har tagit dess plats (fast svagare utan vapnet).
+    public boolean hasPickedUp(WeaponRange range) {
+        return pickedUp.contains(range);
     }
 
     // Försvar kommer från rustningen, 0 utan rustning

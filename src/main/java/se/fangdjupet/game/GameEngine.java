@@ -4,8 +4,10 @@ import se.fangdjupet.combat.*;
 
 import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Item;
+import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -137,11 +139,21 @@ public class GameEngine {
         String heroName = IO.readln().trim();
         if (heroName.isBlank()) heroName = "Hjälten";   // ett tomt namn går inte att spara
 
-        hero = new Hero(heroName, HERO_MAX_HP, new MeleeAttack(AttackMenu.MELEE));
+        hero = newHero(heroName, HERO_MAX_HP);
         world = newWorld(random);
 
         output.onEvent("Äventyret börjar!");
+        output.onEvent("Du har " + SWORD + " i handen: +" + AttackMenu.SWORD_BONUS + " i närstrid.");
         showCurrentRoom();
+    }
+
+    // Hjälten börjar med ett svärd i handen och bara närstrid. Magi och avstånd kommer med staven och pilbågen.
+    static final String SWORD = "Svärd";
+
+    static Hero newHero(String name, int maxHp) {
+        Hero hero = new Hero(name, maxHp, new MeleeAttack(AttackMenu.MELEE));
+        equipAndAim(hero, new Weapon(ItemType.SWORD, WeaponRange.MELEE, SWORD, AttackMenu.SWORD_BONUS, 1));
+        return hero;
     }
 
     // Fienderna och de fyra rummen, likadana varje gång – både för ett nytt och ett sparat äventyr
@@ -203,9 +215,9 @@ public class GameEngine {
         return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex());
     }
 
-    // Hjälten från en sparning: närstrid som i ett nytt äventyr, och det hp hen hade när det sparades
+    // Hjälten från en sparning: svärdet som i ett nytt äventyr, och det hp hen hade när det sparades
     static Hero heroFrom(GameState state) {
-        Hero hero = new Hero(state.heroName(), state.heroMaxHp(), new MeleeAttack(AttackMenu.MELEE));
+        Hero hero = newHero(state.heroName(), state.heroMaxHp());
         hero.takeDamage(state.heroMaxHp() - state.heroHp());
         return hero;
     }
@@ -537,9 +549,8 @@ public class GameEngine {
         running = false;
     }
 
-    // Plockar upp allt i rummet och ger tillbaka det som togs. Ett vapen hamnar i handen (bonus i skada),
-    // men attacken är kvar: pilbågen (avstånd 5) är svagare än närstrid (10), och den som bara trycker
-    // Enter i attackmenyn ska inte få sämre attack. Bågen och staven väljs i attackmenyn.
+    // Plockar upp allt i rummet och ger tillbaka det som togs. Ett vapen hamnar i handen och hjälten
+    // byter till vapnets attack (equipAndAim): pilbågen och staven slår mycket hårdare än svärdet.
     static List<Item> pickUpAll(Hero hero, Room room) {
         List<Item> items = room.getItems();   // en kopia – säker att ta bort ur rummet medan vi går igenom den
         for (Item item : items) {
@@ -683,7 +694,7 @@ public class GameEngine {
     private AttackStrategy chooseAttack(Hero hero) {
         List<AttackStrategy> options = AttackMenu.options(hero);
         IO.println("Välj attack (Enter = behåll):");
-        AttackMenu.lines(options).forEach(IO::println);
+        AttackMenu.lines(hero, options).forEach(IO::println);   // pilbågens och stavens attack gulmarkerade
         IO.print("Ditt val: ");
         return AttackMenu.choose(options, IO.readln());
     }

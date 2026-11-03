@@ -14,7 +14,8 @@ import java.util.Random;
 public final class AttackMenu {
     private AttackMenu() {}
 
-    // Med Java-boken: Martins fyra KnowledgeAttack och citat ur boken. Annars närstrid, magi och avstånd.
+    // Med Java-boken: Martins fyra KnowledgeAttack och citat ur boken. Annars närstrid – och magi och
+    // avstånd först när hjälten har plockat upp staven eller pilbågen. I början finns bara svärdet.
     public static List<AttackStrategy> options(Hero hero) {
         if (hero.hasJavaBook()) {
             List<AttackStrategy> knowledge = new ArrayList<>(Martin.heroChoices());
@@ -25,30 +26,59 @@ public final class AttackMenu {
                 ? STAFF_MAGIC + hero.getWeapon().orElseThrow().damageBonus()   // staven: magin blir mycket starkare
                 : MAGIC;
         int ranged = hero.holds(WeaponRange.RANGED) ? BOW_RANGED : RANGED;   // pilbågen: skjuter på riktigt
-        return List.of(new MeleeAttack(MELEE), new MagicAttack(magic), new RangedAttack(ranged, new Random()));
+        List<AttackStrategy> options = new ArrayList<>();
+        options.add(new MeleeAttack(MELEE));
+        if (hero.hasPickedUp(WeaponRange.MAGIC)) options.add(new MagicAttack(magic));
+        if (hero.hasPickedUp(WeaponRange.RANGED)) options.add(new RangedAttack(ranged, new Random()));
+        return List.copyOf(options);
     }
 
     // Menyns attack för vapnet hjälten håller: pilbågen = avstånd, staven = magi, svärdet = närstrid.
     // Tomt med Java-boken (bara kunskap mot Martin), utan vapen, eller med spjutet (passar båda).
     public static Optional<AttackStrategy> forWeapon(Hero hero) {
         if (hero.hasJavaBook() || hero.getWeapon().isEmpty()) return Optional.empty();
-        List<AttackStrategy> options = options(hero);
-        return switch (hero.getWeapon().get().range()) {
-            case MELEE -> Optional.of(options.get(0));
-            case MAGIC -> Optional.of(options.get(1));
-            case RANGED -> Optional.of(options.get(2));
-            case BOTH -> Optional.empty();
+        WeaponRange range = hero.getWeapon().get().range();
+        return options(hero).stream().filter(attack -> belongsTo(range, attack)).findFirst();
+    }
+
+    // Hör attacken till vapnet? Pilbågen = avstånd, staven = magi, svärdet = närstrid (spjutet: ingen egen)
+    static boolean belongsTo(WeaponRange range, AttackStrategy attack) {
+        return switch (range) {
+            case MELEE -> attack instanceof MeleeAttack;
+            case MAGIC -> attack instanceof MagicAttack;
+            case RANGED -> attack instanceof RangedAttack;
+            case BOTH -> false;
         };
     }
 
-    // Styrkorna i attackmenyn. Utan vapen är närstriden bäst; med pilbågen eller staven är deras attack mycket bättre.
+    // Gulmarkeras attacken i menyn? Ja för pilbågens och stavens attack när hjälten håller vapnet –
+    // de slår mycket hårdare än svärdet, och utan dem klarar man inte trollen och StädHäxan.
+    static boolean highlighted(Hero hero, AttackStrategy attack) {
+        return hero.getWeapon()
+                .filter(w -> w.range() == WeaponRange.MAGIC || w.range() == WeaponRange.RANGED)
+                .map(w -> belongsTo(w.range(), attack))
+                .orElse(false);
+    }
+
+    // Styrkorna i attackmenyn. Svärdet (närstrid) är svagt; med pilbågen eller staven är deras attack mycket bättre.
     // Pilbågen lägger dessutom till halva sin bonus (RangedAttack), och avstånd missar 20 % av skotten.
     // Magi går rakt igenom rustningen och missar aldrig (bara Battles vanliga miss).
-    static final int MELEE = 7;          // knytnävarna (bonus bara med svärd eller spjut)
-    static final int MAGIC = 4;          // magi utan stav
-    static final int RANGED = 4;         // kasta saker utan pilbåge
+    // Magi och avstånd finns i menyn först när staven eller pilbågen har plockats upp.
+    static final int MELEE = 5;          // närstrid: 5 + svärdets bonus (SWORD_BONUS)
+    static final int SWORD_BONUS = 1;    // startsvärdet: +1 i närstrid
+    static final int MAGIC = 4;          // magi när staven inte är i handen längre
+    static final int RANGED = 4;         // avstånd när pilbågen inte är i handen längre
     static final int STAFF_MAGIC = 8;    // magi med Trollstaven: 8 + stavens bonus
     static final int BOW_RANGED = 13;    // pil och båge: 11 + halva bågens bonus
+
+    // Menyraderna för hjälten: pilbågens och stavens attack gulmarkerade när vapnet är i handen
+    public static List<String> lines(Hero hero, List<AttackStrategy> options) {
+        List<String> lines = lines(options);
+        for (int i = 0; i < options.size(); i++) {
+            if (highlighted(hero, options.get(i))) lines.set(i, AsciiArt.yellow(lines.get(i)));
+        }
+        return lines;
+    }
 
     // Menyraderna med nummer, t.ex. "1. Närstrid" eller "1. DoomScrolla"
     public static List<String> lines(List<AttackStrategy> options) {
