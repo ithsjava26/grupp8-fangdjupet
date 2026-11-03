@@ -10,20 +10,24 @@ public final class Martin {
     public static final String NAME = "Lektor Martin";
     public static final String ANGRY = NAME + " ser Städrustningen och blir arg! Han förklarar hårdare.";
 
-    // En ny Martin varje gång: 40 hp, nivå 3. Han förklarar med KnowledgeAttack och
+    // Martins styrka: hp och förklaringarna (fas 1, och fas 2 från halva livet). Arg = i Städrustningen.
+    public static final int HP = 50;
+    static final int EXPLAIN = 7, EXPLAIN_HARDER = 10;
+    static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 10;
+
+    // En ny Martin varje gång: 50 hp, nivå 3. Han förklarar med KnowledgeAttack och
     // byter till den tyngre förklaringen vid halva livet (Boss sköter bytet).
     public static Boss create() {
-        Boss martin = new Boss(NAME, 40,
-                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", 3),   // fas 1
-                new KnowledgeAttack("Utterly explained", 5),                                  // fas 2
+        Boss martin = new Boss(NAME, HP,
+                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", EXPLAIN),   // fas 1
+                new KnowledgeAttack("Utterly explained", EXPLAIN_HARDER),                           // fas 2
                 3);
         // withLine returnerar en Enemy, inte en Boss – därför sparas bossen i en variabel först
         martin.withLine("Let me explain Hello World to you...");
         return martin;
     }
 
-    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 4 i skada i stället för 3 (fas 2 är kvar på 5).
-    // Vid fullt hp vinner hjälten då ungefär 78 % i stället för 89 % (simulerat med StackOverflow).
+    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 10).
     // Kunskap går ändå rakt igenom rustningen, så försvaret hjälper inte mot honom.
     // Förklaringarna heter likadant, så AttackArt visar samma bilder.
     public static final String ENRAGED_LINE = "Jaså, städrustning? Kunskap går rakt igenom gummi!";
@@ -31,8 +35,8 @@ public final class Martin {
     public static void enrage(Boss martin) {
         if (martin == null || martin.isEnraged()) return;
         martin.enrage(
-                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", 4),
-                new KnowledgeAttack("Utterly explained", 5));
+                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", ANGRY_EXPLAIN),
+                new KnowledgeAttack("Utterly explained", ANGRY_EXPLAIN_HARDER));
         martin.withLine(ENRAGED_LINE);
     }
 

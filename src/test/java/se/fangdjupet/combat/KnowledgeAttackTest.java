@@ -80,21 +80,21 @@ class KnowledgeAttackTest {
     }
 
     @Test
-    void doomscrollCostsOneHp() {
-        assertEquals(5, KnowledgeAttack.DOOMSCROLL.calculateDamage(student(), martin()));
-        assertEquals(1, KnowledgeAttack.DOOMSCROLL.selfDamage());
+    void doomscrollCostsTwoHp() {
+        assertEquals(9, KnowledgeAttack.DOOMSCROLL.calculateDamage(student(), martin()));
+        assertEquals(2, KnowledgeAttack.DOOMSCROLL.selfDamage());
     }
 
     @Test
     void quizHasNoSelfDamage() {
-        assertEquals(4, KnowledgeAttack.QUIZ.calculateDamage(student(), martin()));
+        assertEquals(7, KnowledgeAttack.QUIZ.calculateDamage(student(), martin()));
         assertEquals(0, KnowledgeAttack.QUIZ.selfDamage());
     }
 
     @Test
-    void stackOverflowCostsOneHp() {
-        assertEquals(6, KnowledgeAttack.STACKOVERFLOW.calculateDamage(student(), martin()));
-        assertEquals(1, KnowledgeAttack.STACKOVERFLOW.selfDamage());
+    void stackOverflowCostsThreeHp() {
+        assertEquals(11, KnowledgeAttack.STACKOVERFLOW.calculateDamage(student(), martin()));
+        assertEquals(3, KnowledgeAttack.STACKOVERFLOW.selfDamage());
     }
 
     @Test
@@ -102,7 +102,23 @@ class KnowledgeAttackTest {
         assertEquals(0, KnowledgeAttack.SCREENSHARE.selfDamage());
     }
 
-    // ── Dela skärm: 50/50 – ibland går det bra (6), ibland dåligt (1) ──
+    // ── Dela skärm: +10 hp till hjälten, ingen skada, missar aldrig ──
+
+    @Test
+    void screenshareHealsInsteadOfHurting() {
+        assertEquals(KnowledgeAttack.SCREENSHARE_HEAL, KnowledgeAttack.SCREENSHARE.selfHeal());
+        assertEquals(10, KnowledgeAttack.SCREENSHARE_HEAL);
+        assertEquals(0, KnowledgeAttack.SCREENSHARE.calculateDamage(student(), martin()));
+        assertEquals(0, KnowledgeAttack.SCREENSHARE.missPercent());
+        assertEquals(0, KnowledgeAttack.QUIZ.selfHeal());
+    }
+
+    @Test
+    void healingNeedsAPositiveAmount() {
+        assertThrows(IllegalArgumentException.class, () -> KnowledgeAttack.healing("Vila", 0));
+    }
+
+    // ── Chansning: 50/50 – ibland går det bra (6), ibland dåligt (1) ──
 
     // En Random som alltid svarar samma sak på nextBoolean()
     private Random coin(boolean heads) {
@@ -115,9 +131,10 @@ class KnowledgeAttackTest {
     }
 
     @Test
-    void screenshareIsEitherHighOrLow() {
+    void aGambleIsEitherHighOrLow() {
+        KnowledgeAttack gamble = new KnowledgeAttack("Chansa", 1, 6, new Random(3));
         for (int i = 0; i < 50; i++) {
-            int damage = KnowledgeAttack.SCREENSHARE.calculateDamage(student(), martin());
+            int damage = gamble.calculateDamage(student(), martin());
             assertTrue(damage == 1 || damage == 6, "skada: " + damage);
         }
     }
@@ -142,7 +159,7 @@ class KnowledgeAttackTest {
     @Test
     void ordinaryKnowledgeAttackIsNotAGamble() {
         for (int i = 0; i < 20; i++) {
-            assertEquals(4, KnowledgeAttack.QUIZ.calculateDamage(student(), martin()));
+            assertEquals(7, KnowledgeAttack.QUIZ.calculateDamage(student(), martin()));
         }
     }
 

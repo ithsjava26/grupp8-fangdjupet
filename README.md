@@ -122,7 +122,7 @@ AttackStrategy (interface)          Character (abstrakt klass)
  ├─ MeleeAttack    A, PR 2           ├─ Hero    A, PR 1
  ├─ MagicAttack    A, PR 2           └─ Enemy   A, PR 1
  ├─ RangedAttack   A, PR 2                └─ Boss  A – Martin.create(), CleaningWitch.create()
- └─ KnowledgeAttack A, PR 3 (Dela skärm: 50/50)
+ └─ KnowledgeAttack A, PR 3 (Dela skärm: +10 hp)
         ▲
         └──── Character HAR en AttackStrategy (fältet `attack`)
 
@@ -141,7 +141,7 @@ En metod, `calculateDamage(attacker, target)`, som varje strategi räknar på si
 - `MeleeAttack` – styrka + anfallarens bonus − målets försvar.
 - `MagicAttack` – fast kraft, rustningen påverkar inte.
 - `RangedAttack` – slumpar med `Random` (20 % miss), annars lägre skada.
-- `KnowledgeAttack` – fast kraft som ignorerar försvaret, som `MagicAttack`, men vissa attacker kostar anfallaren hp (`DOOMSCROLL`, `STACKOVERFLOW`). `SCREENSHARE` (Dela skärm) är en chansning: 50/50 mellan 1 och 6 i skada (konstruktorn `KnowledgeAttack(namn, låg, hög, Random)`).
+- `KnowledgeAttack` – fast kraft som ignorerar försvaret, som `MagicAttack`, men vissa attacker kostar anfallaren hp (`DOOMSCROLL`, `STACKOVERFLOW`). `SCREENSHARE` (Dela skärm) gör ingen skada: hjälten tar över lektionen och får tid, **+10 hp** (`KnowledgeAttack.healing`, `selfHeal()`), och den missar aldrig (`missPercent()` 0). En chansning mellan två värden går fortfarande att göra med `KnowledgeAttack(namn, låg, hög, Random)`.
 - `CleaningAttack extends RangedAttack` – StädHäxans kast. Samma uträkning som pilbågen (20 % miss, annars styrka + halva bonusen − försvaret), men med eget namn och verb: `SPONGE` *kastar en tvättsvamp på* (6), `SVINTO` *kastar Svinto på* (8) och `CHEMICALS` *sprayar kemikalier på* (10).
 - `RandomAttack(random, attacker...)` – en strategi gjord av andra strategier. Varje slag slumpar den fram en av dem, och `name()`, `verb()` och `selfDamage()` hör till den som valdes senast, så loggen stämmer med slaget.
 
@@ -223,7 +223,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 | Skoldörren | Entrédörren – liten fiende, 15 hp, närstrid 5 | – |
 | Kafferummet | JavaFläcken – liten fiende, 15 hp, närstrid 4. Sedan en **kaffe** från kaffeautomaten (+30 hp, aldrig över max). Sist de riktiga fienderna som gömt sig där, **samtidigt**: **Troll** (12 hp, närstrid 7, nivå 2) och **Trollkarl** (16 hp, magi 6, nivå 2, säger *"Thou shall not pass!"*). När rummet är rensat: en **kanelbulle** (+35 hp). | Pilbåge |
 | Korridoren och städskrubben | **StädHäxan** (`CleaningWitch.create(random)`, en `Boss`) – 30 hp, nivå 2. Kastar tvättsvamp eller Svinto (slumpas varje slag), och vid halva livet sprayar hon kemikalier. Alla tre är avståndsattacker. Hotar: *"Ett steg till mot lektionssalen och jag tar fram kemikalierna!"* När hon är besegrad dyker **Frida** upp (se nedan). | Trollstav (staff) |
-| Lektionssalen | **Lektor Martin** (`Martin.create()`, en `Boss`) – 40 hp, nivå 3. Förklarar 3 per slag, vid halva livet 5. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
+| Lektionssalen | **Lektor Martin** (`Martin.create()`, en `Boss`) – 50 hp, nivå 3. Förklarar 7 per slag, vid halva livet 10. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
 
 #### Hjältens hp genom spelet (körning utan slump i `Battle`, närstrid och StackOverflow mot Martin – från före vapenbalansen, då närstriden var 10)
 
@@ -259,11 +259,21 @@ Robert  [##########] 40/40
 ### `combat/Boss`, `combat/CleaningWitch` och `combat/Martin` – bossarna
 - `Boss extends Enemy` börjar med en fas 1-attack och byter till en tyngre fas 2-attack när hp når halva livet, bara en gång. Bytet sker i `takeDamage`, och en `heal` byter inte tillbaka. `isInPhaseTwo()` visar om bytet skett.
 - `CleaningWitch.create(random)` ger StädHäxan som en `Boss`: fas 1 är en `RandomAttack` av `SPONGE` och `SVINTO`, och fas 2 (vid 15 hp) är `CHEMICALS`.
-- `Martin.create()` ger en `Boss`: Lektor Martin, 40 hp, nivå 3. Han förklarar med `KnowledgeAttack`: *Thoroughly explained the Hello World Java to you* (3), och under halva livet *Utterly explained* (5).
-- `Martin.heroChoices()` ger hjältens fyra val mot honom: `DOOMSCROLL`, `QUIZ`, `STACKOVERFLOW` och `SCREENSHARE`.
+- `Martin.create()` ger en `Boss`: Lektor Martin, **50 hp**, nivå 3. Han förklarar med `KnowledgeAttack`: *Thoroughly explained the Hello World Java to you* (**7**), och under halva livet *Utterly explained* (**10**). I Städrustningen blir fas 1 8.
+- `Martin.heroChoices()` ger hjältens fyra val mot honom, och boken är det femte. Attackmenyn visar vad varje val gör (`AttackMenu.effect`):
+
+  | Val | Mot Martin |
+  |---|---|
+  | 1. DoomScrolla | 9 i skada, kostar dig 2 hp |
+  | 2. Citera från JavaQuizet | 7 i skada |
+  | 3. Citera StackOverflow | 11 i skada, kostar dig 3 hp |
+  | 4. Dela skärm och ta över lektionen | +10 hp till dig, ingen skada, missar aldrig |
+  | 5. Citera från Java-boken | **14** i skada – den bästa – men 30 % risk att du slinter på sidan och missar (`JavaBookAttack.missPercent()`, `missVerb()`) |
+
+  Alla andra slag missar 10 % (`AttackStrategy.USUAL_MISS_PERCENT`), även Martins. Battle frågar attacken: `selfHeal()` > 0 ger hp i stället för skada (`Robert delar skärmen och tar över lektionen: +10 hp, ingen skada på Lektor Martin`), och `missPercent()`/`missVerb()` ger `Robert slinter på sidan och missar Lektor Martin!`.
 - **Java-boken:** Lektionssalen har den (`room.withJavaBook()`, `takeJavaBook()` bara en gång). När man kommer in tar hjälten upp den med `hero.pickUpJavaBook()`, som byter attack till StackOverflow. `hero.hasJavaBook()` gör att `AttackMenu` bara visar de fyra.
 - Martins porträtt (`AsciiArt.MARTIN`) och repliken *"Let me explain Hello World to you..."* visas när han dyker upp.
-- Med full hp och StackOverflow går det att vinna. Går Dela skärm dåligt varje gång vinner Martin. `MartinTest` kollar båda.
+- Simulerat 20 000 gånger från full hp: bara boken vinner **64 %**, boken och Dela skärm när hp är 12 eller lägre **91 %**, bara StackOverflow 9 %, JavaQuizet 5 %, DoomScrolla 3 %. Det går fram och tillbaka: båda missar ibland. Martin slår 10 i fas 2, så att Dela skärm (+10) bara köper tid och inte går att vinna med ensam (`MartinTest`, `BattleAgainstMartinTest`).
 
 ### `combat/Character` – vem som slåss
 Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklasserna måste skriva:

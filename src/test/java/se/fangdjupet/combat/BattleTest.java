@@ -482,11 +482,11 @@ class BattleTest {
     @Test
     void worksWithRealStrategies() {
         // Riktiga strategier i stället för lambdor: kunskap mot närstrid
-        Hero h = new Hero("Robin", 30, KnowledgeAttack.QUIZ);         // 4 skada, ignorerar försvar
+        Hero h = new Hero("Robin", 30, KnowledgeAttack.QUIZ);         // 7 skada, ignorerar försvar
         Enemy e = new Enemy("Troll", 20, new MeleeAttack(2), 2);      // 2 + 2 − 0 = 4 skada
-        // Robin: 30 / 4 → behöver 8 slag på sig. Trollet: 20 / 4 → dör på 5:e slaget.
+        // Robin: 30 / 4 → behöver 8 slag på sig. Trollet: 20 / 7 → dör på 3:e slaget.
         assertSame(h, battle().fight(h, e));
-        assertEquals(14, h.getHp());                  // trollet hann slå 4 gånger: 30 − 16
+        assertEquals(22, h.getHp());                  // trollet hann slå 2 gånger: 30 − 8
     }
 
     // ── Flera fiender samtidigt (trollet och trollkarlen i kafferummet) ──

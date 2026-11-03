@@ -84,9 +84,20 @@ public final class AttackMenu {
     public static List<String> lines(List<AttackStrategy> options) {
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < options.size(); i++) {
-            lines.add((i + 1) + ". " + label(options.get(i)));   // numret är positionen + 1
+            lines.add((i + 1) + ". " + label(options.get(i)) + effect(options.get(i)));   // numret är positionen + 1
         }
         return lines;
+    }
+
+    // Vad attacken gör mot Martin, i menyn: "(14 i skada, 30 % risk att du slinter på sidan)", "(+10 hp till dig, ingen skada)"
+    static String effect(AttackStrategy attack) {
+        return switch (attack) {
+            case KnowledgeAttack k when k.selfHeal() > 0 -> "  (+" + k.selfHeal() + " hp till dig, ingen skada, missar aldrig)";
+            case KnowledgeAttack k when k.lowPower() != k.power() -> "  (" + k.lowPower() + " eller " + k.power() + " i skada)";
+            case KnowledgeAttack k -> "  (" + k.power() + " i skada" + (k.selfDamage() > 0 ? ", kostar dig " + k.selfDamage() + " hp" : "") + ")";
+            case JavaBookAttack b -> "  (" + JavaBookAttack.POWER + " i skada, " + JavaBookAttack.SLIP_PERCENT + " % risk att du slinter på sidan)";
+            default -> "";
+        };
     }
 
     // Attackens namn på svenska, t.ex. "Närstrid". Används i menyn och i "Visa hjältens utrustning".

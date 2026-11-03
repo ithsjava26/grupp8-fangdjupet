@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 // så Battle bryr sig inte om hur skadan räknas, bara att den räknas.
 public class Battle {
     private static final int MAX_ROUNDS = 100;    // rundtak: en strid får aldrig fastna
-    private static final int MISS_PERCENT = 10;   // så ofta ett slag missar när slumpen är på
 
     private final GameEventListener listener;     // dit loggen skickas, t.ex. konsolen eller ett test
 
@@ -88,15 +87,26 @@ public class Battle {
                 showArt(chosen);                            // bilden för det spelaren valde, t.ex. DoomScrolla
             }
             Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
-            boolean heroMisses = misses();                  // slumpen: ibland missar man
-            int damage = heroMisses ? 0 : vary(hero.attack(target));   // bara skadan räknas ut här, hp ändras inte än
-            if (heroMisses) {
-                listener.onEvent("Hero: " + hero.getName() + " missar " + target.getName() + "!");
+            AttackStrategy attack = hero.getAttack();
+            int damage = 0;
+            if (attack.selfHeal() > 0) {
+                // T.ex. Dela skärm: hjälten tar över lektionen och får tid – hp i stället för skada, missar aldrig
+                int before = hero.getHp();
+                hero.heal(attack.selfHeal());
+                listener.onEvent("Hero: " + hero.getName() + " " + attack.verb() + ": +" + (hero.getHp() - before)
+                        + " hp, ingen skada på " + target.getName());
+                listener.onEvent(HpBar.status(hero, 10));
             } else {
-                listener.onEvent("Hero: " + hero.getName() + " " + hit(hero.getAttack(), target, damage));
+                boolean heroMisses = misses(attack.missPercent());   // slumpen: ibland missar man (Java-boken oftare)
+                damage = heroMisses ? 0 : vary(hero.attack(target));  // bara skadan räknas ut här, hp ändras inte än
+                if (heroMisses) {
+                    listener.onEvent("Hero: " + hero.getName() + " " + attack.missVerb() + " " + target.getName() + "!");
+                } else {
+                    listener.onEvent("Hero: " + hero.getName() + " " + hit(attack, target, damage));
+                }
+                target.takeDamage(damage);                          // nu dras skadan av fienden
+                listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
             }
-            target.takeDamage(damage);                          // nu dras skadan av fienden
-            listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
             hero.takeDamage(hero.getAttack().selfDamage());   // attacken kan kosta hjälten hp
             if(hero.getAttack().selfDamage() > 0) {
                 listener.onEvent(HpBar.status(hero, 10));// grafik: hp-mätare för hjälten, 10 tecken bred
@@ -104,7 +114,7 @@ public class Battle {
             if (!anyAlive(enemies) || !hero.isAlive()) break;   // ingen av de döda slår mer
             for (Enemy enemy : enemies) {                     // fiendernas tur, en i taget
                 if (!enemy.isAlive()) continue;                // döda fiender slår inte
-                boolean enemyMisses = misses();
+                boolean enemyMisses = misses(enemy.getAttack().missPercent());
                 damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut
                 // Efter attack(): då vet RandomAttack vilket kast det blev (svamp eller Svinto)
                 if (enemy instanceof Boss && bossAttacksShown.add(enemy.getAttack().name())) {
@@ -143,9 +153,9 @@ public class Battle {
         AttackArt.forAttack(attack).ifPresent(art -> listener.onEvent(art.stripTrailing()));
     }
 
-    // Slumpen (bara med Random): MISS_PERCENT % av slagen missar
-    private boolean misses() {
-        return random != null && random.nextInt(100) < MISS_PERCENT;
+    // Slumpen (bara med Random): percent % av slagen missar – oftast 10 % (AttackStrategy.USUAL_MISS_PERCENT)
+    private boolean misses(int percent) {
+        return random != null && random.nextInt(100) < percent;
     }
 
     // Slagets rad i loggen. 0 i skada (bomkast eller för bra försvar) skrivs som en miss.

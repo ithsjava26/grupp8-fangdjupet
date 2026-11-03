@@ -13,12 +13,21 @@ class JavaBookAttackTest {
     void firstChapter18ThenChapter20ThenFromTheStart() {
         JavaBookAttack book = new JavaBookAttack();
         assertEquals("Citera från Java-boken, kapitel 18: Polymorphism", book.name());
-        assertEquals(5, book.calculateDamage(hero, martin));
+        assertEquals(14, book.calculateDamage(hero, martin));
         assertEquals("citerar kapitel 18: Polymorphism för", book.verb(), "loggen visar kapitlet som just lästes");
         assertEquals("Citera från Java-boken, kapitel 20: Interface", book.name(), "menyn visar nästa kapitel");
         book.calculateDamage(hero, martin);
         assertEquals("citerar kapitel 20: Interface för", book.verb());
         assertEquals("Citera från Java-boken, kapitel 18: Polymorphism", book.name());
+    }
+
+    @Test
+    void itIsTheBestButYouCanSlipOnThePage() {
+        JavaBookAttack book = new JavaBookAttack();
+        assertTrue(JavaBookAttack.POWER > KnowledgeAttack.STACKOVERFLOW.power(), "boken ska vara bäst mot Martin");
+        assertEquals(30, book.missPercent());
+        assertTrue(book.missPercent() > AttackStrategy.USUAL_MISS_PERCENT);
+        assertEquals("slinter på sidan och missar", book.missVerb());
     }
 
     @Test
