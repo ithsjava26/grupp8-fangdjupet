@@ -3,6 +3,7 @@ package se.fangdjupet.combat;
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
 
 import java.util.Optional;
 import java.util.Random;
@@ -39,13 +40,30 @@ public class Hero extends Character {
         this.armor = armor;
     }
 
-    // Attackbonus kommer från vapnet, 0 utan vapen
+    // Attackbonus kommer från vapnet – men bara när attacken passar vapnet:
+    // pilbågen hjälper avståndsattacken, svärdet närstriden, spjutet båda. Knytnävarna blir inte bättre av en pilbåge.
+    // 0 utan vapen. (Magi räknar inte bonus – staven gör magin starkare i AttackMenu i stället.)
     @Override
     public int getAttackBonus() {
-        if (weapon == null) {
+        if (weapon == null || !suits(weapon.range(), getAttack())) {
             return 0;
         }
         return weapon.damageBonus();
+    }
+
+    // Passar attacken vapnets räckvidd?
+    static boolean suits(WeaponRange range, AttackStrategy attack) {
+        return switch (range) {
+            case MELEE -> attack instanceof MeleeAttack;
+            case RANGED -> attack instanceof RangedAttack;
+            case MAGIC -> attack instanceof MagicAttack;
+            case BOTH -> attack instanceof MeleeAttack || attack instanceof RangedAttack;
+        };
+    }
+
+    // Håller hjälten ett vapen med den räckvidden? T.ex. pilbågen = RANGED
+    public boolean holds(WeaponRange range) {
+        return weapon != null && weapon.range() == range;
     }
 
     // Försvar kommer från rustningen, 0 utan rustning

@@ -92,4 +92,16 @@ class AttackMenuTest {
         assertNull(AttackMenu.choose(AttackMenu.options(hero()), "hej"));
         assertNull(AttackMenu.choose(AttackMenu.options(hero()), null));
     }
+
+    @Test
+    void theBowAndTheStaffMakeTheirAttacksMuchStronger() {
+        Hero hero = new Hero("Robert", 40, new MeleeAttack(AttackMenu.MELEE));
+        se.fangdjupet.combat.Character dummy = new Hero("Docka", 99, new MeleeAttack(1));
+        assertEquals(AttackMenu.MAGIC, AttackMenu.options(hero).get(1).calculateDamage(hero, dummy));
+        hero.equip(new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.STAFF,
+                se.fangdjupet.items.WeaponRange.MAGIC, "Trollstav", 4, 1));
+        assertEquals(AttackMenu.STAFF_MAGIC + 4, AttackMenu.options(hero).get(1).calculateDamage(hero, dummy));
+        assertTrue(AttackMenu.BOW_RANGED > AttackMenu.MELEE + 4, "pilbågen ska vara mycket bättre än knytnävarna");
+        assertEquals(7, AttackMenu.MELEE);
+    }
 }

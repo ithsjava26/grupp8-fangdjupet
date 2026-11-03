@@ -165,6 +165,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 
 ### Rum, vapen och grafik i spelet
 - `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller bara Martins fyra `KnowledgeAttack` när hjälten har Java-boken. `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
+- **Vapnen gör skillnad** (`AttackMenu`, `Hero.getAttackBonus`): utan vapen är närstriden bäst, men knytnävarna är bara **7** (`AttackMenu.MELEE`). Pilbågen gör avståndsattacken till **13** + halva bågens bonus (`BOW_RANGED`, 20 % miss), och Trollstaven gör magin till **8 + stavens bonus** (`STAFF_MAGIC`, går rakt igenom rustningen). Utan vapen är magi och avstånd bara 4. Vapnets bonus hjälper bara sin egen attack – en pilbåge gör inte knytnävarna starkare (spjutet hjälper både närstrid och avstånd). Den som plockar upp pilbågen eller staven byter direkt till vapnets attack (`GameEngine.equipAndAim`, `AttackMenu.forWeapon`): `Du byter till Avståndsattack.` – Java-boken mot Martin går före. Simulerat 4000 gånger fram till Martin (kaffet och kanelbullen tagna): med pilbågen mot Trollet och Trollkarlen och staven mot StädHäxan tar man sig förbi **88 %**, med bara knytnävarna **36 %** (förut var det tvärtom: 94 % med närstrid och 3–9 % med pilbågen).
 - **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, 4. Spara äventyret, 5. Leta i rummet, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
 - **Gå till ett annat rum – spelaren väljer** (spelmenyn 2): spelet visar kartan och rummen med siffror, och spelaren väljer vart (Enter = stanna kvar):
   ```
@@ -222,7 +223,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 | Korridoren och städskrubben | **StädHäxan** (`CleaningWitch.create(random)`, en `Boss`) – 30 hp, nivå 2. Kastar tvättsvamp eller Svinto (slumpas varje slag), och vid halva livet sprayar hon kemikalier. Alla tre är avståndsattacker. Hotar: *"Ett steg till mot lektionssalen och jag tar fram kemikalierna!"* När hon är besegrad dyker **Frida** upp (se nedan). | Trollstav (staff) |
 | Lektionssalen | **Kapten Martin** (`Martin.create()`, en `Boss`) – 40 hp, nivå 3. Förklarar 3 per slag, vid halva livet 5. Den sista bossen: besegrad = `vinner Fångdjupet!` | Java-boken (tas upp direkt) |
 
-#### Hjältens hp genom spelet (körning utan slump i `Battle`, närstrid och StackOverflow mot Martin)
+#### Hjältens hp genom spelet (körning utan slump i `Battle`, närstrid och StackOverflow mot Martin – från före vapenbalansen, då närstriden var 10)
 
 | Efter | Robert |
 |---|---|
@@ -236,7 +237,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 | Kapten Martin | 9/40 – **vinner Fångdjupet!** |
 
 #### Svårighet med slumpen
-1000 simulerade spel med samma val (närstrid med vapnen i handen, sedan StackOverflow mot Martin): **795 vinster**. Förlusterna: 51 mot trollet och trollkarlen, 149 mot Martin (37 av dem av StackOverflows egen kostnad) och 5 mot StädHäxan. Om man bara delar skärm mot Martin vinner man 357 av 1000. Siffrorna varierar några procent mellan körningar.
+1000 simulerade spel med samma val (närstrid med vapnen i handen, sedan StackOverflow mot Martin, före vapenbalansen): **795 vinster**. Förlusterna: 51 mot trollet och trollkarlen, 149 mot Martin (37 av dem av StackOverflows egen kostnad) och 5 mot StädHäxan. Om man bara delar skärm mot Martin vinner man 357 av 1000. Siffrorna varierar några procent mellan körningar.
 
 #### `combat/Frida` – hjälp före Martin
 Frida är den goda karaktären. Hon slåss inte och är därför ingen `Character`. `Frida.create()` skapar henne och `WorldBuilder` ställer henne i Korridoren och städskrubben med `room.withFrida(...)`. När rummets sista fiende (StädHäxan) är besegrad dyker hon upp:

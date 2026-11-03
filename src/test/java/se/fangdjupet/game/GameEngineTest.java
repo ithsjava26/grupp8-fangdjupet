@@ -126,12 +126,13 @@ class GameEngineTest {
     }
 
     @Test
-    void aWeaponDoesNotChangeTheAttack() {
-        // Pilbågen ska inte byta närstrid mot en svagare avståndsattack – den väljs i attackmenyn
+    void aWeaponSwitchesToItsAttack() {
+        // Pilbågen är mycket bättre än knytnävarna – den som tar den börjar skjuta (kan bytas i attackmenyn)
         Hero robert = robert();
         var melee = robert.getAttack();
         GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
-        assertSame(melee, robert.getAttack());
+        assertInstanceOf(se.fangdjupet.combat.RangedAttack.class, robert.getAttack());
+        assertNotSame(melee, robert.getAttack());
     }
 
     @Test
@@ -329,12 +330,24 @@ class GameEngineTest {
     }
 
     @Test
-    void equipKeepingAttackKeepsTheChosenAttack() {
+    void pickingUpTheBowSwitchesToShooting() {
         Hero hero = robert();
-        var attack = hero.getAttack();
-        GameEngine.equipKeepingAttack(hero, new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1));
-        assertSame(attack, hero.getAttack());
-        assertEquals(3, hero.getAttackBonus());
+        GameEngine.equipAndAim(hero, new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1));
+        assertInstanceOf(se.fangdjupet.combat.RangedAttack.class, hero.getAttack());
+        assertEquals(3, hero.getAttackBonus(), "bågens bonus hjälper skotten");
+    }
+
+    @Test
+    void theStaffSwitchesToMagicButTheJavaBookKeepsKnowledge() {
+        Hero hero = robert();
+        GameEngine.equipAndAim(hero, new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Trollstav", 4, 1));
+        assertEquals(AttackMenu.STAFF_MAGIC + 4,
+                hero.getAttack().calculateDamage(hero, new Enemy("Docka", 50, new MeleeAttack(1), 1)));
+        Hero reader = robert();
+        reader.pickUpJavaBook();
+        var knowledge = reader.getAttack();
+        GameEngine.equipAndAim(reader, new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Trollstav", 4, 1));
+        assertSame(knowledge, reader.getAttack());
     }
 
     @Test

@@ -137,7 +137,7 @@ public class GameEngine {
         String heroName = IO.readln().trim();
         if (heroName.isBlank()) heroName = "Hjälten";   // ett tomt namn går inte att spara
 
-        hero = new Hero(heroName, HERO_MAX_HP, new MeleeAttack(10));
+        hero = new Hero(heroName, HERO_MAX_HP, new MeleeAttack(AttackMenu.MELEE));
         world = newWorld(random);
 
         output.onEvent("Äventyret börjar!");
@@ -205,7 +205,7 @@ public class GameEngine {
 
     // Hjälten från en sparning: närstrid som i ett nytt äventyr, och det hp hen hade när det sparades
     static Hero heroFrom(GameState state) {
-        Hero hero = new Hero(state.heroName(), state.heroMaxHp(), new MeleeAttack(10));
+        Hero hero = new Hero(state.heroName(), state.heroMaxHp(), new MeleeAttack(AttackMenu.MELEE));
         hero.takeDamage(state.heroMaxHp() - state.heroHp());
         return hero;
     }
@@ -545,17 +545,19 @@ public class GameEngine {
         for (Item item : items) {
             room.removeItem(item);
             if (item instanceof Weapon weapon) {
-                equipKeepingAttack(hero, weapon);
+                equipAndAim(hero, weapon);
             }
         }
         return items;
     }
 
-    // Vapnet i handen (bonus i skada), men attacken spelaren hade behålls
-    static void equipKeepingAttack(Hero hero, Weapon weapon) {
+    // Vapnet i handen, och hjälten byter till vapnets attack: pilbågen skjuter, staven trollar, svärdet slår.
+    // Med Java-boken (bara kunskap mot Martin) eller ett spjut (passar båda) behålls attacken.
+    static void equipAndAim(Hero hero, Weapon weapon) {
         AttackStrategy attack = hero.getAttack();
         hero.equip(weapon);       // equip byter attack efter vapnet ...
-        hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
+        hero.setAttack(attack);   // ... med grundstyrkan, så vi lägger tillbaka den spelaren hade ...
+        AttackMenu.forWeapon(hero).ifPresent(hero::setAttack);   // ... och tar menyns attack för vapnet
     }
 
     // Bossen ser Städrustningen: Martin blir arg och förklarar hårdare, StädHäxan skrattar elakt
@@ -604,8 +606,9 @@ public class GameEngine {
                 output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
             }
             case Weapon weapon -> {
-                equipKeepingAttack(hero, weapon);
+                equipAndAim(hero, weapon);
                 output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+                output.onEvent("Du byter till " + AttackMenu.label(hero.getAttack()) + ".");
             }
             case Potion potion -> {
                 int before = hero.getHp();

@@ -1,9 +1,11 @@
 package se.fangdjupet.game;
 
 import se.fangdjupet.combat.*;
+import se.fangdjupet.items.WeaponRange;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 // Attackmenyn i en strid: vilka attacker spelaren får välja, hur menyn ser ut och vad ett val betyder.
@@ -17,8 +19,34 @@ public final class AttackMenu {
         if (hero.hasJavaBook()) {
             return List.copyOf(Martin.heroChoices());
         }
-        return List.of(new MeleeAttack(10), new MagicAttack(6), new RangedAttack(5, new Random()));
+        int magic = hero.holds(WeaponRange.MAGIC)
+                ? STAFF_MAGIC + hero.getWeapon().orElseThrow().damageBonus()   // staven: magin blir mycket starkare
+                : MAGIC;
+        int ranged = hero.holds(WeaponRange.RANGED) ? BOW_RANGED : RANGED;   // pilbågen: skjuter på riktigt
+        return List.of(new MeleeAttack(MELEE), new MagicAttack(magic), new RangedAttack(ranged, new Random()));
     }
+
+    // Menyns attack för vapnet hjälten håller: pilbågen = avstånd, staven = magi, svärdet = närstrid.
+    // Tomt med Java-boken (bara kunskap mot Martin), utan vapen, eller med spjutet (passar båda).
+    public static Optional<AttackStrategy> forWeapon(Hero hero) {
+        if (hero.hasJavaBook() || hero.getWeapon().isEmpty()) return Optional.empty();
+        List<AttackStrategy> options = options(hero);
+        return switch (hero.getWeapon().get().range()) {
+            case MELEE -> Optional.of(options.get(0));
+            case MAGIC -> Optional.of(options.get(1));
+            case RANGED -> Optional.of(options.get(2));
+            case BOTH -> Optional.empty();
+        };
+    }
+
+    // Styrkorna i attackmenyn. Utan vapen är närstriden bäst; med pilbågen eller staven är deras attack mycket bättre.
+    // Pilbågen lägger dessutom till halva sin bonus (RangedAttack), och avstånd missar 20 % av skotten.
+    // Magi går rakt igenom rustningen och missar aldrig (bara Battles vanliga miss).
+    static final int MELEE = 7;          // knytnävarna (bonus bara med svärd eller spjut)
+    static final int MAGIC = 4;          // magi utan stav
+    static final int RANGED = 4;         // kasta saker utan pilbåge
+    static final int STAFF_MAGIC = 8;    // magi med Trollstaven: 8 + stavens bonus
+    static final int BOW_RANGED = 13;    // pil och båge: 11 + halva bågens bonus
 
     // Menyraderna med nummer, t.ex. "1. Närstrid" eller "1. DoomScrolla"
     public static List<String> lines(List<AttackStrategy> options) {
