@@ -2,6 +2,7 @@ package se.fangdjupet.game;
 
 import se.fangdjupet.combat.*;
 
+import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Weapon;
@@ -78,6 +79,7 @@ public class GameEngine {
                 2. Gå till ett annat rum
                 3. Visa hjältens utrustning
                 4. Spara äventyret
+                5. Leta i rummet
                 e. Avsluta
                 """;
     }
@@ -97,6 +99,7 @@ public class GameEngine {
                 case "2" -> moveToAnotherRoom();
                 case "3" -> showEquipment();
                 case "4" -> saveAdventure();
+                case "5" -> searchRoom();
                 case "e" -> exitGame();
                 default -> output.onEvent("Ogiltigt val. Försök igen.");
             }
@@ -204,6 +207,9 @@ public class GameEngine {
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
+        // Bilder på det hjälten bär: vapnet (t.ex. pilbågen) och rustningen (t.ex. Städrustningen)
+        hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+        hero.getArmor().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
     }
 
     // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
@@ -363,12 +369,47 @@ public class GameEngine {
         for (Item item : items) {
             room.removeItem(item);
             if (item instanceof Weapon weapon) {
-                AttackStrategy attack = hero.getAttack();
-                hero.equip(weapon);       // equip byter attack efter vapnet ...
-                hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
+                equipKeepingAttack(hero, weapon);
             }
         }
         return items;
+    }
+
+    // Vapnet i handen (bonus i skada), men attacken spelaren hade behålls
+    static void equipKeepingAttack(Hero hero, Weapon weapon) {
+        AttackStrategy attack = hero.getAttack();
+        hero.equip(weapon);       // equip byter attack efter vapnet ...
+        hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
+    }
+
+    // Spelmenyn 5: letar i rummet. Det som var gömt (Städrustningen i städskrubben) tas på eller används direkt.
+    private void searchRoom() {
+        Room room = world.getCurrentRoom();
+        output.onEvent("Du letar i " + room.getName() + " ...");
+        List<Item> found = room.search();
+        if (found.isEmpty()) {
+            output.onEvent("Du hittar inget här.");
+            return;
+        }
+        for (Item item : found) {
+            output.onEvent("Du hittar: " + item.description() + "!");
+            AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));
+            switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
+                case Armor armor -> {
+                    hero.equip(armor);
+                    output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
+                }
+                case Weapon weapon -> {
+                    equipKeepingAttack(hero, weapon);
+                    output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+                }
+                case Potion potion -> {
+                    int before = hero.getHp();
+                    hero.drink(potion);
+                    output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
+                }
+            }
+        }
     }
 
     // Visar rummets namn, beskrivning och bild, plockar upp det som ligger där – och tar Java-boken i Lektionssalen
@@ -381,7 +422,7 @@ public class GameEngine {
         // Det som ligger i rummet plockar hjälten upp direkt, som Java-boken
         for (Item item : pickUpAll(hero, room)) {
             output.onEvent("Du hittar och plockar upp: " + item.description());
-            showArt(item.description());
+            AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
             if (item instanceof Weapon weapon) {
                 output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
             }

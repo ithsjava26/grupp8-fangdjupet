@@ -1,5 +1,8 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.items.Item;
+import se.fangdjupet.items.ItemType;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -176,6 +179,65 @@ public final class AsciiArt {
                  |
             """;
 
+    // Städrustningen som ligger gömd i städskrubben: gummiförkläde, hink som hjälm och moppen
+    public static final String CLEANING_ARMOR = """
+                 _______
+                |_HINK__|
+                 (o   o)          STADRUSTNING
+               .-'-----'-.        +20 i forsvar
+              /|  _____  |\\
+             | | |GUMMI| | |#
+             | | |_____| | |#     gummiforklade
+               |_________| #     och moppen
+                |   |   |  #
+                |___|___| _#_
+            """;
+
+    // Föremålen per sort (ItemType), för vapen och rustningar som inte har en egen bild på namnet
+    public static final String SWORD = """
+                   /\\
+                   ||
+                   ||
+                   ||        SVARD
+                 o=||=o
+                   ##
+                   ()
+            """;
+
+    public static final String SPEAR = """
+                   /\\
+                  /  \\
+                  \\  /
+                   ||        SPJUT
+                   ||
+                   ||
+                   ||
+            """;
+
+    public static final String SHIELD = """
+               .--------.
+               | \\    / |
+               |  \\  /  |    SKOLD
+               |   ><   |
+                \\  /\\  /
+                 '----'
+            """;
+
+    public static final String HELMET = """
+                .------.
+               /  ____  \\
+              |  |____|  |   HJALM
+              |__________|
+            """;
+
+    public static final String POTION = """
+                  _
+                 |=|
+                .' '.
+               | ~~~ |       DRYCK
+               |_____|
+            """;
+
     // ── Game over ──
 
     // Visas i rött när hjälten dör – se red()
@@ -229,13 +291,31 @@ public final class AsciiArt {
             Map.entry("en kanelbulle", CINNAMON_BUN),
             Map.entry("Java-bok", JAVA_BOOK),
             Map.entry("Pilbåge", BOW),
-            Map.entry("Trollstav", STAFF));
+            Map.entry("Trollstav", STAFF),
+            Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR));
 
     // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
     //   AsciiArt.forName(enemy.getName()).ifPresent(art -> AsciiArt.show(output, art));
     public static Optional<String> forName(String name) {
         if (name == null) return Optional.empty();
         return Optional.ofNullable(THINGS.get(name));
+    }
+
+    // Sorten -> bilden, när föremålet inte har en egen bild på namnet
+    private static final Map<ItemType, String> ITEM_TYPES = Map.of(
+            ItemType.SWORD, SWORD,
+            ItemType.SPEAR, SPEAR,
+            ItemType.BOW, BOW,
+            ItemType.STAFF, STAFF,
+            ItemType.SHIELD, SHIELD,
+            ItemType.HELMET, HELMET,
+            ItemType.POTION, POTION);
+
+    // Bilden för ett föremål: först på namnet (t.ex. "Pilbåge", "en kopp kaffe"), annars på sorten
+    // (ett svärd från ItemFactory får svärdet). Tomt för null.
+    public static Optional<String> forItem(Item item) {
+        if (item == null) return Optional.empty();
+        return forName(item.description()).or(() -> Optional.ofNullable(ITEM_TYPES.get(item.type())));
     }
 
     // Rumsnamnet (Room.getName()) -> bilden. Namnen måste vara exakt som i WorldBuilder.

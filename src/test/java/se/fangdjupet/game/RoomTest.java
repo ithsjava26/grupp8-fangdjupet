@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.MagicAttack;
 import se.fangdjupet.combat.MeleeAttack;
+import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.ItemType;
 
 import java.util.List;
 
@@ -220,5 +222,31 @@ class RoomTest {
         Room room = world.getCurrentRoom();
         assertEquals("StädHäxan", room.getEnemy().getName());
         assertTrue(room.getEnemy().getLine().orElseThrow().contains("kemikalier"));
+    }
+
+    // ── Gömda föremål: hittas bara om man letar (spelmenyn 5) ──
+
+    @Test
+    void hiddenItemIsFoundOnlyOnce() {
+        Armor armor = new Armor(ItemType.SHIELD, "Städrustning", 20, 2);
+        Room room = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(armor);
+        assertEquals(List.of(armor), room.search());
+        assertTrue(room.search().isEmpty(), "andra gången finns inget kvar");
+    }
+
+    @Test
+    void hiddenItemIsNotPickedUpWhenYouEnter() {
+        Room room = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
+        assertTrue(room.getItems().isEmpty());   // det som plockas upp direkt är något annat än det gömda
+    }
+
+    @Test
+    void roomWithoutHiddenItemsFindsNothing() {
+        assertTrue(coffeeRoom(enemy("JavaFläcken")).search().isEmpty());
+    }
+
+    @Test
+    void hidingNullIsNotAllowed() {
+        assertThrows(IllegalArgumentException.class, () -> coffeeRoom().withHiddenItem(null));
     }
 }

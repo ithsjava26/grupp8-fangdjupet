@@ -1,5 +1,6 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemFactory;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
@@ -14,6 +15,9 @@ import java.util.List;
 // Bygger spelvärlden (Fredrik): de fyra rummen i rad, med fiender, föremål och extra saker.
 // Skoldörren → Kafferummet → Korridoren och städskrubben → Lektionssalen.
 public class WorldBuilder {
+
+    // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
+    public static final String STADRUSTNING = "Städrustning";
 
     public World build(
             Enemy doorEnemy,
@@ -58,7 +62,11 @@ public class WorldBuilder {
                 "Korridoren känns lång.",
                 corridorEnemy,
                 List.of(ItemFactory.createWeapon(ItemType.STAFF, "Trollstav", 1))
-        ).withFrida(Frida.create());   // Frida dyker upp när StädHäxan är besegrad
+        ).withFrida(Frida.create())    // Frida dyker upp när StädHäxan är besegrad
+         // Gömd i städskrubben: hittas bara om man letar (spelmenyn 5). ItemType har ingen egen
+         // rustningssort, så SHIELD används. +20 försvar: närstrid och StädHäxans kast gör nästan
+         // ingen skada – men Martins kunskap går rakt igenom rustningen.
+         .withHiddenItem(new Armor(ItemType.SHIELD, STADRUSTNING, 20, 2));
 
         Room classroom = new Room(
                 "Lektionssalen",

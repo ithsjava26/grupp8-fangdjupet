@@ -188,4 +188,42 @@ class AsciiArtTest {
     void redRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> AsciiArt.red(null));
     }
+
+    // ── Föremålen: bild på namnet, annars på sorten ──
+
+    @Test
+    void itemArtByNameFirst() {
+        var bow = new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.BOW,
+                se.fangdjupet.items.WeaponRange.RANGED, "Pilbåge", 3, 1);
+        assertEquals(AsciiArt.BOW, AsciiArt.forItem(bow).orElseThrow());
+    }
+
+    @Test
+    void itemArtByTypeWhenTheNameHasNoPicture() {
+        var sword = new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.SWORD,
+                se.fangdjupet.items.WeaponRange.MELEE, "Rostigt svärd", 4, 1);
+        var helmet = new se.fangdjupet.items.Armor(se.fangdjupet.items.ItemType.HELMET, "Cykelhjälm", 2, 1);
+        assertEquals(AsciiArt.SWORD, AsciiArt.forItem(sword).orElseThrow());
+        assertEquals(AsciiArt.HELMET, AsciiArt.forItem(helmet).orElseThrow());
+    }
+
+    @Test
+    void cleaningArmorHasItsOwnPicture() {
+        var armor = new se.fangdjupet.items.Armor(se.fangdjupet.items.ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2);
+        assertEquals(AsciiArt.CLEANING_ARMOR, AsciiArt.forItem(armor).orElseThrow());   // inte skölden
+    }
+
+    @Test
+    void everyItemTypeHasPlainAsciiArt() {
+        for (String art : List.of(AsciiArt.SWORD, AsciiArt.SPEAR, AsciiArt.SHIELD, AsciiArt.HELMET,
+                AsciiArt.POTION, AsciiArt.CLEANING_ARMOR)) {
+            assertTrue(isPlainAscii(art));
+            assertTrue(art.lines().allMatch(line -> line.length() <= 60));
+        }
+    }
+
+    @Test
+    void nullItemHasNoArt() {
+        assertTrue(AsciiArt.forItem(null).isEmpty());
+    }
 }

@@ -18,6 +18,7 @@ public class Room {
     // En våg kan vara en fiende eller flera samtidigt (trollet och trollkarlen).
     private final List<List<Enemy>> waves = new ArrayList<>();
     private final List<Item> items;
+    private final List<Item> hidden = new ArrayList<>();   // hittas bara om man letar (spelmenyn 5)
     private Frida frida;                 // dyker upp när rummets fiender är besegrade, null = ingen
     private Refreshment refreshment;     // något att dricka mellan vågorna, null = inget (eller redan drucket)
     private Refreshment reward;          // något att äta när rummet är rensat, null = inget (eller redan uppätet)
@@ -115,6 +116,20 @@ public class Room {
         Optional<Refreshment> taken = Optional.ofNullable(refreshment);
         refreshment = null;
         return taken;
+    }
+
+    // Gömmer ett föremål i rummet. Det plockas inte upp när man kommer in – man måste leta (spelmenyn 5).
+    public Room withHiddenItem(Item item) {
+        if (item == null) throw new IllegalArgumentException("item must not be null");
+        hidden.add(item);
+        return this;
+    }
+
+    // Letar i rummet: ger allt som var gömt, bara en gång – sedan finns inget mer att hitta
+    public List<Item> search() {
+        List<Item> found = List.copyOf(hidden);
+        hidden.clear();
+        return found;
     }
 
     // En kopia – listan i rummet ändras bara via removeItem
