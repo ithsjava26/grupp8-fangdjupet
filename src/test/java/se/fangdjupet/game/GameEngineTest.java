@@ -346,4 +346,106 @@ class GameEngineTest {
         hero.equip(new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2));
         assertTrue(GameEngine.wearsCleaningArmor(hero));
     }
+
+    // ── Kartan och "Gå till ett annat rum" ──
+
+    private void clearCurrent(World world) {
+        Room room = world.getCurrentRoom();
+        while (room.hasLivingEnemy()) room.getEnemies().forEach(e -> e.takeDamage(999));
+    }
+
+    @Test
+    void mapAtTheStart() {
+        World world = GameEngine.newWorld(new Random(1));
+        assertEquals("""
+                KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last
+                [@] Skoldorren    -- [#] Kafferummet
+                                      |
+                [#] Lektionssalen -- [#] Korridoren""", GameEngine.roomMap(world));
+    }
+
+    @Test
+    void mapShowsClearedNewAndCurrentRooms() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);                       // Entrédörren besegrad
+        assertTrue(GameEngine.roomMap(world).contains("[@] Skoldorren    -- [?] Kafferummet"));
+        world.moveTo(1);                           // Kafferummet, JavaFläcken lever
+        world.moveTo(0);                           // tillbaka till Skoldörren
+        String map = GameEngine.roomMap(world);
+        assertTrue(map.contains("[@] Skoldorren"));
+        assertTrue(map.contains("[!] Kafferummet"), map);
+        assertTrue(map.contains("[#] Korridoren"));
+    }
+
+    @Test
+    void mapIsPlainAsciiAndFitsTheConsole() {
+        String map = GameEngine.roomMap(GameEngine.newWorld(new Random(1)));
+        assertTrue(map.chars().allMatch(c -> c < 128));
+        assertTrue(map.lines().allMatch(l -> l.length() <= 60));
+    }
+
+    @Test
+    void roomChoicesShowWhereYouAreAndWhatIsLocked() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);
+        assertEquals("""
+                Vart vill du gå?
+                1. Skoldörren  (du är här)
+                2. Kafferummet  (nytt rum)
+                3. Korridoren och städskrubben  (låst)
+                4. Lektionssalen  (låst)""", GameEngine.roomChoices(world));
+    }
+
+    @Test
+    void visitedRoomIsCleared() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);
+        world.moveTo(1);
+        assertTrue(GameEngine.roomChoices(world).contains("1. Skoldörren  (rensat)"));
+    }
+
+    @Test
+    void lockedMessageNamesWhoIsInTheWay() {
+        World world = GameEngine.newWorld(new Random(1));
+        assertEquals("Kafferummet är låst. Entrédörren står i vägen i Skoldörren – besegra rummets fiender först.",
+                GameEngine.lockedMessage(world, 1));
+        assertEquals("Lektionssalen är låst. Du har inte hittat vägen dit än.", GameEngine.lockedMessage(world, 3));
+    }
+
+    @Test
+    void shortNamesAreAsciiWithoutTheSecondPart() {
+        assertEquals("Skoldorren", GameEngine.shortName("Skoldörren"));
+        assertEquals("Korridoren", GameEngine.shortName("Korridoren och städskrubben"));
+    }
+
+    @Test
+    void saveKeepsTheFurthestRoomWhenYouWentBack() {
+        World world = GameEngine.newWorld(new Random(1));
+        clearCurrent(world);
+        world.moveTo(1);
+        world.moveTo(0);
+        assertEquals(1, GameEngine.stateOf(robert(), world).nextRoom());
+    }
+
+    // ── Föremål i rummet: gulmarkerat, spelaren väljer ──
+
+    @Test
+    void itemHereShowsTheBonus() {
+        assertEquals("Här ligger: Pilbåge (+3 i skada)",
+                GameEngine.itemHere(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1)));
+        assertEquals("Här ligger: Städrustning (+20 i försvar)",
+                GameEngine.itemHere(new Armor(ItemType.SHIELD, "Städrustning", 20, 2)));
+        assertEquals("Här ligger: en kopp kaffe (+30 hp)",
+                GameEngine.itemHere(new Potion(ItemType.POTION, "en kopp kaffe", 30, 1)));
+    }
+
+    @Test
+    void wantsItOnlyOnYes() {
+        assertTrue(GameEngine.wantsIt("j"));
+        assertTrue(GameEngine.wantsIt(" Ja "));
+        assertTrue(GameEngine.wantsIt("y"));
+        assertFalse(GameEngine.wantsIt("n"));
+        assertFalse(GameEngine.wantsIt(""));
+        assertFalse(GameEngine.wantsIt(null));
+    }
 }

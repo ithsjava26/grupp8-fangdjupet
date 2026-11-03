@@ -268,6 +268,15 @@ public final class AsciiArt {
     // Fungerar i IntelliJ och Windows Terminal. Koderna är också ren ASCII.
     public static final String RED = "\u001B[31m";
     public static final String RESET = "\u001B[0m";
+    public static final String YELLOW = "\u001B[33m";   // gult: något man kan plocka upp
+
+    // Gör texten gul, t.ex. "Här ligger: Pilbåge (+3 i skada)"
+    public static String yellow(String text) {
+        if (text == null) {
+            throw new IllegalArgumentException("text must not be null");
+        }
+        return YELLOW + text + RESET;
+    }
 
     // Gör texten röd, t.ex. red(GAME_OVER)
     public static String red(String text) {

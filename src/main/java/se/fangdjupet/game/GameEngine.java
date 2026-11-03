@@ -56,6 +56,7 @@ public class GameEngine {
     }
 
     private void showMenu() {
+        if (world != null) IO.println(roomMap(world));   // kartan över rummen syns hela tiden i spelet
         IO.println(menu(world == null ? null : world.getCurrentRoom()));
         IO.print("Välj ett alternativ: ");
     }
@@ -171,7 +172,7 @@ public class GameEngine {
 
     // Spelmenyn 4: sparar hjältens namn, hp och rummet på sparplats 1 (en gammal sparning skrivs över)
     private void saveAdventure() {
-        Room room = world.getCurrentRoom();
+        Room room = world.getRooms().get(world.getFurthestRoomIndex());   // där hjälten fortsätter
         try {
             saves.save(stateOf(hero, world), SAVE_SLOT);
             output.onEvent("Äventyret är sparat: " + room.getName() + ", " + hero.getHp() + "/" + hero.getMaxHp() + " hp.");
@@ -181,9 +182,11 @@ public class GameEngine {
         }
     }
 
-    // Det som sparas: namn, maxHp, hp och numret på rummet hjälten är i (0 = Skoldörren)
+    // Det som sparas: namn, maxHp, hp och numret på rummet längst fram som hjälten har nått (0 = Skoldörren).
+    // Har hjälten gått tillbaka till Kafferummet från Korridoren fortsätter hen ändå i Korridoren –
+    // rummen före är rensade, annars hade hjälten inte kommit dit.
     static GameState stateOf(Hero hero, World world) {
-        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getCurrentRoomIndex());
+        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex());
     }
 
     // Hjälten från en sparning: närstrid som i ett nytt äventyr, och det hp hen hade när det sparades
@@ -338,17 +341,125 @@ public class GameEngine {
             return;
         }
 
-        Optional<String> blocked = blockedBy(world.getCurrentRoom());
-        if (blocked.isPresent()) {
-            output.onEvent(blocked.get());
+        // Spelaren väljer själv: kartan och rummen med siffror, Enter = stanna kvar
+        IO.println(roomMap(world));
+        IO.println(roomChoices(world));
+        IO.print("Välj rum (Enter = stanna kvar): ");
+        goTo(IO.readln().trim());
+    }
+
+    // Svaret på "Välj rum": en siffra i listan, eller tomt för att stanna
+    private void goTo(String answer) {
+        Room here = world.getCurrentRoom();
+        if (answer.isEmpty()) {
+            output.onEvent("Du stannar i " + here.getName() + ".");
             return;
         }
-
-        if (world.moveForward()) {
+        int index;
+        try {
+            index = Integer.parseInt(answer) - 1;
+        } catch (NumberFormatException e) {
+            output.onEvent("Ogiltigt val. Försök igen.");
+            return;
+        }
+        if (index < 0 || index >= world.getRooms().size()) {
+            output.onEvent("Ogiltigt val. Försök igen.");
+        } else if (index == world.getCurrentRoomIndex()) {
+            output.onEvent("Du är redan i " + here.getName() + ".");
+        } else if (world.moveTo(index)) {
+            output.onEvent("Du går till " + world.getCurrentRoom().getName() + ".");
             showCurrentRoom();
         } else {
-            output.onEvent("Det finns inga fler rum.");
+            output.onEvent(lockedMessage(world, index));
         }
+    }
+
+    // Varför ett rum är låst: rummet längst fram har en fiende som lever, eller rummet ligger längre bort
+    static String lockedMessage(World world, int index) {
+        String name = world.getRooms().get(index).getName();
+        Room front = world.getRooms().get(world.getFurthestRoomIndex());
+        if (index == world.getFurthestRoomIndex() + 1) {
+            String blocker = blockedBy(front).map(m -> m.substring(0, m.indexOf(" står i vägen"))).orElse("någon");
+            return name + " är låst. " + blocker + " står i vägen i " + front.getName() + " – besegra rummets fiender först.";
+        }
+        return name + " är låst. Du har inte hittat vägen dit än.";
+    }
+
+    // ── Kartan över rummen ──
+    // Två rader som en slinga: Skoldörren → Kafferummet överst, Korridoren → Lektionssalen nederst (åt vänster).
+    //   KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last
+    //   [x] Skoldorren -- [@] Kafferummet
+    //                       |
+    //   [#] Lektionssalen -- [?] Korridoren
+    // Bara ren ASCII, som all annan grafik.
+    static final String MAP_LEGEND = "KARTA  @ du ar har  x rensat  ! fiender  ? nytt  # last";
+
+    static String roomMap(World world) {
+        List<Room> rooms = world.getRooms();
+        int n = rooms.size();
+        int half = (n + 1) / 2;
+        List<String> cells = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            cells.add("[" + mapSymbol(world, i) + "] " + shortName(rooms.get(i).getName()));
+        }
+        int width = cells.stream().mapToInt(String::length).max().orElse(0);
+        String joiner = " -- ";
+
+        StringBuilder top = new StringBuilder();
+        StringBuilder bottom = new StringBuilder();
+        for (int col = 0; col < half; col++) {
+            if (col > 0) top.append(joiner);
+            top.append(pad(cells.get(col), width));
+
+            int below = 2 * half - 1 - col;               // nedre raden går tillbaka åt vänster
+            boolean filled = below < n;
+            boolean prevFilled = col > 0 && 2 * half - col < n;
+            if (col > 0) bottom.append(filled && prevFilled ? joiner : " ".repeat(joiner.length()));
+            bottom.append(pad(filled ? cells.get(below) : "", width));
+        }
+
+        StringBuilder map = new StringBuilder(MAP_LEGEND).append('\n').append(top.toString().stripTrailing());
+        if (n > half) {
+            int column = (half - 1) * (width + joiner.length()) + 1;   // under symbolen i sista rummet överst
+            map.append('\n').append(" ".repeat(column)).append('|')
+               .append('\n').append(bottom.toString().stripTrailing());
+        }
+        return map.toString();
+    }
+
+    // @ här, # låst, ? öppet men nytt, ! varit där och fiender lever, x rensat
+    static char mapSymbol(World world, int index) {
+        if (index == world.getCurrentRoomIndex()) return '@';
+        if (!world.isOpen(index)) return '#';
+        if (!world.hasVisited(index)) return '?';
+        return world.getRooms().get(index).hasLivingEnemy() ? '!' : 'x';
+    }
+
+    // Listan i "Gå till ett annat rum", t.ex. "2. Kafferummet  (du är här)"
+    static String roomChoices(World world) {
+        StringBuilder sb = new StringBuilder("Vart vill du gå?");
+        List<Room> rooms = world.getRooms();
+        for (int i = 0; i < rooms.size(); i++) {
+            String status = switch (mapSymbol(world, i)) {
+                case '@' -> "du är här";
+                case '#' -> "låst";
+                case '?' -> "nytt rum";
+                case '!' -> "fiender kvar";
+                default -> "rensat";
+            };
+            sb.append('\n').append(i + 1).append(". ").append(rooms.get(i).getName()).append("  (").append(status).append(')');
+        }
+        return sb.toString();
+    }
+
+    // Kort namn utan å/ä/ö till kartan: "Korridoren och städskrubben" → "Korridoren", "Skoldörren" → "Skoldorren"
+    static String shortName(String roomName) {
+        String first = roomName.split(" och ")[0];
+        return java.text.Normalizer.normalize(first, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+    }
+
+    private static String pad(String s, int width) {
+        return s + " ".repeat(Math.max(0, width - s.length()));
     }
 
     // Står någon i vägen? Lever en fiende i rummet får hjälten inte gå förbi den.
@@ -404,22 +515,44 @@ public class GameEngine {
         for (Item item : found) {
             output.onEvent("Du hittar: " + item.description() + "!");
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));
-            switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
-                case Armor armor -> {
-                    hero.equip(armor);
-                    output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
-                }
-                case Weapon weapon -> {
-                    equipKeepingAttack(hero, weapon);
-                    output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
-                }
-                case Potion potion -> {
-                    int before = hero.getHp();
-                    hero.drink(potion);
-                    output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
-                }
+            take(item);   // man letade själv – det man hittar tar man
+        }
+    }
+
+    // Hjälten tar föremålet: vapnet i handen, rustningen på sig, drycken dricks direkt
+    private void take(Item item) {
+        switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
+            case Armor armor -> {
+                hero.equip(armor);
+                output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
+            }
+            case Weapon weapon -> {
+                equipKeepingAttack(hero, weapon);
+                output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+            }
+            case Potion potion -> {
+                int before = hero.getHp();
+                hero.drink(potion);
+                output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
             }
         }
+    }
+
+    // Raden när något ligger i rummet, t.ex. "Här ligger: Pilbåge (+3 i skada)"
+    static String itemHere(Item item) {
+        String bonus = switch (item) {
+            case Weapon w -> "+" + w.damageBonus() + " i skada";
+            case Armor a -> "+" + a.defense() + " i försvar";
+            case Potion p -> "+" + p.healAmount() + " hp";
+        };
+        return "Här ligger: " + item.description() + " (" + bonus + ")";
+    }
+
+    // Svaret på "Plocka upp ...? (j/n)": j, ja eller y. Enter eller något annat = nej.
+    static boolean wantsIt(String answer) {
+        if (answer == null) return false;
+        String a = answer.trim().toLowerCase();
+        return a.equals("j") || a.equals("ja") || a.equals("y") || a.equals("yes");
     }
 
     // Visar rummets namn, beskrivning och bild, plockar upp det som ligger där – och tar Java-boken i Lektionssalen
@@ -429,12 +562,18 @@ public class GameEngine {
         output.onEvent(room.getDescription());
         AsciiArt.forRoom(room.getName()).ifPresent(art -> AsciiArt.show(output, art));
 
-        // Det som ligger i rummet plockar hjälten upp direkt, som Java-boken
-        for (Item item : pickUpAll(hero, room)) {
-            output.onEvent("Du hittar och plockar upp: " + item.description());
+        // Det som ligger i rummet gulmarkeras, och spelaren väljer själv om hen plockar upp det.
+        // Säger man nej ligger det kvar – och frågan kommer igen när man kommer tillbaka till rummet.
+        for (Item item : room.getItems()) {
+            output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
-            if (item instanceof Weapon weapon) {
-                output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+            IO.print(AsciiArt.yellow("Plocka upp " + item.description() + "? (j/n): "));
+            if (wantsIt(IO.readln())) {
+                room.removeItem(item);
+                output.onEvent("Du plockar upp: " + item.description());
+                take(item);
+            } else {
+                output.onEvent("Du låter " + item.description() + " ligga kvar. Den finns kvar om du kommer tillbaka.");
             }
         }
 

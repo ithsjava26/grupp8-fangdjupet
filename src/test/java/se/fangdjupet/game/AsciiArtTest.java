@@ -226,4 +226,10 @@ class AsciiArtTest {
     void nullItemHasNoArt() {
         assertTrue(AsciiArt.forItem(null).isEmpty());
     }
+
+    @Test
+    void yellowWrapsTextInAnsiColour() {
+        assertEquals("\u001B[33mPilbåge\u001B[0m", AsciiArt.yellow("Pilbåge"));
+        assertThrows(IllegalArgumentException.class, () -> AsciiArt.yellow(null));
+    }
 }
