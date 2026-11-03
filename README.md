@@ -1,5 +1,22 @@
 # grupp8-fangdjupet
 
+**Fångdjupet** är ett textbaserat rollspel i konsolen, byggt i Java av tre personer i kursen
+Javaprogrammering (grupp 8). Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet,
+Korridoren och städskrubben och till sist Lektionssalen – och slåss mot fiender som JavaFläcken,
+ett troll och en trollkarl, StädHäxan och slutbossen Kapten Martin. Spelaren väljer attack varje
+runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. Grafiken är ren ASCII.
+
+Projektet handlar mest om *hur* det är byggt: tre paket med en ägare var, tre designmönster
+(Strategy, Factory och Observer), JUnit-tester och ett Git-arbetsflöde med feature-grenar,
+pull requests och granskning.
+
+**Köra spelet:** kör `Main` i IntelliJ (gröna play-knappen), eller i terminalen:
+```
+mvn -q compile
+java -cp target/classes se.fangdjupet.Main
+```
+Kräver JDK 27 (se *Kom igång* nedan). Testerna körs med `mvn test`.
+
 ## Kom igång
 
 ### 1. Installera
@@ -74,6 +91,76 @@ När koden är klar på din branch:
 | Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
 | Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
 
+## Designmönster
+
+### Strategy – hur man slåss (`combat`, Robert)
+**Var:** `AttackStrategy` är ett interface med `calculateDamage(attacker, target)`. `MeleeAttack`,
+`MagicAttack` och `RangedAttack` räknar skadan på var sitt sätt, och i #18 kom `KnowledgeAttack`,
+`CleaningAttack` och `RandomAttack`. En `Character` *har* en strategi och kan byta den mitt i
+striden med `setAttack(...)`: spelaren väljer attack varje runda, och en `Boss` byter till en
+tyngre attack vid halva livet.
+
+**Varför:** en ny attack blir en ny klass i stället för en ändring i `Character` eller `Battle`
+(open/closed). Varje strategi går att testa för sig, och slumpen (`Random`) skickas in så att
+testerna blir likadana varje gång. Alternativet, en `switch` på attacktyp i `Character`, hade
+behövt ändras vid varje ny attack.
+
+### Factory – hur föremål skapas (`items`, Tanaz)
+**Var:** `ItemFactory` skapar vapen, rustningar och drycker utifrån `ItemType` och nivå:
+`createWeapon(ItemType.BOW, "Pilbåge", 1)`. Fabriken väljer räckvidd och bonus, så den som anropar
+behöver inte veta hur ett föremål byggs. Samma idé finns i `Martin.create()` och
+`CleaningWitch.create(random)`, som bygger bossarna.
+
+**Varför:** skapandet ligger på ett ställe. `WorldBuilder` och testerna ber om "en båge på nivå 1"
+och får ett färdigt `Weapon`. Ändras reglerna för bonusen ändras bara fabriken.
+
+### Observer – vem som får veta vad som händer (`game`, Fredrik)
+**Var:** `GameEventListener` har en metod, `onEvent(String)`. `Battle` och `GameEngine` skickar varje
+händelse dit, och `EventBus` skickar vidare till alla registrerade lyssnare, t.ex.
+`ConsoleEventLogger` (skärmen). Testerna registrerar en lista i stället för konsolen.
+
+**Varför:** den som skickar vet inte vem som lyssnar. Spelet skriver aldrig direkt till
+`System.out`, så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
+topplista – läggs till utan att `Battle` eller `GameEngine` ändras.
+
+## Git-samarbetet – reflektion
+
+> **Utkast** – skrivet av Robert. Fredrik och Tanaz fyller i med egna rader under *Våra egna ord*
+> innan inlämningen.
+
+**Hur vi arbetade.** Dag 1 (26 okt) satte vi ihop kontraktet – de gemensamma interfacen,
+`Character` och recorden – och lade in det i `main` via PR #2. Sedan hade var och en sitt paket och
+sina egna `feature/...`-grenar. `main` har en regel: allt går via pull request och kräver ett
+godkännande från någon annan, och ingen kan pusha direkt. CodeRabbit kommenterar varje PR
+automatiskt, och från PR #9 kör GitHub Actions `mvn test` på varje PR.
+
+**Konflikten vi löste.** Tors 29 okt mergades #7 (EventBus), #8 (ItemFactory), #9 (CI) och #10
+(ASCII-grafik) samma dag. #8 ändrade recorden `Weapon`, `Armor` och `Potion`, och när konflikten
+löstes blev både den gamla och den nya koden kvar i `ItemFactory.java`, `ItemType.java` och
+`ItemFactoryTest.java`. `main` kompilerade inte, och CI blev röd. Vi tittade på det tillsammans och
+lagade det i #11: Tanaz nya version behölls, den gamla togs bort, och A:s tester skrevs om till
+de nya records-konstruktorerna.
+
+**Det som fungerade bra.**
+- Kontraktet först: B och C kunde börja direkt och bygga mot typerna innan A:s kod var klar.
+- Regeln på `main` och granskningen: alla PR:ar har godkänts av någon annan innan merge.
+- CI fångade fel som granskningen missade, t.ex. att `main` var röd efter #8 och efter #17
+  (`EventBusTest` anropade `publish`, som hade bytt namn till `onEvent`).
+
+**Det vi skulle göra annorlunda.**
+- Merga mer sällan på samma dag, och dra in `main` i grenen (`git merge main`) och kör
+  `mvn test` innan PR:en mergas – då hade #11 inte behövts.
+- Läsa och svara på CodeRabbits kommentarer före merge. #15 mergades med tre anmärkningar kvar,
+  och #16 fick fixa dem i efterhand.
+- Fördela arbetet jämnare över personerna och veckorna, och öppna PR:ar tidigare i stället för
+  stora PR:ar mot slutet.
+- Slå på att CI måste vara grön för att få merga, inte bara att den körs.
+
+**Våra egna ord.**
+- *Robert:* …
+- *Fredrik:* …
+- *Tanaz:* …
+
 ## Användning av AI
 
 Kontraktet (interfaces, abstrakt klass och records i `combat`, `items` och `game`) togs fram
@@ -132,7 +219,7 @@ Frida (ingen Character)     A – ger två drycker före Martin
 Item (sealed interface)             GameEventListener (interface)
  ├─ Weapon   record                  ├─ EventBus            C, PR 1
  ├─ Armor    record                  ├─ ConsoleEventLogger  C, PR 1
- └─ Potion   record                  └─ FileLogger          C (inte klar)
+ └─ Potion   record                  └─ FileLogger          C – fangdjupet.log
 ```
 
 ### `combat/AttackStrategy` – hur man slåss
@@ -165,11 +252,21 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 
 ### Rum, vapen och grafik i spelet
 - `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller bara Martins fyra `KnowledgeAttack` när hjälten har Java-boken. `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
-- **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
+- **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, 4. Spara äventyret, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
+- **Inte förbi en levande fiende:** spelmenyn 2 går bara vidare när rummet är rensat. Annars skriver spelet `Entrédörren står i vägen! Besegra rummets fiender innan du går vidare.` (`GameEngine.blockedBy(room)`). Det gäller också efter rundtaket, där hjälten kan vinna på mest hp fast fienden lever.
+- **Visa hjältens utrustning** (spelmenyn 3, `GameEngine.equipment(hero)`): hp-mätaren, vapnet, rustningen, attacken och Java-boken, till exempel:
+  ```
+  Robert  [########--] 34/40
+  Vapen: Pilbåge (+3 i skada)
+  Rustning: ingen
+  Attack: Närstrid
+  ```
+- **Spara och fortsätta:** spelmenyn 4 sparar hjältens namn, maxHp, hp och rummets nummer på sparplats 1 i mappen `saves` (`Äventyret är sparat: Kafferummet, 34/40 hp.`). En gammal sparning skrivs över. Huvudmenyn 2 läser in den: `Välkommen tillbaka, Robert!`, och hjälten står **i början av det sparade rummet** med samma hp. Rummen före är avklarade och fienderna där kommer inte tillbaka, men vapnen som låg där tar hjälten med sig (`GameEngine.fastForward`). Finns ingen sparning skriver spelet `Det finns inget sparat äventyr. Välj 1 för att starta ett nytt.` En trasig sparfil ger `Sparfilen går inte att läsa: ...` och spelet fortsätter. Inventariet sparas inte, och vapnens bonus slumpas på nytt (`ItemFactory.createWeapon`).
+- **Loggfil:** `Main` registrerar en `FileLogger` på `EventBus`, så allt som händer också skrivs till `fangdjupet.log`. Färgkoderna runt GAME OVER tas bort i filen. Går filen inte att skriva fortsätter spelet ändå. `saves/` och `fangdjupet.log` ligger i `.gitignore`.
 - **Föremål plockas upp automatiskt** när hjälten kommer in i rummet (`GameEngine.pickUpAll`), som Java-boken. Ett vapen hamnar i handen och ger sin bonus i skada (`Du har nu Pilbåge i handen: +4 i skada.`), men attacken byts inte: pilbågen (avstånd 5) är svagare än närstrid (10), och den som trycker Enter ska inte få sämre attack. Avstånd och magi väljs i attackmenyn. 1000 simulerade spel: 818 vinster med vapnen i handen, 54 om pilbågen hade bytt attack.
 - `AsciiArt.forRoom(rumsnamn)` ger en ASCII-bild för Skoldörren, Kafferummet (kaffeautomaten med JAVA-skylten), Korridoren och städskrubben och Lektionssalen (tom `Optional` för okända rum). `showCurrentRoom()` visar den, och dessutom det hjälten plockar upp (`Du hittar och plockar upp: Pilbåge` med bild).
 - `AsciiArt.forName(namn)` ger en bild för fiender, saker och personer: JavaFläcken, Troll, Trollkarl, StädHäxan, Kapten Martin, Frida, kaffekoppen, kanelbullen, Java-boken, pilbågen och trollstaven. Den visas när fienden dyker upp, när man tar kaffet eller kanelbullen, när Frida kommer och när man plockar upp något.
-- **Flera fiender i ett rum:** `Room` kan ta en lista med fiender. `getEnemy()` ger den första som lever och `null` när rummet är rensat. Vinner hjälten och rummet har fler fiender skriver spelet `Men vänta... Troll har gömt sig i Kafferummet och hoppar fram!`, och nästa strid (menyval 4) är mot den.
+- **Flera fiender i ett rum:** `Room` kan ta en lista med fiender. `getEnemy()` ger den första som lever och `null` när rummet är rensat. Vinner hjälten och rummet har fler fiender skriver spelet `Men vänta... Troll har gömt sig i Kafferummet och hoppar fram!`, och nästa strid (menyval 1) är mot den.
 - **Flera fiender samtidigt:** `room.thenTogether(troll, wizard)` lägger till en våg där fienderna slåss tillsammans. `room.getEnemies()` ger den aktuella vågen och `Battle.fight(hero, List<Enemy>)` kör striden. Varje runda slår hjälten den första fienden som lever, och sedan slår varje levande fiende i tur och ordning. Slutraden blir `Robert vinner mot Troll och Trollkarl!`.
 - **Paus mellan vågorna:** `room.withRefreshment(replik, dryck)` ger något att dricka när första vågen är besegrad, bara en gång. `GameEngine.nextWaveIsReady` kollar att hela vågen verkligen är död – vid rundtaket kan hjälten vinna på mest hp fast fiender lever, och då kommer varken kaffet eller nästa våg. I Kafferummet: `Du ser dig om efter en kaffe... Där! Kannan på bänken är fortfarande varm.` och `Robert tar en kopp kaffe (+11 hp)`. Kaffet ger 30, men siffran är det hjälten faktiskt fick (aldrig över max).
 - **Belöning när rummet är rensat:** `room.withReward(replik, dryck)`, bara en gång. I Kafferummet: `På bänken bredvid kannan ligger en kanelbulle. Den har ingen tagit!` och `Robert tar en kanelbulle (+27 hp)`. Kanelbullen ger 35.
@@ -237,7 +334,10 @@ Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklass
 `sealed ... permits` betyder att exakt de tre recorden får vara ett `Item`; en fjärde stoppas av kompilatorn. Records är ren data – Java skriver konstruktor och getters. Här kopplas B:s föremål in i A:s strid: `Hero.equip(Weapon)` ger `getAttackBonus()`.
 
 ### `game/GameEventListener` – vem som får veta vad som händer
-Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och senare `FileLogger` (fil).
+Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och `FileLogger` (filen `fangdjupet.log`, en rad per händelse, färgkoderna borttagna).
+
+### `game/GameState` + `GameSaveFileHandler` – spara och ladda
+`GameState` är en record med hjältens namn, maxHp, hp och rummets nummer (`nextRoom`, 0 = Skoldörren). Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad sparplats, ett saknat värde, fel version eller trasiga data ger `SaveFileException`. Den ärver `IOException`, så kod som fångar `IOException` fångar den också. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i. `GameEngine` använder sparplats 1 i mappen `saves`: spelmenyn 4 sparar och huvudmenyn 2 läser in (se *Rum, vapen och grafik i spelet*).
 
 ### `game/GameState` + `GameSaveFileHandler` – spara och ladda
 `GameState` är en record med hjältens namn, maxHp, hp och nästa rum. Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad eller trasig sparfil ger `IOException`. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i.

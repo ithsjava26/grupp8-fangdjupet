@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+// Sparar och läser in äventyret: en .properties-fil per sparplats, save-<nr>.properties i sparmappen.
+// GameEngine sparar på plats 1 (spelmenyn 4) och läser in den igen (huvudmenyn 2).
 public class GameSaveFileHandler {
 
     private static final String SAVE_VERSION = "1";
@@ -55,11 +57,12 @@ public class GameSaveFileHandler {
         }
     }
 
+    // Läser in sparplatsen. Finns den inte, eller är filen trasig, kastas SaveFileException.
     public GameState load(int slot) throws IOException {
         Path file = getSaveFile(slot);
 
         if (!Files.exists(file)) {
-            throw new IOException("Sparplats " + slot + " finns inte");
+            throw new SaveFileException("Sparplats " + slot + " finns inte");
         }
 
         Properties properties = new Properties();
@@ -73,7 +76,7 @@ public class GameSaveFileHandler {
 
         String version = required(properties, "version");
         if (!SAVE_VERSION.equals(version)) {
-            throw new IOException("Sparversionen stöds inte: " + version);
+            throw new SaveFileException("Sparversionen stöds inte: " + version);
         }
 
         try {
@@ -84,7 +87,7 @@ public class GameSaveFileHandler {
                     Integer.parseInt(required(properties, "nextRoom"))
             );
         } catch (IllegalArgumentException e) {
-            throw new IOException("Sparfilen innehåller ogiltiga data", e);
+            throw new SaveFileException("Sparfilen innehåller ogiltiga data", e);
         }
     }
 
@@ -131,7 +134,7 @@ public class GameSaveFileHandler {
         String value = properties.getProperty(key);
 
         if (value == null || value.isBlank()) {
-            throw new IOException("Sparfilen saknar: " + key);
+            throw new SaveFileException("Sparfilen saknar: " + key);
         }
 
         return value;

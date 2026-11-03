@@ -52,6 +52,14 @@ class AttackMenuTest {
         assertEquals("4. " + KnowledgeAttack.SCREENSHARE.name(), lines.get(3));
     }
 
+    @Test
+    void labelGivesTheSwedishName() {
+        assertEquals("Närstrid", AttackMenu.label(new MeleeAttack(10)));
+        assertEquals("Magi", AttackMenu.label(new MagicAttack(6)));
+        assertEquals("Avståndsattack", AttackMenu.label(new RangedAttack(5, new java.util.Random(1))));
+        assertEquals(KnowledgeAttack.QUIZ.name(), AttackMenu.label(KnowledgeAttack.QUIZ));
+    }
+
     // ── Spelarens val ──
 
     @Test

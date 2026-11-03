@@ -1,15 +1,20 @@
 package se.fangdjupet.game;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.Hero;
 import se.fangdjupet.combat.MeleeAttack;
+import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Weapon;
 import se.fangdjupet.items.WeaponRange;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -162,5 +167,130 @@ class GameEngineTest {
     void gameMenuShowsWhereTheHeroIs() {
         String menu = GameEngine.menu(new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of()));
         assertTrue(menu.startsWith("Kafferummet\n==========="), menu);
+    }
+
+    @Test
+    void gameMenuCanSave() {
+        String menu = GameEngine.menu(new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of()));
+        assertTrue(menu.contains("4. Spara äventyret"));
+    }
+
+    // ── Gå till nästa rum: inte förbi en levande fiende ──
+
+    @Test
+    void aLivingEnemyBlocksTheWay() {
+        Room room = new Room("Skoldörren", "Du står utanför skolan.", enemy("Entrédörren"), List.of());
+        assertEquals("Entrédörren står i vägen! Besegra rummets fiender innan du går vidare.",
+                GameEngine.blockedBy(room).orElseThrow());
+    }
+
+    @Test
+    void theWayIsFreeWhenTheRoomIsCleared() {
+        Enemy door = enemy("Entrédörren");
+        Room room = new Room("Skoldörren", "Du står utanför skolan.", door, List.of());
+        door.takeDamage(100);
+        assertTrue(GameEngine.blockedBy(room).isEmpty());
+    }
+
+    @Test
+    void theNextWaveBlocksTooAndAllItsEnemiesAreNamed() {
+        Enemy fleck = enemy("JavaFläcken");
+        Room room = coffeeRoom(fleck, enemy("Troll"), enemy("Trollkarl"));
+        fleck.takeDamage(100);
+        assertTrue(GameEngine.blockedBy(room).orElseThrow().startsWith("Troll och Trollkarl står i vägen!"));
+    }
+
+    @Test
+    void aRoomWithoutEnemiesIsFree() {
+        assertTrue(GameEngine.blockedBy(new Room("Hallen", "Tom.", (Enemy) null, List.of())).isEmpty());
+    }
+
+    // ── Visa hjältens utrustning ──
+
+    @Test
+    void equipmentWithoutAnything() {
+        assertEquals(List.of("Robert  [##########] 40/40", "Vapen: inget", "Rustning: ingen", "Attack: Närstrid"),
+                GameEngine.equipment(robert()));
+    }
+
+    @Test
+    void equipmentShowsWeaponArmorAndHp() {
+        Hero robert = robert();
+        GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
+        robert.equip(new Armor(ItemType.SHIELD, "Läderrustning", 2, 1));
+        robert.takeDamage(10);
+        List<String> lines = GameEngine.equipment(robert);
+        assertEquals("Robert  [#######---] 30/40", lines.get(0));   // 7,5 avrundas nedåt
+        assertTrue(lines.contains("Vapen: Pilbåge (+3 i skada)"), lines.toString());
+        assertTrue(lines.contains("Rustning: Läderrustning (försvar 2)"), lines.toString());
+    }
+
+    @Test
+    void equipmentShowsTheJavaBook() {
+        Hero robert = robert();
+        robert.pickUpJavaBook();
+        List<String> lines = GameEngine.equipment(robert);
+        assertTrue(lines.contains("Attack: Citera StackOverflow. Ställ jobbig fråga."), lines.toString());
+        assertTrue(lines.stream().anyMatch(line -> line.startsWith("Java-boken: ja")), lines.toString());
+    }
+
+    // ── Spara och fortsätta ──
+
+    @Test
+    void theSaveHoldsNameHpAndRoom() {
+        Hero robert = robert();
+        robert.takeDamage(15);
+        World world = GameEngine.newWorld(new Random(1));
+        world.moveForward();                                   // Kafferummet
+        assertEquals(new GameState("Robert", 40, 25, 1), GameEngine.stateOf(robert, world));
+    }
+
+    @Test
+    void aLoadedHeroHasTheSavedHp() {
+        Hero hero = GameEngine.heroFrom(new GameState("Robert", 40, 25, 1));
+        assertEquals("Robert", hero.getName());
+        assertEquals(25, hero.getHp());
+        assertEquals(40, hero.getMaxHp());
+        assertTrue(hero.getAttack() instanceof MeleeAttack);
+    }
+
+    @Test
+    void fastForwardGoesToTheSavedRoomAndKeepsTheWeapons() {
+        Hero hero = robert();
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.fastForward(hero, world, 2));
+        assertEquals("Korridoren och städskrubben", world.getCurrentRoom().getName());
+        assertEquals("Pilbåge", hero.getWeapon().orElseThrow().description());   // från Kafferummet
+        assertTrue(world.getCurrentRoom().hasLivingEnemy(), "StädHäxan väntar – rummet börjar om");
+    }
+
+    @Test
+    void fastForwardToTheFirstRoomStaysThere() {
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.fastForward(robert(), world, 0));
+        assertEquals("Skoldörren", world.getCurrentRoom().getName());
+    }
+
+    @Test
+    void fastForwardToARoomThatDoesNotExistFails() {
+        assertFalse(GameEngine.fastForward(robert(), GameEngine.newWorld(new Random(1)), 99));
+    }
+
+    @Test
+    void saveAndLoadThroughTheFileGivesTheSameAdventure(@TempDir Path dir) throws IOException {
+        Hero robert = robert();
+        robert.takeDamage(7);
+        World world = GameEngine.newWorld(new Random(1));
+        world.moveForward();
+        world.moveForward();
+        GameSaveFileHandler saves = new GameSaveFileHandler(dir);
+        saves.save(GameEngine.stateOf(robert, world), GameEngine.SAVE_SLOT);
+
+        GameState loaded = saves.load(GameEngine.SAVE_SLOT);
+        Hero hero = GameEngine.heroFrom(loaded);
+        World loadedWorld = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.fastForward(hero, loadedWorld, loaded.nextRoom()));
+        assertEquals(33, hero.getHp());
+        assertEquals("Korridoren och städskrubben", loadedWorld.getCurrentRoom().getName());
     }
 }

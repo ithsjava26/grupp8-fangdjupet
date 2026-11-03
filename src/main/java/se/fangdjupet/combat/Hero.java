@@ -4,6 +4,7 @@ import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Weapon;
 
+import java.util.Optional;
 import java.util.Random;
 
 // Hero är spelaren. Ärver hp, attack, heal m.m. från Character.
@@ -59,6 +60,16 @@ public class Hero extends Character {
     // Dricker en dryck och helar så mycket den ger (aldrig över max)
     public void drink(Potion potion) {
         heal(potion.healAmount());
+    }
+
+    // Vapnet i handen, tomt utan vapen (visas i "Visa hjältens utrustning")
+    public Optional<Weapon> getWeapon() {
+        return Optional.ofNullable(weapon);
+    }
+
+    // Rustningen, tom utan rustning
+    public Optional<Armor> getArmor() {
+        return Optional.ofNullable(armor);
     }
 
     // Har hjälten tagit upp Java-boken? Då väljer hen bara bland KnowledgeAttack mot Martin.

@@ -140,4 +140,22 @@ class HeroTest {
         h.drink(new Potion(ItemType.POTION, "Big potion", 50, 3));
         assertEquals(30, h.getHp());
     }
+
+    @Test
+    void newHeroHasNoWeaponOrArmor() {
+        Hero h = hero();
+        assertTrue(h.getWeapon().isEmpty());
+        assertTrue(h.getArmor().isEmpty());
+    }
+
+    @Test
+    void getWeaponAndArmorGiveWhatIsEquipped() {
+        Hero h = hero();
+        Weapon bow = new Weapon(ItemType.BOW, WeaponRange.RANGED, "Bow", 3, 1);
+        Armor leather = new Armor(ItemType.SHIELD, "Leather", 2, 1);
+        h.equip(bow);
+        h.equip(leather);
+        assertEquals(bow, h.getWeapon().orElseThrow());
+        assertEquals(leather, h.getArmor().orElseThrow());
+    }
 }
