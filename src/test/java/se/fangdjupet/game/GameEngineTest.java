@@ -448,4 +448,36 @@ class GameEngineTest {
         assertFalse(GameEngine.wantsIt(""));
         assertFalse(GameEngine.wantsIt(null));
     }
+
+    // ── Gulmarkerade menyval: fiende kvar och något att hitta ──
+
+    @Test
+    void fightOptionIsYellowWithTheEnemyName() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of());
+        assertEquals(AsciiArt.yellow("1. Strid mot rummets fiende  (JavaFläcken väntar!)"), GameEngine.fightOption(room));
+    }
+
+    @Test
+    void fightOptionIsPlainWhenTheRoomIsCleared() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of());
+        room.getEnemy().takeDamage(999);
+        assertEquals("1. Strid mot rummets fiende", GameEngine.fightOption(room));
+    }
+
+    @Test
+    void searchOptionIsYellowWhenSomethingIsHidden() {
+        Room room = new Room("Korridoren", "Lång.", enemy("StädHäxan"), List.of())
+                .withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
+        assertEquals(AsciiArt.yellow("5. Leta i rummet  (något finns här!)"), GameEngine.searchOption(room));
+        room.search();
+        assertEquals("5. Leta i rummet", GameEngine.searchOption(room));
+    }
+
+    @Test
+    void searchOptionIsYellowWhenSomethingWasLeftBehind() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"),
+                List.of(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1)));
+        assertTrue(GameEngine.searchOption(room).startsWith(AsciiArt.YELLOW));
+        assertTrue(GameEngine.menu(room).contains("(något finns här!)"));
+    }
 }

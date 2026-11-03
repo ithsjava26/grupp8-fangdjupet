@@ -249,4 +249,14 @@ class RoomTest {
     void hidingNullIsNotAllowed() {
         assertThrows(IllegalArgumentException.class, () -> coffeeRoom().withHiddenItem(null));
     }
+
+    @Test
+    void somethingToFindWhileItemsOrHiddenThingsAreLeft() {
+        Room empty = coffeeRoom(enemy("JavaFläcken"));
+        assertFalse(empty.hasSomethingToFind());
+        Room hidden = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
+        assertTrue(hidden.hasSomethingToFind());
+        hidden.search();
+        assertFalse(hidden.hasSomethingToFind());
+    }
 }

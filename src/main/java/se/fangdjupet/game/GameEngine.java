@@ -75,14 +75,27 @@ public class GameEngine {
         }
         return room.getName() + "\n"
                 + "=".repeat(room.getName().length()) + "\n"
-                + """
-                1. Strid mot rummets fiende
-                2. Gå till ett annat rum
-                3. Visa hjältens utrustning
-                4. Spara äventyret
-                5. Leta i rummet
-                e. Avsluta
-                """;
+                + fightOption(room) + "\n"
+                + "2. Gå till ett annat rum\n"
+                + "3. Visa hjältens utrustning\n"
+                + "4. Spara äventyret\n"
+                + searchOption(room) + "\n"
+                + "e. Avsluta\n";
+    }
+
+    // Menyval 1. Lever en fiende i rummet blir det gulmarkerat med namnet, t.ex. "(Entrédörren väntar!)".
+    static String fightOption(Room room) {
+        List<Enemy> enemies = room.getEnemies();
+        if (enemies.isEmpty()) return "1. Strid mot rummets fiende";
+        String names = enemies.stream().map(Enemy::getName).collect(Collectors.joining(" och "));
+        return AsciiArt.yellow("1. Strid mot rummets fiende  (" + names + " väntar!)");
+    }
+
+    // Menyval 5. Finns något att hitta i rummet blir det gulmarkerat, så att spelaren ser det.
+    static String searchOption(Room room) {
+        return room.hasSomethingToFind()
+                ? AsciiArt.yellow("5. Leta i rummet  (något finns här!)")
+                : "5. Leta i rummet";
     }
 
     // Ett menyval → rätt metod. Vilken meny som gäller beror på om ett äventyr pågår.
@@ -507,8 +520,9 @@ public class GameEngine {
     private void searchRoom() {
         Room room = world.getCurrentRoom();
         output.onEvent("Du letar i " + room.getName() + " ...");
-        List<Item> found = room.search();
-        if (found.isEmpty()) {
+        boolean lying = offerItems(room);          // det man lämnat kvar kan man ta nu
+        List<Item> found = room.search();          // det gömda (Städrustningen i städskrubben)
+        if (found.isEmpty() && !lying) {
             output.onEvent("Du hittar inget här.");
             return;
         }
@@ -562,9 +576,23 @@ public class GameEngine {
         output.onEvent(room.getDescription());
         AsciiArt.forRoom(room.getName()).ifPresent(art -> AsciiArt.show(output, art));
 
-        // Det som ligger i rummet gulmarkeras, och spelaren väljer själv om hen plockar upp det.
-        // Säger man nej ligger det kvar – och frågan kommer igen när man kommer tillbaka till rummet.
-        for (Item item : room.getItems()) {
+        offerItems(room);
+
+        // I Lektionssalen tar hjälten upp Java-boken direkt: mot Martin hjälper bara kunskap
+        if (room.takeJavaBook()) {
+            output.onEvent("Du hittar en Java-bok på katedern!");
+            showArt("Java-bok");
+            hero.pickUpJavaBook();
+            output.onEvent("Mot Martin hjälper bara kunskap. Du kan nu bara använda Knowledge attacks.");
+        }
+    }
+
+    // Det som ligger i rummet gulmarkeras, och spelaren väljer själv om hen plockar upp det (j/n).
+    // Säger man nej ligger det kvar – frågan kommer igen när man kommer tillbaka eller letar (menyval 5).
+    // true om något låg i rummet.
+    private boolean offerItems(Room room) {
+        List<Item> items = room.getItems();
+        for (Item item : items) {
             output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
             IO.print(AsciiArt.yellow("Plocka upp " + item.description() + "? (j/n): "));
@@ -576,14 +604,7 @@ public class GameEngine {
                 output.onEvent("Du låter " + item.description() + " ligga kvar. Den finns kvar om du kommer tillbaka.");
             }
         }
-
-        // I Lektionssalen tar hjälten upp Java-boken direkt: mot Martin hjälper bara kunskap
-        if (room.takeJavaBook()) {
-            output.onEvent("Du hittar en Java-bok på katedern!");
-            showArt("Java-bok");
-            hero.pickUpJavaBook();
-            output.onEvent("Mot Martin hjälper bara kunskap. Du kan nu bara använda Knowledge attacks.");
-        }
+        return !items.isEmpty();
     }
 
     // Visar bilden för en fiende, sak eller person – om det finns någon
