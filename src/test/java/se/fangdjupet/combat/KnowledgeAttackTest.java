@@ -154,4 +154,5 @@ class KnowledgeAttackTest {
         AttackStrategy lambda = (a, t) -> 5;
         assertEquals(0, lambda.selfDamage());
     }
+
 }

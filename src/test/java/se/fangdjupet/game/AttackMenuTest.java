@@ -31,9 +31,10 @@ class AttackMenuTest {
     }
 
     @Test
-    void withTheBookOnlyMartinsFourAreOffered() {
+    void withTheBookMartinsFourAndTheJavaBookAreOffered() {
         List<AttackStrategy> options = AttackMenu.options(heroWithBook());
-        assertEquals(List.copyOf(Martin.heroChoices()), options);
+        assertEquals(Martin.heroChoices(), options.subList(0, 4));
+        assertInstanceOf(JavaBookAttack.class, options.get(4));
     }
 
     // ── Hur menyn ser ut ──
@@ -47,9 +48,10 @@ class AttackMenuTest {
     @Test
     void menuLinesWithTheBookShowTheKnowledgeAttackNames() {
         List<String> lines = AttackMenu.lines(AttackMenu.options(heroWithBook()));
-        assertEquals(4, lines.size());
+        assertEquals(5, lines.size());
         assertEquals("1. " + KnowledgeAttack.DOOMSCROLL.name(), lines.get(0));
         assertEquals("4. " + KnowledgeAttack.SCREENSHARE.name(), lines.get(3));
+        assertEquals("5. Citera från Java-boken, kapitel 18: Polymorphism", lines.get(4));
     }
 
     @Test

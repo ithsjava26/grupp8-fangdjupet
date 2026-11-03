@@ -23,7 +23,7 @@ class AttackArtTest {
         return List.of(
                 new MeleeAttack(10), new MagicAttack(6), new RangedAttack(5, new Random()),
                 KnowledgeAttack.DOOMSCROLL, KnowledgeAttack.QUIZ,
-                KnowledgeAttack.STACKOVERFLOW, KnowledgeAttack.SCREENSHARE,
+                KnowledgeAttack.STACKOVERFLOW, KnowledgeAttack.SCREENSHARE, new JavaBookAttack(),
                 phaseOne, phaseTwo,
                 CleaningAttack.SPONGE, CleaningAttack.SVINTO, CleaningAttack.CHEMICALS);
     }

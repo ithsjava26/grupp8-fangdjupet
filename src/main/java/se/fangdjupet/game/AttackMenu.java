@@ -14,10 +14,12 @@ import java.util.Random;
 public final class AttackMenu {
     private AttackMenu() {}
 
-    // Med Java-boken: bara Martins fyra KnowledgeAttack. Annars närstrid, magi och avstånd.
+    // Med Java-boken: Martins fyra KnowledgeAttack och citat ur boken. Annars närstrid, magi och avstånd.
     public static List<AttackStrategy> options(Hero hero) {
         if (hero.hasJavaBook()) {
-            return List.copyOf(Martin.heroChoices());
+            List<AttackStrategy> knowledge = new ArrayList<>(Martin.heroChoices());
+            knowledge.add(hero.getJavaBookAttack());   // 5. Citera från Java-boken, kapitel 18 / 20 ...
+            return List.copyOf(knowledge);
         }
         int magic = hero.holds(WeaponRange.MAGIC)
                 ? STAFF_MAGIC + hero.getWeapon().orElseThrow().damageBonus()   // staven: magin blir mycket starkare

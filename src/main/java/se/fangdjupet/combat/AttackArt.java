@@ -72,6 +72,35 @@ public final class AttackArt {
                    _|_               _|_      DELA SKARM
             """;
 
+    // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
+    public static final String POLYMORPHISM = """
+                ______________ ______________
+               | KAP. 18      |              |
+               | Polymorphism | Animal a =   |
+               |              |  new Dog();  |
+               | Animal       | a.speak();   |
+               |  /    \\      |  -> "Voff!"  |
+               | Dog   Cat    |              |
+               |______________|______________|    POLYMORPHISM
+            """;
+
+    // Nästa citat: kapitel 20, ett interface som flera klasser implementerar (som AttackStrategy i spelet)
+    public static final String INTERFACE = """
+                ______________ ________________
+               | KAP. 20      | interface      |
+               | Interface    |  Attack {      |
+               |              |  int hit();    |
+               |  <<Attack>>  | }              |
+               |   /     \\    | class Bow      |
+               | Bow    Staff |  implements .. |
+               |______________|________________|    INTERFACE
+            """;
+
+    // Java-bokens bild för kapitlet som står på tur (JavaBookAttack bläddrar vidare efter varje citat)
+    static String forChapter(String chapter) {
+        return chapter.contains("Interface") ? INTERFACE : POLYMORPHISM;
+    }
+
     // ── Kapten Martins förklaringar (fas 1 och fas 2) ──
 
     public static final String MARTIN_EXPLAINS = """
@@ -142,6 +171,7 @@ public final class AttackArt {
         String art = BY_NAME.get(attack.name());
         if (art != null) return Optional.of(art);
         return switch (attack) {
+            case JavaBookAttack book -> Optional.of(forChapter(book.nextChapter()));   // bilden visas före citatet
             case MeleeAttack m -> Optional.of(MELEE);
             case MagicAttack m -> Optional.of(MAGIC);
             case RangedAttack r -> Optional.of(RANGED);

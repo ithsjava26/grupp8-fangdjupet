@@ -15,6 +15,7 @@ public class Hero extends Character {
     private Weapon weapon;   // null = inget vapen
     private Armor armor;     // null = ingen rustning
     private boolean javaBook; //Plocka upp boken i sista rummet
+    private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
 
     // Skickar vidare till Characters konstruktor
     public Hero(String name, int maxHp, AttackStrategy attack) {
@@ -91,6 +92,11 @@ public class Hero extends Character {
     }
 
     // Har hjälten tagit upp Java-boken? Då väljer hen bara bland KnowledgeAttack mot Martin.
+    // Attacken ur Java-boken (bläddrar vidare för varje citat). Finns i attackmenyn när hjälten har boken.
+    public JavaBookAttack getJavaBookAttack() {
+        return bookAttack;
+    }
+
     public boolean hasJavaBook() {
         return javaBook;
     }
