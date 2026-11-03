@@ -265,8 +265,7 @@ public class GameEngine {
         for (Enemy enemy : enemies) {
             // Har hjälten hittat Städrustningen blir Martin lite svårare (bara en gång)
             if (enemy instanceof Boss boss && !boss.isEnraged() && wearsCleaningArmor(hero)) {
-                Martin.enrage(boss);
-                output.onEvent(boss.getName() + " ser Städrustningen och blir arg! Han förklarar hårdare.");
+                reactToCleaningArmor(boss);
             }
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
@@ -289,11 +288,11 @@ public class GameEngine {
         // Bara den sista bossen (Martin i Lektionssalen) ger vinst i hela spelet
         Room room = world.getCurrentRoom();
         if (winner == hero && !room.hasLivingEnemy()) {
-            room.takeReward().ifPresent(this::drinkRefreshment);   // rummet rensat: t.ex. en kanelbulle
+            room.takeReward().ifPresent(r -> offerRefreshment(room, r));   // rummet rensat: t.ex. en kanelbulle
             room.getFrida().ifPresent(this::meetFrida);           // rummet rensat: Frida kan dyka upp
         }
         if (winner == hero && nextWaveIsReady(enemies, room)) {
-            room.takeRefreshment().ifPresent(this::drinkRefreshment);   // t.ex. kaffe innan nästa våg
+            room.takeRefreshment().ifPresent(r -> offerRefreshment(room, r));   // t.ex. kaffe innan nästa våg
             String next = room.getEnemies().stream().map(Enemy::getName).collect(Collectors.joining(" och "));
             output.onEvent("Men vänta... " + next + " har gömt sig i " + room.getName() + " och hoppar fram!");
         }
@@ -323,10 +322,39 @@ public class GameEngine {
         return List.of(AsciiArt.red(art), how, "Välj 1 för att börja om, eller e för att avsluta.");
     }
 
-    // En paus i rummet: repliken, sedan dricker/äter hjälten (t.ex. kaffe +30 hp, kanelbulle +35 hp)
+    // En paus i rummet vid rätt ögonblick: repliken och bilden gulmarkerade, hjältens hp, och spelaren väljer (j/n).
+    // Säger man nej står kaffet/kanelbullen kvar i rummet (Leta i rummet, eller när man kommer tillbaka) –
+    // men nästa våg hoppar fram direkt, så den som tackar nej kan dö.
+    private void offerRefreshment(Room room, Room.Refreshment refreshment) {
+        Potion potion = refreshment.potion();
+        output.onEvent(AsciiArt.yellow(refreshment.line()));
+        showArt(potion.description());                 // kaffekoppen eller kanelbullen
+        output.onEvent(HpBar.status(hero, 10));
+        IO.print(AsciiArt.yellow(takeQuestion(potion)));
+        if (wantsIt(IO.readln())) {
+            drinkRefreshment(refreshment);
+        } else {
+            room.leaveItem(potion);
+            output.onEvent(leftBehind(potion));
+        }
+    }
+
+    // Frågan för något i rummet: "Ta en kopp kaffe (+30 hp)? (j/n): " eller "Plocka upp Pilbåge? (j/n): "
+    static String takeQuestion(Item item) {
+        return item instanceof Potion p
+                ? "Ta " + p.description() + " (+" + p.healAmount() + " hp)? (j/n): "
+                : "Plocka upp " + item.description() + "? (j/n): ";
+    }
+
+    // När spelaren säger nej
+    static String leftBehind(Item item) {
+        return item instanceof Potion
+                ? "Du låter " + item.description() + " stå kvar. Den finns kvar om du letar i rummet eller kommer tillbaka."
+                : "Du låter " + item.description() + " ligga kvar. Den finns kvar om du kommer tillbaka.";
+    }
+
+    // Hjälten dricker/äter (t.ex. kaffe +30 hp, kanelbulle +35 hp)
     private void drinkRefreshment(Room.Refreshment refreshment) {
-        output.onEvent(refreshment.line());
-        showArt(refreshment.potion().description());   // kaffekoppen eller kanelbullen
         int before = hero.getHp();
         hero.drink(refreshment.potion());
         output.onEvent(hero.getName() + " tar " + refreshment.potion().description()
@@ -530,6 +558,22 @@ public class GameEngine {
         hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
     }
 
+    // Bossen ser Städrustningen: Martin blir arg och förklarar hårdare, StädHäxan skrattar elakt
+    // (det är ju hennes rustning) och hotar med Vanish. Andra bossar bryr sig inte.
+    private void reactToCleaningArmor(Boss boss) {
+        switch (boss.getName()) {
+            case Martin.NAME -> {
+                Martin.enrage(boss);
+                output.onEvent(Martin.ANGRY);
+            }
+            case CleaningWitch.NAME -> {
+                CleaningWitch.enrage(boss);
+                output.onEvent(CleaningWitch.LAUGH);
+            }
+            default -> { }
+        }
+    }
+
     // Bär hjälten Städrustningen från städskrubben?
     static boolean wearsCleaningArmor(Hero hero) {
         return hero.getArmor().map(a -> WorldBuilder.STADRUSTNING.equals(a.description())).orElse(false);
@@ -614,13 +658,13 @@ public class GameEngine {
         for (Item item : items) {
             output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
-            IO.print(AsciiArt.yellow("Plocka upp " + item.description() + "? (j/n): "));
+            IO.print(AsciiArt.yellow(takeQuestion(item)));
             if (wantsIt(IO.readln())) {
                 room.removeItem(item);
-                output.onEvent("Du plockar upp: " + item.description());
+                if (!(item instanceof Potion)) output.onEvent("Du plockar upp: " + item.description());
                 take(item);
             } else {
-                output.onEvent("Du låter " + item.description() + " ligga kvar. Den finns kvar om du kommer tillbaka.");
+                output.onEvent(leftBehind(item));
             }
         }
         return !items.isEmpty();

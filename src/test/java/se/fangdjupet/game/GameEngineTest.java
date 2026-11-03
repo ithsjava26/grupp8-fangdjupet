@@ -469,6 +469,15 @@ class GameEngineTest {
     // ── Föremål i rummet: gulmarkerat, spelaren väljer ──
 
     @Test
+    void coffeeAndBunAreOfferedWithTheirHp() {
+        Potion coffee = new Potion(ItemType.POTION, "en kopp kaffe", 30, 1);
+        assertEquals("Ta en kopp kaffe (+30 hp)? (j/n): ", GameEngine.takeQuestion(coffee));
+        assertTrue(GameEngine.leftBehind(coffee).contains("letar i rummet"));
+        assertEquals("Plocka upp Pilbåge? (j/n): ",
+                GameEngine.takeQuestion(bow));
+    }
+
+    @Test
     void itemHereShowsTheBonus() {
         assertEquals("Här ligger: Pilbåge (+3 i skada)",
                 GameEngine.itemHere(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1)));

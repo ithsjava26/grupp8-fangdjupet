@@ -113,6 +113,15 @@ public final class AttackArt {
                 |__|
             """;
 
+    // Vanish i ansiktet – när StädHäxan ser sin Städrustning på hjälten (CleaningWitch.enrage)
+    public static final String VANISH = """
+                 ____
+                |=|_____
+                |VANISH_]>  ~*~*~*~*~   VANISH
+                |    |                  (rakt i ansiktet!)
+                |____|
+            """;
+
     // Attackens namn (name()) -> bilden. Namnen måste vara exakt som i KnowledgeAttack, Martin och CleaningAttack.
     private static final Map<String, String> BY_NAME = Map.ofEntries(
             Map.entry(KnowledgeAttack.DOOMSCROLL.name(), DOOMSCROLL),
@@ -123,7 +132,8 @@ public final class AttackArt {
             Map.entry("Utterly explained", MARTIN_UTTERLY),
             Map.entry(CleaningAttack.SPONGE.name(), SPONGE),
             Map.entry(CleaningAttack.SVINTO.name(), SVINTO),
-            Map.entry(CleaningAttack.CHEMICALS.name(), CHEMICALS));
+            Map.entry(CleaningAttack.CHEMICALS.name(), CHEMICALS),
+            Map.entry(CleaningAttack.VANISH.name(), VANISH));
 
     // Bilden för en attack, eller tomt om den saknar bild. Först på namnet (kunskap, Martin, StädHäxan),
     // sedan på typen (närstrid, magi, avstånd). CleaningAttack ärver RangedAttack men hittas på namnet först.

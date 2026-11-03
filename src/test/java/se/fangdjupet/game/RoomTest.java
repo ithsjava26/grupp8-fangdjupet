@@ -259,4 +259,13 @@ class RoomTest {
         hidden.search();
         assertFalse(hidden.hasSomethingToFind());
     }
+
+    @Test
+    void aRefreshmentYouSaidNoToStaysInTheRoom() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", (Enemy) null, List.of());
+        assertFalse(room.hasSomethingToFind());
+        room.leaveItem(new se.fangdjupet.items.Potion(ItemType.POTION, "en kopp kaffe", 30, 1));
+        assertTrue(room.hasSomethingToFind(), "Leta i rummet blir gul");
+        assertEquals("en kopp kaffe", room.getItems().getFirst().description());
+    }
 }

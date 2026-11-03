@@ -158,6 +158,12 @@ public class Room {
         return Optional.ofNullable(frida);
     }
 
+    // Lämnar något i rummet, t.ex. kaffet som hjälten tackade nej till – det erbjuds igen senare
+    public void leaveItem(Item item) {
+        if (item == null) throw new IllegalArgumentException("item must not be null");
+        items.add(item);
+    }
+
     // Tar bort föremålet från rummet – true om det fanns där
     public boolean removeItem(Item item) {
         return items.remove(item);

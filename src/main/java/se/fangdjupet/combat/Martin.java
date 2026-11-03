@@ -7,10 +7,13 @@ import java.util.List;
 public final class Martin {
     private Martin() {}                 // ingen ska skriva new Martin()
 
+    public static final String NAME = "Kapten Martin";
+    public static final String ANGRY = NAME + " ser Städrustningen och blir arg! Han förklarar hårdare.";
+
     // En ny Martin varje gång: 40 hp, nivå 3. Han förklarar med KnowledgeAttack och
     // byter till den tyngre förklaringen vid halva livet (Boss sköter bytet).
     public static Boss create() {
-        Boss martin = new Boss("Kapten Martin", 40,
+        Boss martin = new Boss(NAME, 40,
                 new KnowledgeAttack("Thoroughly explained the Hello World Java to you", 3),   // fas 1
                 new KnowledgeAttack("Utterly explained", 5),                                  // fas 2
                 3);

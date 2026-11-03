@@ -15,6 +15,9 @@ public class CleaningAttack extends RangedAttack {
     // Kemikalierna (spolarvätska) – det hårdaste, tas fram vid halva livet
     public static final CleaningAttack CHEMICALS =
             new CleaningAttack("Kemikalier", "sprayar kemikalier på", 10, new Random());
+    // Kemikalieangreppet när hon ser sin Städrustning på hjälten: Vanish rakt i ansiktet (lika hårt som kemikalierna)
+    public static final CleaningAttack VANISH =
+            new CleaningAttack("Vanish", "sprejar Vanish i ansiktet på", 10, new Random());
 
     private final String name;
     private final String verb;
