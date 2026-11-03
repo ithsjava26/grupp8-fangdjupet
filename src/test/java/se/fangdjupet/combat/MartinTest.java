@@ -143,4 +143,30 @@ class MartinTest {
     void normalMartinIsNotEnraged() {
         assertFalse(Martin.create().isEnraged());
     }
+
+    @Test
+    void martinAsksAJavaQuestionEveryRoundInTurn() {
+        Boss martin = Martin.create();
+        assertEquals(Martin.QUESTIONS.get(0), martin.nextTaunt().orElseThrow());
+        assertEquals(Martin.QUESTIONS.get(1), martin.nextTaunt().orElseThrow());
+        assertTrue(Martin.QUESTIONS.get(0).contains("första normalformen"));
+        for (int i = 2; i < Martin.QUESTIONS.size(); i++) martin.nextTaunt();
+        assertEquals(Martin.QUESTIONS.get(0), martin.nextTaunt().orElseThrow(), "sedan från början");
+    }
+
+    @Test
+    void theQuestionsComeBeforeHisExplanationInTheFight() {
+        java.util.List<String> log = new java.util.ArrayList<>();
+        Hero hero = new Hero("Robert", 40, new MeleeAttack(1));
+        hero.pickUpJavaBook();
+        new Battle(log::add, Hero::getJavaBookAttack).fight(hero, Martin.create());
+        int question = log.indexOf("Lektor Martin: \"" + Martin.QUESTIONS.get(0) + "\"");
+        assertTrue(question >= 0, log.toString());
+        assertTrue(log.get(question + 1).startsWith("Enemy: Lektor Martin"), log.toString());
+    }
+
+    @Test
+    void ordinaryEnemiesSayNothingInTheFight() {
+        assertTrue(new Enemy("Troll", 10, new MeleeAttack(1), 1).nextTaunt().isEmpty());
+    }
 }

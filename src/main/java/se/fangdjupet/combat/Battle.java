@@ -119,6 +119,7 @@ public class Battle {
             if (!anyAlive(enemies) || !hero.isAlive()) break;   // ingen av de döda slår mer
             for (Enemy enemy : enemies) {                     // fiendernas tur, en i taget
                 if (!enemy.isAlive()) continue;                // döda fiender slår inte
+                enemy.nextTaunt().ifPresent(taunt -> listener.onEvent(enemy.getName() + ": \"" + taunt + "\""));   // t.ex. Martins Java-fråga
                 boolean enemyMisses = misses(enemy.getAttack().missPercent());
                 damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut
                 // Efter attack(): då vet RandomAttack vilket kast det blev (svamp eller Svinto)

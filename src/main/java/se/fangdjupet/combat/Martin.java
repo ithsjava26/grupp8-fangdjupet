@@ -24,13 +24,29 @@ public final class Martin {
                 3);
         // withLine returnerar en Enemy, inte en Boss – därför sparas bossen i en variabel först
         martin.withLine("Let me explain Hello World to you...");
+        martin.withTaunts(QUESTIONS);
         return martin;
     }
+
+    // Martin förhör hjälten: en fråga per runda innan han förklarar (Battle skriver ut den), sedan från början
+    public static final List<String> QUESTIONS = List.of(
+            "Kan du första normalformen? Inga upprepade grupper i tabellen!",
+            "Vad är skillnaden mellan == och equals()?",
+            "Varför är String immutable?",
+            "Vad händer om du glömmer break i en switch?",
+            "Vad betyder static – egentligen?",
+            "Interface eller abstrakt klass? Motivera!",
+            "Andra normalformen då? Inga partiella beroenden!",
+            "Vad är en NullPointerException – och varför är det ditt fel?",
+            "Checked eller unchecked exception?",
+            "ArrayList eller LinkedList? Vad blir tidskomplexiteten?",
+            "Varför ska fälten vara private?",
+            "Tredje normalformen? Inga transitiva beroenden!");
 
     // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 10).
     // Kunskap går ändå rakt igenom rustningen, så försvaret hjälper inte mot honom.
     // Förklaringarna heter likadant, så AttackArt visar samma bilder.
-    public static final String ENRAGED_LINE = "Jaså, städrustning? Kunskap går rakt igenom gummi!";
+    public static final String ENRAGED_LINE = "Städrustning? Den implementerar inte Shield-interfacet – kunskap kompilerar rakt igenom!";
 
     public static void enrage(Boss martin) {
         if (martin == null || martin.isEnraged()) return;
