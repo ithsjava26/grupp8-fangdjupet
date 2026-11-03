@@ -132,7 +132,8 @@ Frida (ingen Character)     A – ger två drycker före Martin
 Item (sealed interface)             GameEventListener (interface)
  ├─ Weapon   record                  ├─ EventBus            C, PR 1
  ├─ Armor    record                  ├─ ConsoleEventLogger  C, PR 1
- └─ Potion   record                  └─ FileLogger          C – fangdjupet.log
+ └─ Potion   record                  ├─ FileLogger          C – fangdjupet.log
+                                     └─ SoundListener       sound/ – musik och ljud (Speaker → RetroSpeaker)
 ```
 
 ### `combat/AttackStrategy` – hur man slåss
@@ -275,7 +276,15 @@ Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklass
 `sealed ... permits` betyder att exakt de tre recorden får vara ett `Item`; en fjärde stoppas av kompilatorn. Records är ren data – Java skriver konstruktor och getters. Här kopplas B:s föremål in i A:s strid: `Hero.equip(Weapon)` ger `getAttackBonus()`.
 
 ### `game/GameEventListener` – vem som får veta vad som händer
-Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och `FileLogger` (filen `fangdjupet.log`, en rad per händelse, färgkoderna borttagna).
+Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm), `FileLogger` (filen `fangdjupet.log`, en rad per händelse, färgkoderna borttagna) och `sound/SoundListener` (musik och ljud, se nedan).
+
+### `sound/` – musik och ljud
+Retromusik i japansk RPG-stil och medvetet fula 8-bitarsljud, **syntade i Java Sound** (`javax.sound.sampled`) – inga ljudfiler. Samma låtar och ljud som webbversionen (`fangdjupet-web`, `sound.js`).
+- `SoundListener` är en lyssnare till på `EventBus` (Observer) och väljer ljud efter händelserna. Varje rum har en egen låt: huvudmenyn (yo-skalan), Skoldörren, Kafferummet (ryūkyū), en **klibbig** låt i städskrubben (iwato: tonerna glider in i varandra som i såpa, svajar och är ostämda, med ett "plopp" som en mopp i hinken) och Lektionssalen (in-skalan). `Fiende ... dyker upp!` byter till stridsmusik – mot StädHäxan en snabbare klibbig låt och mot Lektor Martin egen bossmusik. Jinglar vid vinst, game over och när Fångdjupet är vunnet.
+- Ljudeffekter: blipp när man trycker Enter (`GameEngine.onInput`), ett skränigt krossat "PJOOO" när pilbågen skjuter, magi, svärdshugg, kunskap mot Martin, miss, skada, kaffe (glugg), föremål, Entrédörren som slår igen och StädHäxans skratt. Magi och avstånd skriver båda "skjuter", så ljudet väljs efter hjältens attack (`GameEngine.heroAttack`).
+- `Song` håller låtarna som text: varje token är ett åttondelssteg i en pentatonisk skala (`0` grundtonen, `5` oktaven över, `_` håll, `.` paus) och trummorna `k s h p`.
+- `RetroSpeaker` (en `Speaker`) räknar fram ljudet i en egen tråd: fyrkantsvåg, sågtand, triangel, sinus och brus med glidning, vibrato, filter och ett envelopp. Finns inget ljudkort blir det tyst och spelet fungerar som vanligt. **Stäng av** med `-Dfangdjupet.ljud=av` eller `FANGDJUPET_LJUD=av` – webbservern startar spelet så, eftersom webbläsaren spelar sitt eget ljud.
+- Testerna (`SoundListenerTest`, `SongTest`) använder en `Speaker` som bara antecknar vad som skulle spelas, och `RetroSpeaker.offline()` som räknar fram ljudet utan högtalare: varje låt och effekt ska höras men inte klippa.
 
 ### `game/GameState` + `GameSaveFileHandler` – spara och ladda
 `GameState` är en record med hjältens namn, maxHp, hp och rummets nummer (`nextRoom`, 0 = Skoldörren). Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad sparplats, ett saknat värde, fel version eller trasiga data ger `SaveFileException`. Den ärver `IOException`, så kod som fångar `IOException` fångar den också. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i. `GameEngine` använder sparplats 1 i mappen `saves`: spelmenyn 4 sparar och huvudmenyn 2 läser in (se *Rum, vapen och grafik i spelet*).

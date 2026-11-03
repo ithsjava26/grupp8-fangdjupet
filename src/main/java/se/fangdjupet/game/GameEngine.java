@@ -47,12 +47,31 @@ public class GameEngine {
     }
 
     // Visar menyn och kör valen tills spelaren väljer e
+    private Runnable onInput = () -> { };   // t.ex. ett blipp när spelaren trycker Enter (SoundListener)
+
+    // Körs varje gång spelaren har svarat
+    public void onInput(Runnable onInput) {
+        this.onInput = onInput == null ? () -> { } : onInput;
+    }
+
+    // Hjältens attack just nu, om ett äventyr pågår – ljudet låter olika för magi, avstånd och närstrid
+    public Optional<AttackStrategy> heroAttack() {
+        return Optional.ofNullable(hero).map(Hero::getAttack);
+    }
+
+    // All inmatning går hit: läser raden och säger till att spelaren har svarat
+    private String readln() {
+        String line = IO.readln();
+        onInput.run();
+        return line;
+    }
+
     public void run() {
         running = true;
 
         while (running) {
             showMenu();
-            String choice = IO.readln().trim().toLowerCase();
+            String choice = readln().trim().toLowerCase();
             handleChoice(choice);
         }
     }
@@ -136,7 +155,7 @@ public class GameEngine {
     private void startNewAdventure() {
         output.onEvent("Starta nytt äventyr.");
         IO.print("Vad heter hjälten? ");
-        String heroName = IO.readln().trim();
+        String heroName = readln().trim();
         if (heroName.isBlank()) heroName = "Hjälten";   // ett tomt namn går inte att spara
 
         hero = newHero(heroName, HERO_MAX_HP);
@@ -343,7 +362,7 @@ public class GameEngine {
         showArt(potion.description());                 // kaffekoppen eller kanelbullen
         output.onEvent(HpBar.status(hero, 10));
         IO.print(AsciiArt.yellow(takeQuestion(potion)));
-        if (wantsIt(IO.readln())) {
+        if (wantsIt(readln())) {
             drinkRefreshment(refreshment);
         } else {
             room.leaveItem(potion);
@@ -399,7 +418,7 @@ public class GameEngine {
         IO.println(roomMap(world));
         IO.println(roomChoices(world));
         IO.print("Välj rum (Enter = stanna kvar): ");
-        goTo(IO.readln().trim());
+        goTo(readln().trim());
     }
 
     // Svaret på "Välj rum": en siffra i listan, eller tomt för att stanna
@@ -673,7 +692,7 @@ public class GameEngine {
             output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
             IO.print(AsciiArt.yellow(takeQuestion(item)));
-            if (wantsIt(IO.readln())) {
+            if (wantsIt(readln())) {
                 room.removeItem(item);
                 if (!(item instanceof Potion)) output.onEvent("Du plockar upp: " + item.description());
                 take(item);
@@ -696,6 +715,6 @@ public class GameEngine {
         IO.println("Välj attack (Enter = behåll):");
         AttackMenu.lines(hero, options).forEach(IO::println);   // pilbågens och stavens attack gulmarkerade
         IO.print("Ditt val: ");
-        return AttackMenu.choose(options, IO.readln());
+        return AttackMenu.choose(options, readln());
     }
 }
