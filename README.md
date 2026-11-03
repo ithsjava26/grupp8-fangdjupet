@@ -1,5 +1,22 @@
 # grupp8-fangdjupet
 
+**Fångdjupet** är ett textbaserat rollspel i konsolen, byggt i Java av tre personer i kursen
+Javaprogrammering (grupp 8). Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet,
+Korridoren och städskrubben och till sist Lektionssalen – och slåss mot fiender som JavaFläcken,
+ett troll och en trollkarl, StädHäxan och slutbossen Kapten Martin. Spelaren väljer attack varje
+runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. Grafiken är ren ASCII.
+
+Projektet handlar mest om *hur* det är byggt: tre paket med en ägare var, tre designmönster
+(Strategy, Factory och Observer), JUnit-tester och ett Git-arbetsflöde med feature-grenar,
+pull requests och granskning.
+
+**Köra spelet:** kör `Main` i IntelliJ (gröna play-knappen), eller i terminalen:
+```
+mvn -q compile
+java -cp target/classes se.fangdjupet.Main
+```
+Kräver JDK 27 (se *Kom igång* nedan). Testerna körs med `mvn test`.
+
 ## Kom igång
 
 ### 1. Installera
@@ -73,6 +90,76 @@ När koden är klar på din branch:
 | Strid & karaktärer | `se.fangdjupet.combat` | Robert (`elitrobban89`), A   |
 | Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
 | Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
+
+## Designmönster
+
+### Strategy – hur man slåss (`combat`, Robert)
+**Var:** `AttackStrategy` är ett interface med `calculateDamage(attacker, target)`. `MeleeAttack`,
+`MagicAttack` och `RangedAttack` räknar skadan på var sitt sätt, och i #18 kom `KnowledgeAttack`,
+`CleaningAttack` och `RandomAttack`. En `Character` *har* en strategi och kan byta den mitt i
+striden med `setAttack(...)`: spelaren väljer attack varje runda, och en `Boss` byter till en
+tyngre attack vid halva livet.
+
+**Varför:** en ny attack blir en ny klass i stället för en ändring i `Character` eller `Battle`
+(open/closed). Varje strategi går att testa för sig, och slumpen (`Random`) skickas in så att
+testerna blir likadana varje gång. Alternativet, en `switch` på attacktyp i `Character`, hade
+behövt ändras vid varje ny attack.
+
+### Factory – hur föremål skapas (`items`, Tanaz)
+**Var:** `ItemFactory` skapar vapen, rustningar och drycker utifrån `ItemType` och nivå:
+`createWeapon(ItemType.BOW, "Pilbåge", 1)`. Fabriken väljer räckvidd och bonus, så den som anropar
+behöver inte veta hur ett föremål byggs. Samma idé finns i `Martin.create()` och
+`CleaningWitch.create(random)`, som bygger bossarna.
+
+**Varför:** skapandet ligger på ett ställe. `WorldBuilder` och testerna ber om "en båge på nivå 1"
+och får ett färdigt `Weapon`. Ändras reglerna för bonusen ändras bara fabriken.
+
+### Observer – vem som får veta vad som händer (`game`, Fredrik)
+**Var:** `GameEventListener` har en metod, `onEvent(String)`. `Battle` och `GameEngine` skickar varje
+händelse dit, och `EventBus` skickar vidare till alla registrerade lyssnare, t.ex.
+`ConsoleEventLogger` (skärmen). Testerna registrerar en lista i stället för konsolen.
+
+**Varför:** den som skickar vet inte vem som lyssnar. Spelet skriver aldrig direkt till
+`System.out`, så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
+topplista – läggs till utan att `Battle` eller `GameEngine` ändras.
+
+## Git-samarbetet – reflektion
+
+> **Utkast** – skrivet av Robert. Fredrik och Tanaz fyller i med egna rader under *Våra egna ord*
+> innan inlämningen.
+
+**Hur vi arbetade.** Dag 1 (26 okt) satte vi ihop kontraktet – de gemensamma interfacen,
+`Character` och recorden – och lade in det i `main` via PR #2. Sedan hade var och en sitt paket och
+sina egna `feature/...`-grenar. `main` har en regel: allt går via pull request och kräver ett
+godkännande från någon annan, och ingen kan pusha direkt. CodeRabbit kommenterar varje PR
+automatiskt, och från PR #9 kör GitHub Actions `mvn test` på varje PR.
+
+**Konflikten vi löste.** Tors 29 okt mergades #7 (EventBus), #8 (ItemFactory), #9 (CI) och #10
+(ASCII-grafik) samma dag. #8 ändrade recorden `Weapon`, `Armor` och `Potion`, och när konflikten
+löstes blev både den gamla och den nya koden kvar i `ItemFactory.java`, `ItemType.java` och
+`ItemFactoryTest.java`. `main` kompilerade inte, och CI blev röd. Vi tittade på det tillsammans och
+lagade det i #11: Tanaz nya version behölls, den gamla togs bort, och A:s tester skrevs om till
+de nya records-konstruktorerna.
+
+**Det som fungerade bra.**
+- Kontraktet först: B och C kunde börja direkt och bygga mot typerna innan A:s kod var klar.
+- Regeln på `main` och granskningen: alla PR:ar har godkänts av någon annan innan merge.
+- CI fångade fel som granskningen missade, t.ex. att `main` var röd efter #8 och efter #17
+  (`EventBusTest` anropade `publish`, som hade bytt namn till `onEvent`).
+
+**Det vi skulle göra annorlunda.**
+- Merga mer sällan på samma dag, och dra in `main` i grenen (`git merge main`) och kör
+  `mvn test` innan PR:en mergas – då hade #11 inte behövts.
+- Läsa och svara på CodeRabbits kommentarer före merge. #15 mergades med tre anmärkningar kvar,
+  och #16 fick fixa dem i efterhand.
+- Fördela arbetet jämnare över personerna och veckorna, och öppna PR:ar tidigare i stället för
+  stora PR:ar mot slutet.
+- Slå på att CI måste vara grön för att få merga, inte bara att den körs.
+
+**Våra egna ord.**
+- *Robert:* …
+- *Fredrik:* …
+- *Tanaz:* …
 
 ## Användning av AI
 
