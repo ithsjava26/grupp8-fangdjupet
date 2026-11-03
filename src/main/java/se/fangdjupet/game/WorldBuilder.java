@@ -4,6 +4,7 @@ import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemFactory;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.StressBall;
 
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.Frida;
@@ -18,6 +19,7 @@ public class WorldBuilder {
 
     // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
     public static final String STADRUSTNING = "Städrustning";
+    public static final String STRESSBOLL = "Stressboll";
 
     public World build(
             Enemy doorEnemy,
@@ -73,7 +75,10 @@ public class WorldBuilder {
                 "Du har nått fram. Framför dig väntar dagens stora test.",
                 finalEnemy,
                 List.of()
-        ).withJavaBook();   // hjälten tar upp Java-boken när hen kommer in
+        ).withJavaBook()    // hjälten tar upp Java-boken när hen kommer in
+         // Gömd i Lektionssalen: hittas bara om man letar (spelmenyn 5). +5 hp varje runda i striden mot Martin,
+         // eller kasta den på honom (10 i skada) – men då är den borta.
+         .withHiddenItem(new StressBall(ItemType.STRESSBALL, STRESSBOLL, 5, 3));
 
         return new World(List.of(door, coffeeRoom, corridor, classroom));
     }

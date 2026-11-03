@@ -22,6 +22,10 @@ public final class SoundListener implements GameEventListener {
     private final Supplier<Optional<AttackStrategy>> heroAttack;   // magi och avstånd skriver båda "skjuter"
     private String roomSong = "title";
     private boolean inFight;
+    private boolean expectHeroBar;   // efter fiendens slag kommer hjältens hp-mätare
+
+    // "Robert  [###-------] 12/40"
+    private static final java.util.regex.Pattern HP_BAR = java.util.regex.Pattern.compile("(.+?)\\s+\\[[#-]+\\]\\s+(\\d+)/(\\d+)\\s*");
 
     public SoundListener(Speaker speaker, Supplier<Optional<AttackStrategy>> heroAttack) {
         if (speaker == null) throw new IllegalArgumentException("speaker cannot be null");
@@ -41,12 +45,28 @@ public final class SoundListener implements GameEventListener {
         if (message == null) return;
         String t = message.replaceAll("\u001B\\[[0-9;]*m", "");   // utan färgkoder (gult, rött)
 
-        if (t.startsWith("Hero: ")) {
+        java.util.regex.Matcher bar = HP_BAR.matcher(t);
+        boolean heroBar = expectHeroBar;
+        expectHeroBar = false;
+        if (bar.matches()) {
+            // Hjältens hp-mätare efter fiendens slag: varna när en fjärdedel eller mindre är kvar
+            int hp = Integer.parseInt(bar.group(2)), max = Integer.parseInt(bar.group(3));
+            if (heroBar && hp > 0 && hp * 4 <= max) speaker.sfx("lowhp");
+        } else if (t.startsWith("Hero: ")) {
             inFight = true;
-            speaker.sfx(t.contains(" missar ") ? "whoosh" : attackSound());
+            speaker.sfx(heroSound(t));
         } else if (t.startsWith("Enemy: ")) {
             inFight = true;
-            speaker.sfx(t.contains(" missar ") ? "whoosh" : "hurt");
+            expectHeroBar = true;
+            speaker.sfx(t.contains(" missar ") ? "whoosh" : enemySound(t));
+        } else if (t.contains("klämmer stressbollen") || t.startsWith("Du stoppar Stressboll")) {
+            speaker.sfx("squeak");
+        } else if (t.startsWith("Du har nu ") && t.contains(" i handen")) {
+            speaker.sfx("clang");
+        } else if (t.startsWith("Du tar på dig")) {
+            speaker.sfx("clank");
+        } else if (t.contains("kanelbulle") && t.matches(".*\\(\\+\\d+ hp\\).*")) {
+            speaker.sfx("munch");
         } else if (t.endsWith(" vinner Fångdjupet!")) {
             inFight = false;
             roomSong = "title";
@@ -77,6 +97,27 @@ public final class SoundListener implements GameEventListener {
         } else if (t.startsWith("Du plockar upp:")) {
             speaker.sfx("pickup");
         }
+    }
+
+    // Hjältens rad: boken bläddrar (eller slinter), Dela skärm klingar, stressbollen säger boing – annars attackens ljud
+    private String heroSound(String t) {
+        if (t.contains("slinter på sidan")) return "slip";
+        if (t.contains(" missar ") || t.contains("kastar stressbollen förbi")) return "whoosh";
+        if (t.contains("delar skärmen")) return "chime";
+        if (t.contains("kastar stressbollen på")) return "boing";
+        if (t.contains(" citerar ")) return "page";
+        return attackSound();
+    }
+
+    // Fiendens slag: varje fiende låter på sitt sätt. Okända fiender låter som en vanlig smäll.
+    static String enemySound(String t) {
+        if (t.startsWith("Enemy: Trollkarl")) return "zap";
+        if (t.startsWith("Enemy: Troll")) return "club";
+        if (t.contains("tvättsvamp")) return "splat";
+        if (t.contains("Svinto")) return "hiss";
+        if (t.contains("kemikalier")) return "fizz";
+        if (t.startsWith("Enemy: " + se.fangdjupet.combat.Martin.NAME)) return "blah";
+        return "hurt";
     }
 
     // Ljudet för hjältens slag: ett fult krossat "PJOOO" för pilbågen, magi, svärdshugg – eller kunskap mot Martin

@@ -96,7 +96,7 @@ class SoundListenerTest {
     void missesWhooshAndHitsOnTheHeroHurt() {
         sound.onEvent("Hero: Robert missar Troll!");
         assertEquals("sfx whoosh", speaker.last());
-        sound.onEvent("Enemy: Troll slår Robert skada: 7");
+        sound.onEvent("Enemy: Entrédörren slår Robert skada: 7");
         assertEquals("sfx hurt", speaker.last());
         sound.onEvent("Enemy: Troll missar Robert!");
         assertEquals("sfx whoosh", speaker.last());
@@ -122,6 +122,63 @@ class SoundListenerTest {
         assertEquals("sfx gulp", speaker.last());
         sound.onEvent(AsciiArt.yellow("Du hittar Städrustningen!"));   // färgkoderna stör inte
         assertEquals("sfx find", speaker.last());
+    }
+
+    @Test
+    void everyEnemySoundsDifferent() {
+        sound.onEvent("Enemy: Troll slår Robert skada: 7");
+        assertEquals("sfx club", speaker.last());
+        sound.onEvent("Enemy: Trollkarl skjuter Robert skada: 6");
+        assertEquals("sfx zap", speaker.last());
+        sound.onEvent("Enemy: StädHäxan kastar en tvättsvamp på Robert skada: 6");
+        assertEquals("sfx splat", speaker.last());
+        sound.onEvent("Enemy: StädHäxan kastar Svinto på Robert skada: 8");
+        assertEquals("sfx hiss", speaker.last());
+        sound.onEvent("Enemy: StädHäxan sprayar kemikalier på Robert skada: 11");
+        assertEquals("sfx fizz", speaker.last());
+        sound.onEvent("Enemy: Lektor Martin slår Robert skada: 10");
+        assertEquals("sfx blah", speaker.last());
+    }
+
+    @Test
+    void theHerosNewThingsHaveSounds() {
+        attack = KnowledgeAttack.SCREENSHARE;
+        sound.onEvent("Hero: Robert citerar kapitel 18: Polymorphism för Lektor Martin skada: 14");
+        assertEquals("sfx page", speaker.last());
+        sound.onEvent("Hero: Robert slinter på sidan och missar Lektor Martin!");
+        assertEquals("sfx slip", speaker.last());
+        sound.onEvent("Hero: Robert delar skärmen och tar över lektionen: +10 hp, ingen skada på Lektor Martin");
+        assertEquals("sfx chime", speaker.last());
+        sound.onEvent("Hero: Robert kastar stressbollen på Lektor Martin skada: 10");
+        assertEquals("sfx boing", speaker.last());
+        sound.onEvent("Hero: Robert kastar stressbollen förbi Lektor Martin!");
+        assertEquals("sfx whoosh", speaker.last());
+        sound.onEvent("Robert klämmer stressbollen: +5 hp");
+        assertEquals("sfx squeak", speaker.last());
+    }
+
+    @Test
+    void pickingThingsUpSoundsLikeTheThing() {
+        sound.onEvent("Du har nu Pilbåge i handen: +4 i skada.");
+        assertEquals("sfx clang", speaker.last());
+        sound.onEvent("Du tar på dig Städrustning: +20 i försvar.");
+        assertEquals("sfx clank", speaker.last());
+        sound.onEvent("Du äter en kanelbulle (+35 hp).");
+        assertEquals("sfx munch", speaker.last());
+        sound.onEvent("Du stoppar Stressboll i fickan: i striden klämmer du den, +5 hp varje runda.");
+        assertEquals("sfx squeak", speaker.last());
+    }
+
+    @Test
+    void lowHpAfterAnEnemyHitBeeps() {
+        sound.onEvent("Enemy: Troll slår Robert skada: 7");
+        sound.onEvent("Robert  [##--------] 9/40");
+        assertEquals("sfx lowhp", speaker.last());
+        int before = speaker.played.size();
+        sound.onEvent("Troll  [#---------] 2/12");     // fiendens mätare: ingen varning
+        sound.onEvent("Enemy: Troll slår Robert skada: 7");
+        sound.onEvent("Robert  [######----] 25/40");   // mycket kvar: ingen varning
+        assertEquals(before + 1, speaker.played.size());
     }
 
     @Test

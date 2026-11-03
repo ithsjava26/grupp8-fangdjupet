@@ -6,6 +6,7 @@ import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.StressBall;
 import se.fangdjupet.items.Weapon;
 import se.fangdjupet.items.WeaponRange;
 
@@ -255,9 +256,12 @@ public class GameEngine {
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
-        // Bilder på det hjälten bär: vapnet (t.ex. pilbågen) och rustningen (t.ex. Städrustningen)
+        // Bilder på allt hjälten bär: vapnet (t.ex. pilbågen), rustningen (t.ex. Städrustningen),
+        // Java-boken och stressbollen
         hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
         hero.getArmor().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+        if (hero.hasJavaBook()) AsciiArt.show(output, AsciiArt.JAVA_BOOK);
+        hero.getStressBall().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
     }
 
     // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
@@ -274,6 +278,8 @@ public class GameEngine {
         if (hero.hasJavaBook()) {
             lines.add("Java-boken: ja – mot Martin hjälper bara kunskap");
         }
+        hero.getStressBall().ifPresent(ball -> lines.add("Stressboll: i fickan (+" + ball.hpPerTurn()
+                + " hp per runda, eller kasta den på Martin)"));
         return lines;
     }
 
@@ -645,6 +651,13 @@ public class GameEngine {
                 hero.drink(potion);
                 output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
             }
+            case StressBall ball -> {
+                hero.pickUp(ball);
+                output.onEvent("Du stoppar " + ball.description() + " i fickan: i striden klämmer du den, +"
+                        + ball.hpPerTurn() + " hp varje runda.");
+                output.onEvent("Du kan också kasta den på Martin (" + StressBallThrow.POWER
+                        + " i skada om den träffar) – men då är den borta.");
+            }
         }
     }
 
@@ -654,6 +667,7 @@ public class GameEngine {
             case Weapon w -> "+" + w.damageBonus() + " i skada";
             case Armor a -> "+" + a.defense() + " i försvar";
             case Potion p -> "+" + p.healAmount() + " hp";
+            case StressBall b -> "+" + b.hpPerTurn() + " hp per runda";
         };
         return "Här ligger: " + item.description() + " (" + bonus + ")";
     }

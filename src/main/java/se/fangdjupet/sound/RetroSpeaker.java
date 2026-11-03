@@ -129,6 +129,64 @@ public final class RetroSpeaker implements Speaker {
                 for (int i = 0; i < up.length; i++)
                     tone("triangle", Song.frequency(79 + up[i]), t + 0.07 * i, 0.12, 0.12).sfx();
             }
+            // ---- fiendernas slag: varje fiende låter på sitt eget sätt ----
+            case "club" -> {   // trollets klubba: en tung, dov duns
+                tone("sine", 55, t, 0.25, 0.8).from(180, 0.1).sfx();
+                noise(t, 0.2, 0.5, 'l', 400, 0, 1).crushed();
+            }
+            case "zap" -> {    // trollkarlen: elektriskt surr
+                tone("sawtooth", 2000, t, 0.2, 0.22).from(200, 0.15).vibrato(40, 200).crushed();
+                tone("square", 2600, t + 0.05, 0.12, 0.06).sfx();
+            }
+            case "splat" -> {  // tvättsvampen: blöt smäll
+                noise(t, 0.25, 0.7, 'l', 1500, 200, 2).crushed();
+                tone("sine", 90, t, 0.15, 0.5).from(300, 0.1).sfx();
+            }
+            case "hiss" -> noise(t, 0.45, 0.35, 'h', 4000, 0, 1).sfx();   // Svinto: sprejet väser
+            case "fizz" -> {   // kemikalierna fräser och bubblar
+                noise(t, 0.5, 0.3, 'b', 5000, 1500, 6).sfx();
+                for (int i = 0; i < 5; i++) tone("sine", 900 + i * 150, t + i * 0.07, 0.05, 0.12).from(400, 0.03).sfx();
+            }
+            case "blah" -> {   // Martin förklarar: bla-bla-bla-bla
+                int[] up = {0, 3, -2, 1, 5, -1};
+                for (int i = 0; i < up.length; i++)
+                    tone("square", Song.frequency(57 + up[i]), t + i * 0.08, 0.07, 0.12).vibrato(9, 40).lowpass(1200, 0, 2).sfx();
+            }
+            // ---- hjältens nya saker ----
+            case "page" -> {   // en sida i Java-boken vänds
+                noise(t, 0.12, 0.3, 'h', 3000, 0, 1).sfx();
+                noise(t + 0.1, 0.08, 0.25, 'b', 2000, 0, 1).sfx();
+            }
+            case "slip" -> {   // slinter på sidan: wiiiuuu – duns
+                tone("square", 200, t, 0.55, 0.2).from(900, 0.5).vibrato(12, 50).crushed();
+                tone("sine", 50, t + 0.5, 0.2, 0.6).from(150, 0.1).sfx();
+            }
+            case "chime" -> {  // Dela skärm: tid att andas
+                int[] up = {0, 4, 7, 12, 16};
+                for (int i = 0; i < up.length; i++)
+                    tone("triangle", Song.frequency(72 + up[i]), t + 0.06 * i, 0.3, 0.12).sfx();
+            }
+            case "boing" -> tone("sine", 300, t, 0.4, 0.4).from(120, 0.08).vibrato(14, 300).sfx();   // stressbollen kastas
+            case "squeak" -> {  // stressbollen kläms: iiik-iiik
+                tone("square", 1400, t, 0.1, 0.12).from(900, 0.06).sfx();
+                tone("square", 1500, t + 0.12, 0.1, 0.1).from(950, 0.06).sfx();
+            }
+            case "clang" -> {   // ett vapen i handen
+                tone("square", 1250, t, 0.4, 0.12).sfx();
+                tone("square", 1873, t, 0.35, 0.08).detune(15).sfx();
+                noise(t, 0.05, 0.3, 'h', 6000, 0, 1).sfx();
+            }
+            case "clank" -> {   // rustningen på
+                noise(t, 0.15, 0.5, 'b', 900, 0, 4).crushed();
+                tone("triangle", 330, t, 0.2, 0.2).sfx();
+            }
+            case "munch" -> {   // kanelbullen: mums-mums-mums
+                for (int i = 0; i < 3; i++) noise(t + i * 0.11, 0.07, 0.45, 'l', 1500, 0, 1).crushed();
+            }
+            case "lowhp" -> {   // varning: lite hp kvar
+                tone("square", 988, t, 0.09, 0.1).sfx();
+                tone("square", 988, t + 0.16, 0.09, 0.1).sfx();
+            }
             default -> { }
         }
     }

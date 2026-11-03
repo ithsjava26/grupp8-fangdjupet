@@ -2,6 +2,7 @@ package se.fangdjupet.combat;
 
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.StressBall;
 import se.fangdjupet.items.Weapon;
 import se.fangdjupet.items.WeaponRange;
 
@@ -16,6 +17,7 @@ public class Hero extends Character {
     private Weapon weapon;   // null = inget vapen
     private Armor armor;     // null = ingen rustning
     private boolean javaBook; //Plocka upp boken i sista rummet
+    private StressBall stressBall;   // null = ingen stressboll i fickan
     private final EnumSet<WeaponRange> pickedUp = EnumSet.noneOf(WeaponRange.class);   // räckvidderna hjälten har haft i handen
     private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
 
@@ -108,6 +110,31 @@ public class Hero extends Character {
 
     public boolean hasJavaBook() {
         return javaBook;
+    }
+
+    // Stressbollen i fickan (från Leta i Lektionssalen)
+    public void pickUp(StressBall ball) {
+        if (ball == null)
+            throw new IllegalArgumentException("ball must not be null");
+        stressBall = ball;
+    }
+
+    public Optional<StressBall> getStressBall() {
+        return Optional.ofNullable(stressBall);
+    }
+
+    // Battle klämmer bollen i början av varje runda: +hpPerTurn hp (aldrig över maxHp). Ger hur mycket som kom tillbaka.
+    public int squeezeStressBall() {
+        if (stressBall == null || !isAlive()) return 0;
+        int before = getHp();
+        heal(stressBall.hpPerTurn());
+        return getHp() - before;
+    }
+
+    // Bollen är kastad på Martin: borta ur fickan. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.
+    void throwAwayStressBall() {
+        stressBall = null;
+        if (getAttack() instanceof StressBallThrow) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);
     }
 
     // Tar upp Java-boken i Lektionssalen och börjar med StackOverflow – som när en båge

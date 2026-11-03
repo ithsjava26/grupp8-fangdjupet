@@ -193,6 +193,15 @@ public final class AsciiArt {
               |________|
             """;
 
+    // Stressbollen från Lektionssalen: kläm den (+5 hp varje runda) eller kasta den på Martin
+    public static final String STRESS_BALL = """
+               .-''''-.
+              / ~    ~ \\
+             |  (o)(o)  |    STRESSBOLL
+              \\  \\__/  /     kläm: +5 hp per runda
+               '-....-'      kasta: 10 i skada
+            """;
+
     public static final String BOW = """
                |\\
                | \\
@@ -331,6 +340,7 @@ public final class AsciiArt {
             Map.entry("Java-bok", JAVA_BOOK),
             Map.entry("Pilbåge", BOW),
             Map.entry("Trollstav", STAFF),
+            Map.entry(WorldBuilder.STRESSBOLL, STRESS_BALL),
             Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR));
 
     // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
@@ -348,7 +358,8 @@ public final class AsciiArt {
             ItemType.STAFF, STAFF,
             ItemType.SHIELD, SHIELD,
             ItemType.HELMET, HELMET,
-            ItemType.POTION, POTION);
+            ItemType.POTION, POTION,
+            ItemType.STRESSBALL, STRESS_BALL);
 
     // Bilden för ett föremål: först på namnet (t.ex. "Pilbåge", "en kopp kaffe"), annars på sorten
     // (ett svärd från ItemFactory får svärdet). Tomt för null.

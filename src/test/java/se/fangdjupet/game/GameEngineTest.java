@@ -315,6 +315,30 @@ class GameEngineTest {
     }
 
     @Test
+    void theStressBallIsHiddenInTheClassroom() {
+        World world = GameEngine.newWorld(new Random(1));
+        world.moveForward();
+        world.moveForward();
+        world.moveForward();                                   // Lektionssalen
+        se.fangdjupet.items.StressBall ball = (se.fangdjupet.items.StressBall) world.getCurrentRoom().search().getFirst();
+        assertEquals(WorldBuilder.STRESSBOLL, ball.description());
+        assertEquals(5, ball.hpPerTurn());
+        assertTrue(AsciiArt.forItem(ball).isPresent(), "stressbollen har en bild");
+    }
+
+    @Test
+    void equipmentShowsTheStressBallAndTheMenuCanThrowIt() {
+        Hero robert = robert();
+        robert.pickUpJavaBook();
+        robert.pickUp(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, WorldBuilder.STRESSBOLL, 5, 3));
+        assertTrue(GameEngine.equipment(robert).contains("Stressboll: i fickan (+5 hp per runda, eller kasta den på Martin)"));
+        List<String> menu = AttackMenu.lines(AttackMenu.options(robert));
+        assertEquals("6. Kasta stressbollen  (10 i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)", menu.get(5));
+        assertEquals("Här ligger: Stressboll (+5 hp per runda)",
+                GameEngine.itemHere(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, "Stressboll", 5, 3)));
+    }
+
+    @Test
     void otherRoomsHaveNothingHidden() {
         World world = GameEngine.newWorld(new Random(1));
         assertTrue(world.getCurrentRoom().search().isEmpty());   // Skoldörren
