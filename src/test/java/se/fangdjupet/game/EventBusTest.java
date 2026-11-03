@@ -23,8 +23,8 @@ class EventBusTest {
         bus.register(selfRemoving);
         bus.register(message -> received.add("remaining:" + message));
 
-        bus.publish("first");
-        bus.publish("second");
+        bus.onEvent("first");
+        bus.onEvent("second");
 
         assertEquals(List.of("self:first", "remaining:first", "remaining:second"), received);
     }
@@ -41,8 +41,8 @@ class EventBusTest {
         bus.register(removed);
         bus.register(message -> received.add("last:" + message));
 
-        bus.publish("first");
-        bus.publish("second");
+        bus.onEvent("first");
+        bus.onEvent("second");
 
         assertEquals(List.of("first:first", "removed:first", "last:first",
                 "first:second", "last:second"), received);
@@ -59,8 +59,8 @@ class EventBusTest {
         });
         bus.register(message -> received.add("last:" + message));
 
-        bus.publish("first");
-        bus.publish("second");
+        bus.onEvent("first");
+        bus.onEvent("second");
 
         assertEquals(List.of("first:first", "last:first",
                 "first:second", "last:second", "added:second"), received);

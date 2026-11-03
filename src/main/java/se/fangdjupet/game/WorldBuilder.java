@@ -1,9 +1,18 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.items.ItemFactory;
+import se.fangdjupet.items.ItemType;
+import se.fangdjupet.items.Potion;
+
 import se.fangdjupet.combat.Enemy;
+import se.fangdjupet.combat.Frida;
+import se.fangdjupet.combat.MagicAttack;
+import se.fangdjupet.combat.MeleeAttack;
 
 import java.util.List;
 
+// Bygger spelvärlden (Fredrik): de fyra rummen i rad, med fiender, föremål och extra saker.
+// Skoldörren → Kafferummet → Korridoren och städskrubben → Lektionssalen.
 public class WorldBuilder {
 
     public World build(
@@ -13,6 +22,11 @@ public class WorldBuilder {
             Enemy finalEnemy
 
     ) {
+        // StädHäxan hotar när man är på väg mot lektionssalen
+        if (corridorEnemy != null && corridorEnemy.getLine().isEmpty()) {
+            corridorEnemy.withLine("Ett steg till mot lektionssalen och jag tar fram kemikalierna!");
+        }
+
         Room door = new Room(
                 "Skoldörren",
                 "Du står utanför skolan.",
@@ -20,26 +34,38 @@ public class WorldBuilder {
                 List.of()
         );
 
+        // De riktiga fienderna: trollet och trollkarlen gömmer sig i kafferummet och
+        // hoppar fram tillsammans när JavaFläcken är besegrad. Trollkarlen använder magi.
+        Enemy troll = new Enemy("Troll", 12, new MeleeAttack(7), 2);
+        Enemy wizard = new Enemy("Trollkarl", 16, new MagicAttack(6), 2)
+                .withLine("Thou shall not pass!");
         Room coffeeRoom = new Room(
                 "Kafferummet",
                 "Det luktar kaffe.",
                 coffeeEnemy,
-                List.of()
-        );
+                List.of(ItemFactory.createWeapon(ItemType.BOW, "Pilbåge", 1))
+        )
+                // Efter JavaFläcken: en kaffe (+30 hp), sedan trollet och trollkarlen samtidigt
+                .withRefreshment("Du ser dig om efter en kaffe... Där! Kannan på bänken är fortfarande varm.",
+                        new Potion(ItemType.POTION, "en kopp kaffe", 30, 1))
+                .thenTogether(troll, wizard)
+                // När trollet och trollkarlen är besegrade: en kanelbulle (+35 hp) inför StädHäxan
+                .withReward("På bänken bredvid kannan ligger en kanelbulle. Den har ingen tagit!",
+                        new Potion(ItemType.POTION, "en kanelbulle", 35, 1));
 
         Room corridor = new Room(
-                "På väg till lektionssalen",
+                "Korridoren och städskrubben",
                 "Korridoren känns lång.",
                 corridorEnemy,
-                List.of()
-        );
+                List.of(ItemFactory.createWeapon(ItemType.STAFF, "Trollstav", 1))
+        ).withFrida(Frida.create());   // Frida dyker upp när StädHäxan är besegrad
 
         Room classroom = new Room(
                 "Lektionssalen",
                 "Du har nått fram. Framför dig väntar dagens stora test.",
                 finalEnemy,
                 List.of()
-        );
+        ).withJavaBook();   // hjälten tar upp Java-boken när hen kommer in
 
         return new World(List.of(door, coffeeRoom, corridor, classroom));
     }

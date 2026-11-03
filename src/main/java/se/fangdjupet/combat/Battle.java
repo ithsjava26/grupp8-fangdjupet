@@ -1,0 +1,150 @@
+package se.fangdjupet.combat;
+
+import se.fangdjupet.game.GameEventListener;
+
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+// En strid mellan hjälten och en eller flera fiender. fight(...) kör runda efter runda tills
+// någon sida är död, och returnerar vinnaren. Varje slag skickas som text till listenern
+// (Observer) – Battle skriver aldrig själv till konsolen. Attackerna är strategier (Strategy),
+// så Battle bryr sig inte om hur skadan räknas, bara att den räknas.
+public class Battle {
+    private static final int MAX_ROUNDS = 100;    // rundtak: en strid får aldrig fastna
+    private static final int MISS_PERCENT = 10;   // så ofta ett slag missar när slumpen är på
+
+    private final GameEventListener listener;     // dit loggen skickas, t.ex. konsolen eller ett test
+
+    private final AttackChooser chooser;   // frågas före varje hjältens slag
+    private final Random random;           // null = ingen slump: skadan blir exakt (testerna)
+
+    public Battle(GameEventListener listener) {
+        this(listener, hero -> null);      // utan val: hjälten behåller sin attack
+    }
+
+    // Spelaren väljer attack varje runda, men utan slump – skadan blir exakt (så kör testerna)
+    public Battle(GameEventListener listener, AttackChooser chooser) {
+        this(listener, chooser, false, null);   // utan slump
+    }
+
+    // Med slump: ibland en miss, och ±1 i skada. Så kör GameEngine striderna.
+    public Battle(GameEventListener listener, AttackChooser chooser, Random random) {
+        this(listener, chooser, true, random);
+    }
+
+    // Alla konstruktorer hamnar här. withLuck = true kräver en Random.
+    private Battle(GameEventListener listener, AttackChooser chooser, boolean withLuck, Random random) {
+        if (listener == null)
+            throw new IllegalArgumentException("listener cannot be null"); //Samma princip som character
+        if (chooser == null)
+            throw new IllegalArgumentException("chooser cannot be null");
+        if (withLuck && random == null)
+            throw new IllegalArgumentException("random cannot be null");
+        this.listener = listener;
+        this.chooser = chooser;
+        this.random = random;
+    }
+
+    // Kör hela striden, berättar vem som vann och returnerar vinnaren
+    public Character fight(Hero hero, Enemy enemy) {
+        return fight(hero, List.of(enemy));                // en vanlig strid = en grupp med en fiende
+    }
+
+    // Strid mot flera fiender samtidigt, t.ex. trollet och trollkarlen i kafferummet
+    public Character fight(Hero hero, List<Enemy> enemies) {
+        if (enemies == null || enemies.isEmpty())
+            throw new IllegalArgumentException("enemies cannot be empty");
+        Character result = runFight(hero, enemies);                        // själva striden
+        String losers = (result == hero)
+                ? enemies.stream().map(Character::getName).collect(Collectors.joining(" och "))
+                : hero.getName();
+        listener.onEvent(result.getName() + " vinner mot " + losers + "!");   // slutmeddelandet, loggas bara en gång
+        return result;
+    }
+
+    // En runda = hjälten slår den första fienden som lever, sedan slår varje levande fiende.
+    // Går tills hjälten eller alla fiender är döda, eller rundtaket nås.
+    private Character runFight(Hero hero, List<Enemy> enemies) {
+        int round = 0;
+        // Så länge hjälten och minst en fiende lever och taket inte nåtts – slåss
+        while (hero.isAlive() && anyAlive(enemies) && round < MAX_ROUNDS) {
+            round++;
+            AttackStrategy chosen = chooser.choose(hero);   // spelaren väljer attack för den här rundan
+            if (chosen != null) hero.setAttack(chosen);
+            Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
+            boolean heroMisses = misses();                  // slumpen: ibland missar man
+            int damage = heroMisses ? 0 : vary(hero.attack(target));   // bara skadan räknas ut här, hp ändras inte än
+            if (heroMisses) {
+                listener.onEvent("Hero: " + hero.getName() + " missar " + target.getName() + "!");
+            } else {
+                listener.onEvent("Hero: " + hero.getName() + " " + hit(hero.getAttack(), target, damage));
+            }
+            target.takeDamage(damage);                          // nu dras skadan av fienden
+            listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
+            hero.takeDamage(hero.getAttack().selfDamage());   // attacken kan kosta hjälten hp
+            if(hero.getAttack().selfDamage() > 0) {
+                listener.onEvent(HpBar.status(hero, 10));// grafik: hp-mätare för hjälten, 10 tecken bred
+            }
+            if (!anyAlive(enemies) || !hero.isAlive()) break;   // ingen av de döda slår mer
+            for (Enemy enemy : enemies) {                     // fiendernas tur, en i taget
+                if (!enemy.isAlive()) continue;                // döda fiender slår inte
+                boolean enemyMisses = misses();
+                damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut
+                if (enemyMisses) {
+                    listener.onEvent("Enemy: " + enemy.getName() + " missar " + hero.getName() + "!");
+                } else {
+                    listener.onEvent("Enemy: " + enemy.getName() + " " + hit(enemy.getAttack(), hero, damage));
+                }
+                hero.takeDamage(damage);                                     // hjälten tar skadan
+                listener.onEvent(HpBar.status(hero, 10));          // grafik: hp-mätare för hjälten, 10 tecken bred
+                enemy.takeDamage(enemy.getAttack().selfDamage());            // fiendens attack kan kosta fienden hp
+                if (enemy.getAttack().selfDamage() > 0) {                    // mätaren bara om attacken kostade något
+                    listener.onEvent(HpBar.status(enemy, 10));
+                }
+                if(!hero.isAlive()) return enemy;                            // hjälten dog: den fienden vinner direkt
+            }
+        }
+        return winner(hero, enemies);   // fienderna dog, eller rundtaket nåddes: winner() avgör
+    }
+
+    // Alla fiender döda: hjälten vinner, även om hen dog av sin egen attack i samma slag (valet B).
+    // Hjälten dog: den första levande fienden vinner. Rundtaket nåddes: hjälten vinner bara med
+    // mer hp än fienderna har tillsammans – vid lika vinner fienden, hjälten hann inte besegra den.
+    private Character winner(Hero hero, List<Enemy> enemies) {
+        if (!anyAlive(enemies)) return hero;
+        if (!hero.isAlive()) return firstAlive(enemies);
+        int enemyHp = enemies.stream().mapToInt(Character::getHp).sum();
+        return hero.getHp() > enemyHp ? hero : firstAlive(enemies);
+    }
+
+    // Slumpen (bara med Random): MISS_PERCENT % av slagen missar
+    private boolean misses() {
+        return random != null && random.nextInt(100) < MISS_PERCENT;
+    }
+
+    // Slagets rad i loggen. 0 i skada (bomkast eller för bra försvar) skrivs som en miss.
+    private static String hit(AttackStrategy attack, Character target, int damage) {
+        if (damage == 0) {
+            return attack.verb() + " " + target.getName() + " men missar!";
+        }
+        return attack.verb() + " " + target.getName() + " skada: " + damage;
+    }
+
+    // Slumpen (bara med Random): skadan blir 1 lägre, samma eller 1 högre – aldrig under 0.
+    // En miss (0) förblir en miss.
+    private int vary(int damage) {
+        if (random == null || damage == 0) return damage;
+        return Math.max(0, damage + random.nextInt(3) - 1);
+    }
+
+    // Lever minst en av fienderna?
+    private static boolean anyAlive(List<Enemy> enemies) {
+        return enemies.stream().anyMatch(Character::isAlive);
+    }
+
+    // Hjälten slår alltid den första fienden som lever
+    private static Enemy firstAlive(List<Enemy> enemies) {
+        return enemies.stream().filter(Character::isAlive).findFirst().orElseThrow();
+    }
+}

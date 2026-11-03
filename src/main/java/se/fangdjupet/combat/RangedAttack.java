@@ -23,4 +23,9 @@ public class RangedAttack implements AttackStrategy {
         }
         return Math.max(0, strength + attacker.getAttackBonus() / 2 - target.getDefense());
     }
+    // Pilar skjuts, de slås inte
+    @Override
+    public String verb() {
+        return "skjuter"; //Ranged attack
+    }
 }

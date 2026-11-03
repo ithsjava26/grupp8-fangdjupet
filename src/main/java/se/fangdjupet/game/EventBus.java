@@ -3,7 +3,8 @@ package se.fangdjupet.game;
 import java.util.ArrayList;
 import java.util.List;
 
-//Todo: Tester
+// Skickar varje händelse vidare till alla registrerade lyssnare, t.ex. konsolen och loggfilen (Observer).
+// Testerna finns i EventBusTest.
 public class EventBus implements GameEventListener {
     private final List<GameEventListener> listeners = new ArrayList<>();
 

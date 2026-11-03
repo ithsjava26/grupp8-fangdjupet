@@ -41,12 +41,14 @@ public abstract class Character {
         return hp > 0;
     }
 
+    // Drar skadan från hp, men aldrig under 0. Boss skriver över den för att byta fas.
     public void takeDamage(int amount) {
         // Dra av – hp aldrig under 0, negativ skada räknas som 0
         amount = Math.max(0, amount); //Begränsa skada till 0
         hp = Math.max(0, hp - amount);
     }
 
+    // Lägger till hp, men aldrig över maxHp
     public void heal(int amount) {
         // (övning 1.3): lägg till – hp aldrig över maxHp. Döda kan inte helas.
         if (!isAlive()) return;
@@ -59,6 +61,7 @@ public abstract class Character {
         return attack;
     }
 
+    // Byter strategi mitt i spelet, t.ex. när hjälten tar fram ett vapen (Strategy)
     public void setAttack(AttackStrategy attack) {
         // byt strategi mitt i striden
         if (attack == null)
