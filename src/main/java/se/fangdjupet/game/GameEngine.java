@@ -180,7 +180,7 @@ public class GameEngine {
     static World newWorld(Random random) {
         Enemy doorEnemy = new Enemy("Entrédörren", 15, new MeleeAttack(5), 1);   // liten fiende
         Enemy corridorEnemy = CleaningWitch.create(random);   // kastar tvättsvamp och Svinto, sedan sprayar hon kemikalier
-        Enemy coffeeEnemy = new Enemy("JavaFläcken", 15, new MeleeAttack(4), 1);   // liten fiende
+        Enemy coffeeEnemy = new Enemy("JavaFläcken", 24, new MeleeAttack(7), 2);   // seg fläck: två pilar, och den slår tillbaka
         Enemy finalEnemy = Martin.create();   // bossen: byter till tyngre förklaringar vid halva livet
 
         return new WorldBuilder().build(

@@ -109,7 +109,9 @@ class RoomTest {
         assertEquals("Troll", together.get(0).getName());
         assertEquals("Trollkarl", together.get(1).getName());
         assertEquals(12, together.get(0).getMaxHp());
-        assertEquals(16, together.get(1).getMaxHp());
+        assertEquals(24, together.get(1).getMaxHp());                  // trollkarlen tål två pilar
+        assertEquals(9 + 2, together.get(0).getAttack().calculateDamage(together.get(0), new se.fangdjupet.combat.Hero("R", 40, new se.fangdjupet.combat.MeleeAttack(1))), "trollet slår 9 + nivån");
+        assertEquals(7, together.get(1).getAttack().calculateDamage(together.get(1), new se.fangdjupet.combat.Hero("R", 40, new se.fangdjupet.combat.MeleeAttack(1))), "trollkarlen trollar 7");
         assertInstanceOf(MagicAttack.class, together.get(1).getAttack());   // trollkarlen använder magi
         assertEquals("Thou shall not pass!", together.get(1).getLine().orElseThrow());
     }

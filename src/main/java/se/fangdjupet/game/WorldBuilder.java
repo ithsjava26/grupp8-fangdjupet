@@ -42,8 +42,9 @@ public class WorldBuilder {
 
         // De riktiga fienderna: trollet och trollkarlen gömmer sig i kafferummet och
         // hoppar fram tillsammans när JavaFläcken är besegrad. Trollkarlen använder magi.
-        Enemy troll = new Enemy("Troll", 12, new MeleeAttack(7), 2);
-        Enemy wizard = new Enemy("Trollkarl", 16, new MagicAttack(6), 2)
+        // Trollet slår hårt (9 + nivån), trollkarlen tål två pilar och trollar 7 rakt igenom rustningen
+        Enemy troll = new Enemy("Troll", 12, new MeleeAttack(9), 2);
+        Enemy wizard = new Enemy("Trollkarl", 24, new MagicAttack(7), 2)
                 .withLine("Thou shall not pass!");
         Room coffeeRoom = new Room(
                 "Kafferummet",

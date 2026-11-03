@@ -565,4 +565,15 @@ class GameEngineTest {
         assertTrue(GameEngine.searchOption(room).startsWith(AsciiArt.YELLOW));
         assertTrue(GameEngine.menu(room).contains("(något finns här!)"));
     }
+
+    @Test
+    void theJavaFleckIsToughNow() {
+        World world = GameEngine.newWorld(new java.util.Random(1));
+        world.moveForward();                                   // Kafferummet
+        Enemy fleck = world.getCurrentRoom().getEnemy();
+        assertEquals("JavaFläcken", fleck.getName());
+        assertEquals(24, fleck.getMaxHp(), "två pilar");
+        assertEquals(2, fleck.getAttackBonus(), "nivå 2");
+        assertEquals(7 + 2, fleck.getAttack().calculateDamage(fleck, GameEngine.newHero("R", 40)));
+    }
 }
