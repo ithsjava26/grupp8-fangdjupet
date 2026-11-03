@@ -576,4 +576,12 @@ class GameEngineTest {
         assertEquals(2, fleck.getAttackBonus(), "nivå 2");
         assertEquals(7 + 2, fleck.getAttack().calculateDamage(fleck, GameEngine.newHero("R", 40)));
     }
+
+    @Test
+    void theEntranceDoorIsHeavierNow() {
+        Enemy door = GameEngine.newWorld(new java.util.Random(1)).getCurrentRoom().getEnemy();
+        assertEquals("Entrédörren", door.getName());
+        assertEquals(20, door.getMaxHp(), "fyra hugg med svärdet (6)");
+        assertEquals(6 + 1, door.getAttack().calculateDamage(door, GameEngine.newHero("R", 40)), "6 + nivån");
+    }
 }
