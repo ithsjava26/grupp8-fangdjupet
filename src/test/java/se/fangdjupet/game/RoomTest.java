@@ -249,23 +249,4 @@ class RoomTest {
     void hidingNullIsNotAllowed() {
         assertThrows(IllegalArgumentException.class, () -> coffeeRoom().withHiddenItem(null));
     }
-
-    @Test
-    void somethingToFindWhileItemsOrHiddenThingsAreLeft() {
-        Room empty = coffeeRoom(enemy("JavaFläcken"));
-        assertFalse(empty.hasSomethingToFind());
-        Room hidden = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
-        assertTrue(hidden.hasSomethingToFind());
-        hidden.search();
-        assertFalse(hidden.hasSomethingToFind());
-    }
-
-    @Test
-    void aRefreshmentYouSaidNoToStaysInTheRoom() {
-        Room room = new Room("Kafferummet", "Det luktar kaffe.", (Enemy) null, List.of());
-        assertFalse(room.hasSomethingToFind());
-        room.leaveItem(new se.fangdjupet.items.Potion(ItemType.POTION, "en kopp kaffe", 30, 1));
-        assertTrue(room.hasSomethingToFind(), "Leta i rummet blir gul");
-        assertEquals("en kopp kaffe", room.getItems().getFirst().description());
-    }
 }

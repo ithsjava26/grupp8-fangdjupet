@@ -1,5 +1,22 @@
 # grupp8-fangdjupet
 
+**Fångdjupet** är ett textbaserat rollspel i konsolen, byggt i Java av tre personer i kursen
+Javaprogrammering (grupp 8). Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet,
+Korridoren och städskrubben och till sist Lektionssalen – och slåss mot fiender som JavaFläcken,
+ett troll och en trollkarl, StädHäxan och slutbossen Kapten Martin. Spelaren väljer attack varje
+runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. Grafiken är ren ASCII.
+
+Projektet handlar mest om *hur* det är byggt: tre paket med en ägare var, tre designmönster
+(Strategy, Factory och Observer), JUnit-tester och ett Git-arbetsflöde med feature-grenar,
+pull requests och granskning.
+
+**Köra spelet:** kör `Main` i IntelliJ (gröna play-knappen), eller i terminalen:
+```
+mvn -q compile
+java -cp target/classes se.fangdjupet.Main
+```
+Kräver JDK 27 (se *Kom igång* nedan). Testerna körs med `mvn test`.
+
 ## Kom igång
 
 ### 1. Installera
@@ -73,6 +90,76 @@ När koden är klar på din branch:
 | Strid & karaktärer | `se.fangdjupet.combat` | Robert (`elitrobban89`), A   |
 | Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
 | Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
+
+## Designmönster
+
+### Strategy – hur man slåss (`combat`, Robert)
+**Var:** `AttackStrategy` är ett interface med `calculateDamage(attacker, target)`. `MeleeAttack`,
+`MagicAttack` och `RangedAttack` räknar skadan på var sitt sätt, och i #18 kom `KnowledgeAttack`,
+`CleaningAttack` och `RandomAttack`. En `Character` *har* en strategi och kan byta den mitt i
+striden med `setAttack(...)`: spelaren väljer attack varje runda, och en `Boss` byter till en
+tyngre attack vid halva livet.
+
+**Varför:** en ny attack blir en ny klass i stället för en ändring i `Character` eller `Battle`
+(open/closed). Varje strategi går att testa för sig, och slumpen (`Random`) skickas in så att
+testerna blir likadana varje gång. Alternativet, en `switch` på attacktyp i `Character`, hade
+behövt ändras vid varje ny attack.
+
+### Factory – hur föremål skapas (`items`, Tanaz)
+**Var:** `ItemFactory` skapar vapen, rustningar och drycker utifrån `ItemType` och nivå:
+`createWeapon(ItemType.BOW, "Pilbåge", 1)`. Fabriken väljer räckvidd och bonus, så den som anropar
+behöver inte veta hur ett föremål byggs. Samma idé finns i `Martin.create()` och
+`CleaningWitch.create(random)`, som bygger bossarna.
+
+**Varför:** skapandet ligger på ett ställe. `WorldBuilder` och testerna ber om "en båge på nivå 1"
+och får ett färdigt `Weapon`. Ändras reglerna för bonusen ändras bara fabriken.
+
+### Observer – vem som får veta vad som händer (`game`, Fredrik)
+**Var:** `GameEventListener` har en metod, `onEvent(String)`. `Battle` och `GameEngine` skickar varje
+händelse dit, och `EventBus` skickar vidare till alla registrerade lyssnare, t.ex.
+`ConsoleEventLogger` (skärmen). Testerna registrerar en lista i stället för konsolen.
+
+**Varför:** den som skickar vet inte vem som lyssnar. Spelet skriver aldrig direkt till
+`System.out`, så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
+topplista – läggs till utan att `Battle` eller `GameEngine` ändras.
+
+## Git-samarbetet – reflektion
+
+> **Utkast** – skrivet av Robert. Fredrik och Tanaz fyller i med egna rader under *Våra egna ord*
+> innan inlämningen.
+
+**Hur vi arbetade.** Dag 1 (26 okt) satte vi ihop kontraktet – de gemensamma interfacen,
+`Character` och recorden – och lade in det i `main` via PR #2. Sedan hade var och en sitt paket och
+sina egna `feature/...`-grenar. `main` har en regel: allt går via pull request och kräver ett
+godkännande från någon annan, och ingen kan pusha direkt. CodeRabbit kommenterar varje PR
+automatiskt, och från PR #9 kör GitHub Actions `mvn test` på varje PR.
+
+**Konflikten vi löste.** Tors 29 okt mergades #7 (EventBus), #8 (ItemFactory), #9 (CI) och #10
+(ASCII-grafik) samma dag. #8 ändrade recorden `Weapon`, `Armor` och `Potion`, och när konflikten
+löstes blev både den gamla och den nya koden kvar i `ItemFactory.java`, `ItemType.java` och
+`ItemFactoryTest.java`. `main` kompilerade inte, och CI blev röd. Vi tittade på det tillsammans och
+lagade det i #11: Tanaz nya version behölls, den gamla togs bort, och A:s tester skrevs om till
+de nya records-konstruktorerna.
+
+**Det som fungerade bra.**
+- Kontraktet först: B och C kunde börja direkt och bygga mot typerna innan A:s kod var klar.
+- Regeln på `main` och granskningen: alla PR:ar har godkänts av någon annan innan merge.
+- CI fångade fel som granskningen missade, t.ex. att `main` var röd efter #8 och efter #17
+  (`EventBusTest` anropade `publish`, som hade bytt namn till `onEvent`).
+
+**Det vi skulle göra annorlunda.**
+- Merga mer sällan på samma dag, och dra in `main` i grenen (`git merge main`) och kör
+  `mvn test` innan PR:en mergas – då hade #11 inte behövts.
+- Läsa och svara på CodeRabbits kommentarer före merge. #15 mergades med tre anmärkningar kvar,
+  och #16 fick fixa dem i efterhand.
+- Fördela arbetet jämnare över personerna och veckorna, och öppna PR:ar tidigare i stället för
+  stora PR:ar mot slutet.
+- Slå på att CI måste vara grön för att få merga, inte bara att den körs.
+
+**Våra egna ord.**
+- *Robert:* …
+- *Fredrik:* …
+- *Tanaz:* …
 
 ## Användning av AI
 
@@ -165,47 +252,23 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 - **Grafik:** efter varje träff loggas den träffades hp som ASCII-mätare via `HpBar.status(character, 10)`, till exempel `Troll  [######----] 6/10`. Den som dör visar en tom mätare (`[----------] 0/10`). En attack som kostar anfallaren hp (`selfDamage`) ger också en mätare för anfallaren.
 
 ### Rum, vapen och grafik i spelet
-- `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller, när hjälten har Java-boken, Martins fyra `KnowledgeAttack` och **5. Citera från Java-boken** (`JavaBookAttack`, en per hjälte via `Hero.getJavaBookAttack()`): första gången *kapitel 18: Polymorphism*, nästa runda *kapitel 20: Interface*, sedan från början igen. 5 i skada och kostar ingenting (StackOverflow gör 6 men kostar 1 hp). Loggen visar kapitlet: `Hero: Robert citerar kapitel 18: Polymorphism för Lektor Martin skada: 5`, och bilden är boken uppslagen på rätt kapitel (`AttackArt.POLYMORPHISM`, `AttackArt.INTERFACE`). `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
-- **Hjälten börjar med ett svärd** (`GameEngine.newHero`): `Du har Svärd i handen: +1 i närstrid.` Svärdet syns under Visa utrustning, och närstriden blir **5 + 1 = 6** (`AttackMenu.MELEE`, `SWORD_BONUS`). I början finns bara `1. Närstrid` i attackmenyn: **magi och avstånd låses upp** först när man plockar upp staven eller pilbågen (`Hero.hasPickedUp`), och finns sedan kvar även när ett annat vapen tar platsen i handen – fast svaga (4) utan vapnet. Attacken för vapnet i handen är **gulmarkerad** i attackmenyn (`AttackMenu.lines(hero, options)`), t.ex. `2. Avståndsattack` med pilbågen. Svärdet räcker inte: 4000 simulerade spel med bara svärdet gav **4 %** vinster (85 % dör mot Trollet och Trollkarlen), med pilbågen och staven **76 %** vinster och **89 %** fram till Martin.
-- **Vapnen gör skillnad** (`AttackMenu`, `Hero.getAttackBonus`): svärdet är svagt. Pilbågen gör avståndsattacken till **13** + halva bågens bonus (`BOW_RANGED`, 20 % miss), och Trollstaven gör magin till **8 + stavens bonus** (`STAFF_MAGIC`, går rakt igenom rustningen). Utan vapnet i handen är magi och avstånd bara 4. Vapnets bonus hjälper bara sin egen attack – en pilbåge gör inte närstriden starkare (spjutet hjälper både närstrid och avstånd). Den som plockar upp pilbågen eller staven byter direkt till vapnets attack (`GameEngine.equipAndAim`, `AttackMenu.forWeapon`): `Du byter till Avståndsattack.` – Java-boken mot Martin går före. Simulerat 4000 gånger fram till Martin (kaffet och kanelbullen tagna): med pilbågen mot Trollet och Trollkarlen och staven mot StädHäxan tar man sig förbi **88 %**, med bara knytnävarna (närstrid 7, före svärdet) **36 %** (förut var det tvärtom: 94 % med närstrid och 3–9 % med pilbågen).
+- `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller bara Martins fyra `KnowledgeAttack` när hjälten har Java-boken. `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
 - **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, 4. Spara äventyret, 5. Leta i rummet, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
-- **Gå till ett annat rum – spelaren väljer** (spelmenyn 2): spelet visar kartan och rummen med siffror, och spelaren väljer vart (Enter = stanna kvar):
-  ```
-  Vart vill du gå?
-  1. Skoldörren  (rensat)
-  2. Kafferummet  (du är här)
-  3. Korridoren och städskrubben  (nytt rum)
-  4. Lektionssalen  (låst)
-  Välj rum (Enter = stanna kvar):
-  ```
-  Man kan gå tillbaka till alla rum man har varit i, och vidare till nästa nya rum när rummet längst fram är rensat (`World.isOpen`, `World.moveTo`). **Inte förbi en levande fiende:** ett låst rum ger `Kafferummet är låst. Entrédörren står i vägen i Skoldörren – besegra rummets fiender först.` (`GameEngine.lockedMessage`, som använder `blockedBy(room)`). Det gäller också efter rundtaket, där hjälten kan vinna på mest hp fast fienden lever. Rum längre bort: `Lektionssalen är låst. Du har inte hittat vägen dit än.`
-- **Kartan syns hela tiden** (`GameEngine.roomMap(world)`), ovanför spelmenyn och i "Gå till ett annat rum". Rummen ligger som en slinga, med streck i ren ASCII och namnen med å, ä och ö:
-  ```
-  KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst
-  [x] Skoldörren    -- [@] Kafferummet
-                        |
-  [#] Lektionssalen -- [#] Korridoren
-  ```
-  `@` = här, `x` = rensat, `!` = varit där och fiender lever, `?` = öppet men nytt, `#` = låst. Kartan skrivs med `IO.println` som menyn, så den hamnar inte i loggfilen.
-- **Spara när man gått tillbaka:** sparningen tar rummet **längst fram** som hjälten har nått (`World.getFurthestRoomIndex()`), inte det hen står i. Rummen före är ju rensade.
-- **Inlåst i Fångdjupet:** när hjälten går in i skolan (från Skoldörren till Kafferummet) slår Entrédörren igen bakom hen (`AsciiArt.LOCKED_DOOR`): `Entrédörren slår igen bakom dig!` och `Du är nu inlåst i Fångdjupet och behöver besegra slutbossen innan du kan ta dig ut.` Skoldörren är sedan låst på kartan (`#`) och i rumsvalet tills Martin i sista rummet är besegrad (`World.isEntranceLocked`). Det gäller också när en sparning läses in.
-- **Skolbyggnaden ovanför huvudmenyn:** `AsciiArt.SCHOOL` – Fångdjupets skola med klocktorn, flagga, fönster och entrédörr – visas bara ovanför huvudmenyn (starta, fortsätt, avsluta), inte i spelmenyn.
-- **Gulmarkerade menyval:** lever en fiende i rummet blir `1. Strid mot rummets fiende  (Entrédörren väntar!)` gult (`GameEngine.fightOption`), och finns något att hitta – något man lämnat kvar eller något gömt – blir `5. Leta i rummet  (något finns här!)` gult (`GameEngine.searchOption`, `Room.hasSomethingToFind`). Att leta erbjuder först det som ligger kvar (j/n), sedan det gömda.
-- **Visa hjältens utrustning** (spelmenyn 3, `GameEngine.equipment(hero)`): hp-mätaren, vapnet, rustningen, attacken, Java-boken och stressbollen – och sedan **bilder på allt hjälten bär**: vapnet, rustningen, Java-boken och stressbollen. Till exempel:
+- **Inte förbi en levande fiende:** spelmenyn 2 går bara vidare när rummet är rensat. Annars skriver spelet `Entrédörren står i vägen! Besegra rummets fiender innan du går vidare.` (`GameEngine.blockedBy(room)`). Det gäller också efter rundtaket, där hjälten kan vinna på mest hp fast fienden lever.
+- **Visa hjältens utrustning** (spelmenyn 3, `GameEngine.equipment(hero)`): hp-mätaren, vapnet, rustningen, attacken och Java-boken – och sedan bilder på vapnet och rustningen hjälten bär. Till exempel:
   ```
   Robert  [########--] 34/40
   Vapen: Pilbåge (+3 i skada)
   Rustning: ingen
   Attack: Närstrid
   ```
-- **Leta i rummet** (spelmenyn 5, `Room.withHiddenItem` / `Room.search()`): gömda föremål hittas bara om man letar, och bara en gång. I **städskrubben** (Korridoren och städskrubben) ligger **Städrustningen** – gummiförkläde, hink som hjälm och moppen – med **+20 i försvar** (`Du tar på dig Städrustning: +20 i försvar.`). Med den gör närstrid och StädHäxans kast nästan ingen skada, men Martins kunskap går rakt igenom rustningen – och **Martin blir argare** när han ser den (`Martin.enrage`, `Boss.enrage`): `Lektor Martin ser Städrustningen och blir arg! Han förklarar hårdare.` och repliken *"Jaså, städrustning? Kunskap går rakt igenom gummi!"*. Hans första förklaring gör då 4 i skada i stället för 3 (fas 2 är kvar på 5). Vid fullt hp vinner hjälten ungefär 78 % i stället för 89 %. **StädHäxan** – det är ju hennes rustning – skrattar elakt i stället (`CleaningWitch.enrage`): `StädHäxan ser sin Städrustning på dig och skrattar elakt: "Mwahahaha!"` och *"Jaså, min städrustning? Akta dig så jag inte kastar Svinto på dig – och tvättsvampar! Och sen blir det kemikalieangrepp: jag sprejar dig i ansiktet med Vanish!"* Vid halva livet blir kemikalierna `CleaningAttack.VANISH` (`sprejar Vanish i ansiktet på`, egen bild), lika hårt som förut. Andra bossar bryr sig inte (`GameEngine.reactToCleaningArmor`). I de andra rummen: `Du hittar inget här.` Rustningen sparas inte (inventariet sparas inte än). `ItemType` har ingen egen rustningssort, så rustningen är en `SHIELD`.
-- **Stressbollen** (`items/StressBall`, `ItemType.STRESSBALL`): gömd i **Lektionssalen** – leta (spelmenyn 5) så hittar du den: `Du hittar: Stressboll!` och `Du stoppar Stressboll i fickan: i striden klämmer du den, +5 hp varje runda.` I början av varje runda klämmer hjälten den (`Battle` → `Hero.squeezeStressBall()`): `Robert klämmer stressbollen: +5 hp`. Den finns också som **6. Kasta stressbollen** i attackmenyn mot Martin (`combat/StressBallThrow`): `(10 i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)`. Träffar kastet är bollen borta och hjälten citerar ur boken nästa runda (Enter); missar det studsar bollen tillbaka (`Robert kastar stressbollen förbi Lektor Martin!`). Bollen har en egen bild, och syns i utrustningen: `Stressboll: i fickan (+5 hp per runda, eller kasta den på Martin)`. Den sparas inte, som Städrustningen.
+- **Leta i rummet** (spelmenyn 5, `Room.withHiddenItem` / `Room.search()`): gömda föremål hittas bara om man letar, och bara en gång. I **städskrubben** (Korridoren och städskrubben) ligger **Städrustningen** – gummiförkläde, hink som hjälm och moppen – med **+20 i försvar** (`Du tar på dig Städrustning: +20 i försvar.`). Med den gör närstrid och StädHäxans kast nästan ingen skada, men Martins kunskap går rakt igenom rustningen – och **Martin blir argare** när han ser den (`Martin.enrage`, `Boss.enrage`): `Kapten Martin ser Städrustningen och blir arg! Han förklarar hårdare.` och repliken *"Jaså, städrustning? Kunskap går rakt igenom gummi!"*. Hans första förklaring gör då 4 i skada i stället för 3 (fas 2 är kvar på 5). Vid fullt hp vinner hjälten ungefär 78 % i stället för 89 %. I de andra rummen: `Du hittar inget här.` Rustningen sparas inte (inventariet sparas inte än). `ItemType` har ingen egen rustningssort, så rustningen är en `SHIELD`.
 - **Bilder för föremålen:** `AsciiArt.forItem(item)` tar först bilden på namnet (Pilbåge, Trollstav, kaffet, Städrustningen) och annars på sorten: svärd, spjut, båge, stav, sköld, hjälm och dryck. Den visas när man plockar upp eller hittar något och under Visa hjältens utrustning.
 - **Spara och fortsätta:** spelmenyn 4 sparar hjältens namn, maxHp, hp och rummets nummer på sparplats 1 i mappen `saves` (`Äventyret är sparat: Kafferummet, 34/40 hp.`). En gammal sparning skrivs över. Huvudmenyn 2 läser in den: `Välkommen tillbaka, Robert!`, och hjälten står **i början av det sparade rummet** med samma hp. Rummen före är avklarade och fienderna där kommer inte tillbaka, men vapnen som låg där tar hjälten med sig (`GameEngine.fastForward`). Finns ingen sparning skriver spelet `Det finns inget sparat äventyr. Välj 1 för att starta ett nytt.` En trasig sparfil ger `Sparfilen går inte att läsa: ...` och spelet fortsätter. Inventariet sparas inte, och vapnens bonus slumpas på nytt (`ItemFactory.createWeapon`).
 - **Loggfil:** `Main` registrerar en `FileLogger` på `EventBus`, så allt som händer också skrivs till `fangdjupet.log`. Färgkoderna runt GAME OVER tas bort i filen. Går filen inte att skriva fortsätter spelet ändå. `saves/` och `fangdjupet.log` ligger i `.gitignore`.
-- **Föremål i rummet – spelaren väljer:** det som ligger i rummet **gulmarkeras** (`AsciiArt.yellow`, ANSI `ESC[33m`) med bild och bonus, och spelet väntar på svar: `Här ligger: Pilbåge (+3 i skada)` och `Plocka upp Pilbåge? (j/n):`. `j` (eller `ja`, `y`) plockar upp (`GameEngine.wantsIt`), allt annat lämnar det kvar: `Du låter Pilbåge ligga kvar. Den finns kvar om du kommer tillbaka.` – och frågan kommer igen när man går tillbaka till rummet. Java-boken tas fortfarande automatiskt (mot Martin hjälper bara kunskap). När en sparning läses in tar hjälten med sig vapnen från rummen före (`GameEngine.pickUpAll`). Ett vapen hamnar i handen, ger sin bonus i skada och hjälten byter till vapnets attack (`Du har nu Pilbåge i handen: +4 i skada.` och `Du byter till Avståndsattack.`).
-- `AsciiArt.forRoom(rumsnamn)` ger en ASCII-bild för Skoldörren, Kafferummet (kaffeautomaten med JAVA-skylten), Korridoren och städskrubben och Lektionssalen (tom `Optional` för okända rum). `showCurrentRoom()` visar den, och dessutom det som ligger i rummet (gulmarkerat, med bild).
-- `AsciiArt.forName(namn)` ger en bild för fiender, saker och personer: Entrédörren ("Har du passerkort?"), JavaFläcken, Troll, Trollkarl, StädHäxan, Lektor Martin, Frida, kaffekoppen, kanelbullen, Java-boken, pilbågen och trollstaven. Den visas när fienden dyker upp, när man tar kaffet eller kanelbullen, när Frida kommer och när man plockar upp något.
+- **Föremål plockas upp automatiskt** när hjälten kommer in i rummet (`GameEngine.pickUpAll`), som Java-boken. Ett vapen hamnar i handen och ger sin bonus i skada (`Du har nu Pilbåge i handen: +4 i skada.`), men attacken byts inte: pilbågen (avstånd 5) är svagare än närstrid (10), och den som trycker Enter ska inte få sämre attack. Avstånd och magi väljs i attackmenyn. 1000 simulerade spel: 818 vinster med vapnen i handen, 54 om pilbågen hade bytt attack.
+- `AsciiArt.forRoom(rumsnamn)` ger en ASCII-bild för Skoldörren, Kafferummet (kaffeautomaten med JAVA-skylten), Korridoren och städskrubben och Lektionssalen (tom `Optional` för okända rum). `showCurrentRoom()` visar den, och dessutom det hjälten plockar upp (`Du hittar och plockar upp: Pilbåge` med bild).
+- `AsciiArt.forName(namn)` ger en bild för fiender, saker och personer: Entrédörren ("Har du passerkort?"), JavaFläcken, Troll, Trollkarl, StädHäxan, Kapten Martin, Frida, kaffekoppen, kanelbullen, Java-boken, pilbågen och trollstaven. Den visas när fienden dyker upp, när man tar kaffet eller kanelbullen, när Frida kommer och när man plockar upp något.
 - **Bilder för attackerna:** `combat/AttackArt.forAttack(attack)` ger en bild för varje attack i spelet – närstrid (svärd), magi, avstånd (pil), DoomScrolla (mobilen som scrollar), JavaQuizet, StackOverflow, Dela skärm, Martins två förklaringar och StädHäxans tvättsvamp, Svinto och kemikalier. Bilden hittas först på attackens namn, sedan på typen – `CleaningAttack` ärver `RangedAttack` men får StädHäxans bild, inte pilen. `Battle` visar bilden när spelaren väljer en attack (Enter = behåll visar ingen), och första gången en boss använder en attack i striden. Det slås på med `new Battle(...).withAttackArt()` – av som standard, så att stridstesterna kan räkna loggraderna.
 - **Vinst:** när Martin är besegrad visar `GameEngine` `AsciiArt.VICTORY` (en pokal och *D U   V A N N !*) före `Robert vinner Fångdjupet!`.
 - **Flera fiender i ett rum:** `Room` kan ta en lista med fiender. `getEnemy()` ger den första som lever och `null` när rummet är rensat. Vinner hjälten och rummet har fler fiender skriver spelet `Men vänta... Troll har gömt sig i Kafferummet och hoppar fram!`, och nästa strid (menyval 1) är mot den.
@@ -301,6 +364,9 @@ Retromusik i japansk RPG-stil och medvetet fula 8-bitarsljud, **syntade i Java S
 ### `game/GameState` + `GameSaveFileHandler` – spara och ladda
 `GameState` är en record med hjältens namn, maxHp, hp och rummets nummer (`nextRoom`, 0 = Skoldörren). Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad sparplats, ett saknat värde, fel version eller trasiga data ger `SaveFileException`. Den ärver `IOException`, så kod som fångar `IOException` fångar den också. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i. `GameEngine` använder sparplats 1 i mappen `saves`: spelmenyn 4 sparar och huvudmenyn 2 läser in (se *Rum, vapen och grafik i spelet*).
 
+### `game/GameState` + `GameSaveFileHandler` – spara och ladda
+`GameState` är en record med hjältens namn, maxHp, hp och nästa rum. Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad eller trasig sparfil ger `IOException`. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i.
+
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
 
@@ -316,5 +382,5 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3. `Battle` loggar varje slag, hp-mätare efter varje träff och ett slutmeddelande (se avsnittet om `Battle`) |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
-| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Streck och tecken i ren ASCII (`#` `-` `\|` `/`), texterna med å, ä och ö (FÅNGDJUPET, SKOLDÖRREN, PILBÅGE …), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
-| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. `GameEngine` sparar och läser in plats 1 sedan `feature/spara-och-fortsatt`. Inventariet sparas inte än – B:s `Inventory` behövs först |
+| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
+| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. Inventariet sparas inte än – C:s nästa PR, alla tre granskar |

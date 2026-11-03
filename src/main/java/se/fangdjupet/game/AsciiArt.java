@@ -123,7 +123,7 @@ public final class AsciiArt {
     // Entrédörren: en sur skoldörr som inte släpper in någon utan passerkort
     public static final String ENTRANCE_DOOR = """
                 .---------.
-                | o     o |     ENTRÉDÖRREN
+                | o     o |     ENTREDORREN
                 |    ^    |     "Har du passerkort?"
                 |  \\___/  |
                 |       o |
@@ -222,7 +222,7 @@ public final class AsciiArt {
     public static final String CLEANING_ARMOR = """
                  _______
                 |_HINK__|
-                 (o   o)          STÄDRUSTNING
+                 (o   o)          STADRUSTNING
                .-'-----'-.        +20 i forsvar
               /|  _____  |\\
              | | |GUMMI| | |#
@@ -237,7 +237,7 @@ public final class AsciiArt {
                    /\\
                    ||
                    ||
-                   ||        SVÄRD
+                   ||        SVARD
                  o=||=o
                    ##
                    ()
@@ -256,7 +256,7 @@ public final class AsciiArt {
     public static final String SHIELD = """
                .--------.
                | \\    / |
-               |  \\  /  |    SKÖLD
+               |  \\  /  |    SKOLD
                |   ><   |
                 \\  /\\  /
                  '----'
@@ -265,7 +265,7 @@ public final class AsciiArt {
     public static final String HELMET = """
                 .------.
                /  ____  \\
-              |  |____|  |   HJÄLM
+              |  |____|  |   HJALM
               |__________|
             """;
 
@@ -295,8 +295,8 @@ public final class AsciiArt {
                  '._==_==_=_.'
                  .-\\:      /-.        D U   V A N N !
                 | (|:.     |) |
-                 '-|:.     |-'        Martin är besegrad och
-                   \\::.    /          Fångdjupet är klarat.
+                 '-|:.     |-'        Martin ar besegrad och
+                   \\::.    /          Fangdjupet ar klarat.
                     '::. .'
                       ) (
                     _.' '._
@@ -340,7 +340,6 @@ public final class AsciiArt {
             Map.entry("Java-bok", JAVA_BOOK),
             Map.entry("Pilbåge", BOW),
             Map.entry("Trollstav", STAFF),
-            Map.entry(WorldBuilder.STRESSBOLL, STRESS_BALL),
             Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR));
 
     // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
@@ -358,8 +357,7 @@ public final class AsciiArt {
             ItemType.STAFF, STAFF,
             ItemType.SHIELD, SHIELD,
             ItemType.HELMET, HELMET,
-            ItemType.POTION, POTION,
-            ItemType.STRESSBALL, STRESS_BALL);
+            ItemType.POTION, POTION);
 
     // Bilden för ett föremål: först på namnet (t.ex. "Pilbåge", "en kopp kaffe"), annars på sorten
     // (ett svärd från ItemFactory får svärdet). Tomt för null.

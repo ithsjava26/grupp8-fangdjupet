@@ -158,9 +158,9 @@ public class Battle {
         AttackArt.forAttack(attack).ifPresent(art -> listener.onEvent(art.stripTrailing()));
     }
 
-    // Slumpen (bara med Random): percent % av slagen missar – oftast 10 % (AttackStrategy.USUAL_MISS_PERCENT)
-    private boolean misses(int percent) {
-        return random != null && random.nextInt(100) < percent;
+    // Slumpen (bara med Random): MISS_PERCENT % av slagen missar
+    private boolean misses() {
+        return random != null && random.nextInt(100) < MISS_PERCENT;
     }
 
     // Slagets rad i loggen. 0 i skada (bomkast eller för bra försvar) skrivs som en miss.

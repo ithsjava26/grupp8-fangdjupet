@@ -27,7 +27,8 @@ public final class Martin {
         return martin;
     }
 
-    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 10).
+    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 4 i skada i stället för 3 (fas 2 är kvar på 5).
+    // Vid fullt hp vinner hjälten då ungefär 78 % i stället för 89 % (simulerat med StackOverflow).
     // Kunskap går ändå rakt igenom rustningen, så försvaret hjälper inte mot honom.
     // Förklaringarna heter likadant, så AttackArt visar samma bilder.
     public static final String ENRAGED_LINE = "Jaså, städrustning? Kunskap går rakt igenom gummi!";
@@ -35,8 +36,8 @@ public final class Martin {
     public static void enrage(Boss martin) {
         if (martin == null || martin.isEnraged()) return;
         martin.enrage(
-                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", ANGRY_EXPLAIN),
-                new KnowledgeAttack("Utterly explained", ANGRY_EXPLAIN_HARDER));
+                new KnowledgeAttack("Thoroughly explained the Hello World Java to you", 4),
+                new KnowledgeAttack("Utterly explained", 5));
         martin.withLine(ENRAGED_LINE);
     }
 

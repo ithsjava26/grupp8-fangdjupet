@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GameSaveFileHandlerTest {
@@ -45,42 +44,6 @@ class GameSaveFileHandlerTest {
         Files.writeString(dir.resolve("save-1.properties"), "version=1\nheroName=\\u12\n");
 
         assertThrows(IOException.class, () -> new GameSaveFileHandler(dir).load(1));
-    }
-
-    @Test
-    void missingSlotGivesSaveFileException() {
-        SaveFileException e = assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
-        assertEquals("Sparplats 1 finns inte", e.getMessage());
-    }
-
-    @Test
-    void missingValueGivesSaveFileException() throws IOException {
-        Files.writeString(dir.resolve("save-1.properties"), "version=1\nheroName=Aria\n");
-
-        SaveFileException e = assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
-        assertEquals("Sparfilen saknar: heroMaxHp", e.getMessage());
-    }
-
-    @Test
-    void wrongVersionGivesSaveFileException() throws IOException {
-        Files.writeString(dir.resolve("save-1.properties"), "version=99\n");
-
-        assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
-    }
-
-    @Test
-    void hpThatIsNotANumberGivesSaveFileException() throws IOException {
-        Files.writeString(dir.resolve("save-1.properties"),
-                "version=1\nheroName=Aria\nheroMaxHp=30\nheroHp=mycket\nnextRoom=1\n");
-
-        SaveFileException e = assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
-        assertInstanceOf(NumberFormatException.class, e.getCause());
-    }
-
-    @Test
-    void saveFileExceptionIsAnIOException() {
-        // Kod som redan fångar IOException fångar även SaveFileException
-        assertInstanceOf(IOException.class, new SaveFileException("trasig"));
     }
 
     @Test

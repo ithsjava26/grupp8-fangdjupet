@@ -78,16 +78,6 @@ class MartinTest {
         assertSame(martin, b.fight(h, martin));
     }
 
-    @Test
-    void screenSharingGivesTimeButNeverWins() {
-        // Dela skärm ger +10 hp men gör ingen skada: vid rundtaket har Martin fortfarande full hp
-        Hero h = new Hero("Robert", 40, new MeleeAttack(10));
-        Boss martin = Martin.create();
-        Battle b = new Battle(message -> { }, hero -> KnowledgeAttack.SCREENSHARE);
-        assertSame(martin, b.fight(h, martin));
-        assertEquals(Martin.HP, martin.getHp());
-    }
-
     // ── Argare Martin när hjälten bär Städrustningen ──
 
     private final Hero dummy = new Hero("Robert", 40, new MeleeAttack(1));
@@ -97,9 +87,9 @@ class MartinTest {
         Boss martin = Martin.create();
         Martin.enrage(martin);
         assertTrue(martin.isEnraged());
-        assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 8 i stället för 7
-        martin.takeDamage(25);                                                      // halva livet: fas 2
-        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 10
+        assertEquals(4, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 4 i stället för 3
+        martin.takeDamage(20);                                                      // halva livet: fas 2
+        assertEquals(5, martin.getAttack().calculateDamage(martin, dummy));        // fas 2: kvar på 5
     }
 
     @Test
@@ -121,9 +111,9 @@ class MartinTest {
     @Test
     void enrageInPhaseTwoUsesTheNewPhaseTwoAttack() {
         Boss martin = Martin.create();
-        martin.takeDamage(30);
+        martin.takeDamage(25);
         Martin.enrage(martin);
-        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));
+        assertEquals(5, martin.getAttack().calculateDamage(martin, dummy));
     }
 
     @Test
@@ -131,7 +121,7 @@ class MartinTest {
         Boss martin = Martin.create();
         Martin.enrage(martin);
         martin.enrage(new KnowledgeAttack("x", 99), new KnowledgeAttack("y", 99));   // ignoreras
-        assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));
+        assertEquals(4, martin.getAttack().calculateDamage(martin, dummy));
     }
 
     @Test

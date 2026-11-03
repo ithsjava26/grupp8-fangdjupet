@@ -19,7 +19,6 @@ public class WorldBuilder {
 
     // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
     public static final String STADRUSTNING = "Städrustning";
-    public static final String STRESSBOLL = "Stressboll";
 
     public World build(
             Enemy doorEnemy,

@@ -132,11 +132,6 @@ public class Room {
         return found;
     }
 
-    // Finns det något att hitta här? Något som ligger kvar, eller något gömt (då gulmarkeras "Leta i rummet")
-    public boolean hasSomethingToFind() {
-        return !items.isEmpty() || !hidden.isEmpty();
-    }
-
     // En kopia – listan i rummet ändras bara via removeItem
     public List<Item> getItems() {
         return List.copyOf(items);

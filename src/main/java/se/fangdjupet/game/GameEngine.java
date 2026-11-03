@@ -98,27 +98,14 @@ public class GameEngine {
         }
         return room.getName() + "\n"
                 + "=".repeat(room.getName().length()) + "\n"
-                + fightOption(room) + "\n"
-                + "2. Gå till ett annat rum\n"
-                + "3. Visa hjältens utrustning\n"
-                + "4. Spara äventyret\n"
-                + searchOption(room) + "\n"
-                + "e. Avsluta\n";
-    }
-
-    // Menyval 1. Lever en fiende i rummet blir det gulmarkerat med namnet, t.ex. "(Entrédörren väntar!)".
-    static String fightOption(Room room) {
-        List<Enemy> enemies = room.getEnemies();
-        if (enemies.isEmpty()) return "1. Strid mot rummets fiende";
-        String names = enemies.stream().map(Enemy::getName).collect(Collectors.joining(" och "));
-        return AsciiArt.yellow("1. Strid mot rummets fiende  (" + names + " väntar!)");
-    }
-
-    // Menyval 5. Finns något att hitta i rummet blir det gulmarkerat, så att spelaren ser det.
-    static String searchOption(Room room) {
-        return room.hasSomethingToFind()
-                ? AsciiArt.yellow("5. Leta i rummet  (något finns här!)")
-                : "5. Leta i rummet";
+                + """
+                1. Strid mot rummets fiende
+                2. Gå till ett annat rum
+                3. Visa hjältens utrustning
+                4. Spara äventyret
+                5. Leta i rummet
+                e. Avsluta
+                """;
     }
 
     // Ett menyval → rätt metod. Vilken meny som gäller beror på om ett äventyr pågår.
@@ -256,12 +243,9 @@ public class GameEngine {
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
-        // Bilder på allt hjälten bär: vapnet (t.ex. pilbågen), rustningen (t.ex. Städrustningen),
-        // Java-boken och stressbollen
+        // Bilder på det hjälten bär: vapnet (t.ex. pilbågen) och rustningen (t.ex. Städrustningen)
         hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
         hero.getArmor().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
-        if (hero.hasJavaBook()) AsciiArt.show(output, AsciiArt.JAVA_BOOK);
-        hero.getStressBall().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
     }
 
     // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
@@ -302,7 +286,8 @@ public class GameEngine {
         for (Enemy enemy : enemies) {
             // Har hjälten hittat Städrustningen blir Martin lite svårare (bara en gång)
             if (enemy instanceof Boss boss && !boss.isEnraged() && wearsCleaningArmor(hero)) {
-                reactToCleaningArmor(boss);
+                Martin.enrage(boss);
+                output.onEvent(boss.getName() + " ser Städrustningen och blir arg! Han förklarar hårdare.");
             }
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
@@ -581,35 +566,17 @@ public class GameEngine {
         for (Item item : items) {
             room.removeItem(item);
             if (item instanceof Weapon weapon) {
-                equipAndAim(hero, weapon);
+                equipKeepingAttack(hero, weapon);
             }
         }
         return items;
     }
 
-    // Vapnet i handen, och hjälten byter till vapnets attack: pilbågen skjuter, staven trollar, svärdet slår.
-    // Med Java-boken (bara kunskap mot Martin) eller ett spjut (passar båda) behålls attacken.
-    static void equipAndAim(Hero hero, Weapon weapon) {
+    // Vapnet i handen (bonus i skada), men attacken spelaren hade behålls
+    static void equipKeepingAttack(Hero hero, Weapon weapon) {
         AttackStrategy attack = hero.getAttack();
         hero.equip(weapon);       // equip byter attack efter vapnet ...
-        hero.setAttack(attack);   // ... med grundstyrkan, så vi lägger tillbaka den spelaren hade ...
-        AttackMenu.forWeapon(hero).ifPresent(hero::setAttack);   // ... och tar menyns attack för vapnet
-    }
-
-    // Bossen ser Städrustningen: Martin blir arg och förklarar hårdare, StädHäxan skrattar elakt
-    // (det är ju hennes rustning) och hotar med Vanish. Andra bossar bryr sig inte.
-    private void reactToCleaningArmor(Boss boss) {
-        switch (boss.getName()) {
-            case Martin.NAME -> {
-                Martin.enrage(boss);
-                output.onEvent(Martin.ANGRY);
-            }
-            case CleaningWitch.NAME -> {
-                CleaningWitch.enrage(boss);
-                output.onEvent(CleaningWitch.LAUGH);
-            }
-            default -> { }
-        }
+        hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
     }
 
     // Bär hjälten Städrustningen från städskrubben?
@@ -621,62 +588,30 @@ public class GameEngine {
     private void searchRoom() {
         Room room = world.getCurrentRoom();
         output.onEvent("Du letar i " + room.getName() + " ...");
-        boolean lying = offerItems(room);          // det man lämnat kvar kan man ta nu
-        List<Item> found = room.search();          // det gömda (Städrustningen i städskrubben)
-        if (found.isEmpty() && !lying) {
+        List<Item> found = room.search();
+        if (found.isEmpty()) {
             output.onEvent("Du hittar inget här.");
             return;
         }
         for (Item item : found) {
             output.onEvent("Du hittar: " + item.description() + "!");
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));
-            take(item);   // man letade själv – det man hittar tar man
-        }
-    }
-
-    // Hjälten tar föremålet: vapnet i handen, rustningen på sig, drycken dricks direkt
-    private void take(Item item) {
-        switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
-            case Armor armor -> {
-                hero.equip(armor);
-                output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
-            }
-            case Weapon weapon -> {
-                equipAndAim(hero, weapon);
-                output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
-                output.onEvent("Du byter till " + AttackMenu.label(hero.getAttack()) + ".");
-            }
-            case Potion potion -> {
-                int before = hero.getHp();
-                hero.drink(potion);
-                output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
-            }
-            case StressBall ball -> {
-                hero.pickUp(ball);
-                output.onEvent("Du stoppar " + ball.description() + " i fickan: i striden klämmer du den, +"
-                        + ball.hpPerTurn() + " hp varje runda.");
-                output.onEvent("Du kan också kasta den på Martin (" + StressBallThrow.POWER
-                        + " i skada om den träffar) – men då är den borta.");
+            switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
+                case Armor armor -> {
+                    hero.equip(armor);
+                    output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
+                }
+                case Weapon weapon -> {
+                    equipKeepingAttack(hero, weapon);
+                    output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+                }
+                case Potion potion -> {
+                    int before = hero.getHp();
+                    hero.drink(potion);
+                    output.onEvent("Du dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp).");
+                }
             }
         }
-    }
-
-    // Raden när något ligger i rummet, t.ex. "Här ligger: Pilbåge (+3 i skada)"
-    static String itemHere(Item item) {
-        String bonus = switch (item) {
-            case Weapon w -> "+" + w.damageBonus() + " i skada";
-            case Armor a -> "+" + a.defense() + " i försvar";
-            case Potion p -> "+" + p.healAmount() + " hp";
-            case StressBall b -> "+" + b.hpPerTurn() + " hp per runda";
-        };
-        return "Här ligger: " + item.description() + " (" + bonus + ")";
-    }
-
-    // Svaret på "Plocka upp ...? (j/n)": j, ja eller y. Enter eller något annat = nej.
-    static boolean wantsIt(String answer) {
-        if (answer == null) return false;
-        String a = answer.trim().toLowerCase();
-        return a.equals("j") || a.equals("ja") || a.equals("y") || a.equals("yes");
     }
 
     // Visar rummets namn, beskrivning och bild, plockar upp det som ligger där – och tar Java-boken i Lektionssalen
@@ -686,7 +621,14 @@ public class GameEngine {
         output.onEvent(room.getDescription());
         AsciiArt.forRoom(room.getName()).ifPresent(art -> AsciiArt.show(output, art));
 
-        offerItems(room);
+        // Det som ligger i rummet plockar hjälten upp direkt, som Java-boken
+        for (Item item : pickUpAll(hero, room)) {
+            output.onEvent("Du hittar och plockar upp: " + item.description());
+            AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
+            if (item instanceof Weapon weapon) {
+                output.onEvent("Du har nu " + weapon.description() + " i handen: +" + weapon.damageBonus() + " i skada.");
+            }
+        }
 
         // I Lektionssalen tar hjälten upp Java-boken direkt: mot Martin hjälper bara kunskap
         if (room.takeJavaBook()) {

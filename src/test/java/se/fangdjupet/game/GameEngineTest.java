@@ -315,30 +315,6 @@ class GameEngineTest {
     }
 
     @Test
-    void theStressBallIsHiddenInTheClassroom() {
-        World world = GameEngine.newWorld(new Random(1));
-        world.moveForward();
-        world.moveForward();
-        world.moveForward();                                   // Lektionssalen
-        se.fangdjupet.items.StressBall ball = (se.fangdjupet.items.StressBall) world.getCurrentRoom().search().getFirst();
-        assertEquals(WorldBuilder.STRESSBOLL, ball.description());
-        assertEquals(5, ball.hpPerTurn());
-        assertTrue(AsciiArt.forItem(ball).isPresent(), "stressbollen har en bild");
-    }
-
-    @Test
-    void equipmentShowsTheStressBallAndTheMenuCanThrowIt() {
-        Hero robert = robert();
-        robert.pickUpJavaBook();
-        robert.pickUp(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, WorldBuilder.STRESSBOLL, 5, 3));
-        assertTrue(GameEngine.equipment(robert).contains("Stressboll: i fickan (+5 hp per runda, eller kasta den på Martin)"));
-        List<String> menu = AttackMenu.lines(AttackMenu.options(robert));
-        assertEquals("6. Kasta stressbollen  (10 i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)", menu.get(5));
-        assertEquals("Här ligger: Stressboll (+5 hp per runda)",
-                GameEngine.itemHere(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, "Stressboll", 5, 3)));
-    }
-
-    @Test
     void otherRoomsHaveNothingHidden() {
         World world = GameEngine.newWorld(new Random(1));
         assertTrue(world.getCurrentRoom().search().isEmpty());   // Skoldörren
@@ -354,24 +330,12 @@ class GameEngineTest {
     }
 
     @Test
-    void pickingUpTheBowSwitchesToShooting() {
+    void equipKeepingAttackKeepsTheChosenAttack() {
         Hero hero = robert();
-        GameEngine.equipAndAim(hero, new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1));
-        assertInstanceOf(se.fangdjupet.combat.RangedAttack.class, hero.getAttack());
-        assertEquals(3, hero.getAttackBonus(), "bågens bonus hjälper skotten");
-    }
-
-    @Test
-    void theStaffSwitchesToMagicButTheJavaBookKeepsKnowledge() {
-        Hero hero = robert();
-        GameEngine.equipAndAim(hero, new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Trollstav", 4, 1));
-        assertEquals(AttackMenu.STAFF_MAGIC + 4,
-                hero.getAttack().calculateDamage(hero, new Enemy("Docka", 50, new MeleeAttack(1), 1)));
-        Hero reader = robert();
-        reader.pickUpJavaBook();
-        var knowledge = reader.getAttack();
-        GameEngine.equipAndAim(reader, new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Trollstav", 4, 1));
-        assertSame(knowledge, reader.getAttack());
+        var attack = hero.getAttack();
+        GameEngine.equipKeepingAttack(hero, new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1));
+        assertSame(attack, hero.getAttack());
+        assertEquals(3, hero.getAttackBonus());
     }
 
     @Test
@@ -382,187 +346,5 @@ class GameEngineTest {
         assertFalse(GameEngine.wearsCleaningArmor(hero));
         hero.equip(new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2));
         assertTrue(GameEngine.wearsCleaningArmor(hero));
-    }
-
-    // ── Kartan och "Gå till ett annat rum" ──
-
-    private void clearCurrent(World world) {
-        Room room = world.getCurrentRoom();
-        while (room.hasLivingEnemy()) room.getEnemies().forEach(e -> e.takeDamage(999));
-    }
-
-    @Test
-    void mapAtTheStart() {
-        World world = GameEngine.newWorld(new Random(1));
-        assertEquals("""
-                KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst
-                [@] Skoldörren    -- [#] Kafferummet
-                                      |
-                [#] Lektionssalen -- [#] Korridoren""", GameEngine.roomMap(world));
-    }
-
-    @Test
-    void mapShowsClearedNewAndCurrentRooms() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);                       // Entrédörren besegrad
-        assertTrue(GameEngine.roomMap(world).contains("[@] Skoldörren    -- [?] Kafferummet"));
-        world.moveTo(1);                           // Kafferummet – dörren ut slår igen
-        clearCurrent(world);                       // alla vågor i Kafferummet
-        world.moveTo(2);                           // Korridoren, StädHäxan lever
-        world.moveTo(1);                           // tillbaka till Kafferummet
-        String map = GameEngine.roomMap(world);
-        assertTrue(map.contains("[#] Skoldörren"), map);
-        assertTrue(map.contains("[@] Kafferummet"), map);
-        assertTrue(map.contains("[!] Korridoren"), map);
-    }
-
-    @Test
-    void mapIsPlainAsciiAndFitsTheConsole() {
-        String map = GameEngine.roomMap(GameEngine.newWorld(new Random(1)));
-        assertTrue(map.chars().allMatch(c -> c < 128 || "åäöÅÄÖé".indexOf(c) >= 0));
-        assertTrue(map.lines().allMatch(l -> l.length() <= 60));
-    }
-
-    @Test
-    void roomChoicesShowWhereYouAreAndWhatIsLocked() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);
-        assertEquals("""
-                Vart vill du gå?
-                1. Skoldörren  (du är här)
-                2. Kafferummet  (nytt rum)
-                3. Korridoren och städskrubben  (låst)
-                4. Lektionssalen  (låst)""", GameEngine.roomChoices(world));
-    }
-
-    @Test
-    void visitedRoomIsCleared() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);
-        world.moveTo(1);
-        clearCurrent(world);
-        world.moveTo(2);
-        String choices = GameEngine.roomChoices(world);
-        assertTrue(choices.contains("2. Kafferummet  (rensat)"), choices);
-        assertTrue(choices.contains("1. Skoldörren  (låst)"), choices);
-    }
-
-    @Test
-    void lockedMessageNamesWhoIsInTheWay() {
-        World world = GameEngine.newWorld(new Random(1));
-        assertEquals("Kafferummet är låst. Entrédörren står i vägen i Skoldörren – besegra rummets fiender först.",
-                GameEngine.lockedMessage(world, 1));
-        assertEquals("Lektionssalen är låst. Du har inte hittat vägen dit än.", GameEngine.lockedMessage(world, 3));
-    }
-
-    @Test
-    void shortNamesAreAsciiWithoutTheSecondPart() {
-        assertEquals("Skoldörren", GameEngine.shortName("Skoldörren"));
-        assertEquals("Korridoren", GameEngine.shortName("Korridoren och städskrubben"));
-    }
-
-    @Test
-    void saveKeepsTheFurthestRoomWhenYouWentBack() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);
-        world.moveTo(1);
-        clearCurrent(world);
-        world.moveTo(2);
-        world.moveTo(1);
-        assertEquals(2, GameEngine.stateOf(robert(), world).nextRoom());
-    }
-
-    // ── Inlåst: Entrédörren slår igen när hjälten går in ──
-
-    @Test
-    void theEntranceLocksWhenYouGoInside() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);
-        assertFalse(world.isEntranceLocked(), "ute på skolgården är dörren inte låst än");
-        world.moveTo(1);
-        assertTrue(world.isEntranceLocked());
-        assertFalse(world.moveTo(0));
-        assertEquals("Skoldörren är låst. Du är nu inlåst i Fångdjupet och behöver besegra slutbossen innan du kan ta dig ut.",
-                GameEngine.lockedMessage(world, 0));
-    }
-
-    @Test
-    void theEntranceOpensWhenTheFinalBossIsDefeated() {
-        World world = GameEngine.newWorld(new Random(1));
-        clearCurrent(world);
-        world.moveTo(1);
-        world.getRooms().getLast().getEnemies().forEach(e -> e.takeDamage(999));   // Martin besegrad
-        assertFalse(world.isEntranceLocked());
-        assertTrue(world.isOpen(0));
-    }
-
-    @Test
-    void loadingASaveAlsoLocksTheEntrance() {
-        World world = GameEngine.newWorld(new Random(1));
-        assertTrue(GameEngine.fastForward(robert(), world, 1));
-        assertTrue(world.isEntranceLocked());
-    }
-
-    // ── Föremål i rummet: gulmarkerat, spelaren väljer ──
-
-    @Test
-    void coffeeAndBunAreOfferedWithTheirHp() {
-        Potion coffee = new Potion(ItemType.POTION, "en kopp kaffe", 30, 1);
-        assertEquals("Ta en kopp kaffe (+30 hp)? (j/n): ", GameEngine.takeQuestion(coffee));
-        assertTrue(GameEngine.leftBehind(coffee).contains("letar i rummet"));
-        assertEquals("Plocka upp Pilbåge? (j/n): ",
-                GameEngine.takeQuestion(bow));
-    }
-
-    @Test
-    void itemHereShowsTheBonus() {
-        assertEquals("Här ligger: Pilbåge (+3 i skada)",
-                GameEngine.itemHere(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1)));
-        assertEquals("Här ligger: Städrustning (+20 i försvar)",
-                GameEngine.itemHere(new Armor(ItemType.SHIELD, "Städrustning", 20, 2)));
-        assertEquals("Här ligger: en kopp kaffe (+30 hp)",
-                GameEngine.itemHere(new Potion(ItemType.POTION, "en kopp kaffe", 30, 1)));
-    }
-
-    @Test
-    void wantsItOnlyOnYes() {
-        assertTrue(GameEngine.wantsIt("j"));
-        assertTrue(GameEngine.wantsIt(" Ja "));
-        assertTrue(GameEngine.wantsIt("y"));
-        assertFalse(GameEngine.wantsIt("n"));
-        assertFalse(GameEngine.wantsIt(""));
-        assertFalse(GameEngine.wantsIt(null));
-    }
-
-    // ── Gulmarkerade menyval: fiende kvar och något att hitta ──
-
-    @Test
-    void fightOptionIsYellowWithTheEnemyName() {
-        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of());
-        assertEquals(AsciiArt.yellow("1. Strid mot rummets fiende  (JavaFläcken väntar!)"), GameEngine.fightOption(room));
-    }
-
-    @Test
-    void fightOptionIsPlainWhenTheRoomIsCleared() {
-        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of());
-        room.getEnemy().takeDamage(999);
-        assertEquals("1. Strid mot rummets fiende", GameEngine.fightOption(room));
-    }
-
-    @Test
-    void searchOptionIsYellowWhenSomethingIsHidden() {
-        Room room = new Room("Korridoren", "Lång.", enemy("StädHäxan"), List.of())
-                .withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
-        assertEquals(AsciiArt.yellow("5. Leta i rummet  (något finns här!)"), GameEngine.searchOption(room));
-        room.search();
-        assertEquals("5. Leta i rummet", GameEngine.searchOption(room));
-    }
-
-    @Test
-    void searchOptionIsYellowWhenSomethingWasLeftBehind() {
-        Room room = new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"),
-                List.of(new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1)));
-        assertTrue(GameEngine.searchOption(room).startsWith(AsciiArt.YELLOW));
-        assertTrue(GameEngine.menu(room).contains("(något finns här!)"));
     }
 }

@@ -24,7 +24,7 @@ class AsciiArtTest {
     // ── Bilder för fiender, saker och personer (namnen i GameEngine och WorldBuilder) ──
 
     private static final List<String> THING_NAMES = List.of(
-            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Lektor Martin", "Frida",
+            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Kapten Martin", "Frida",
             "en kopp kaffe", "en kanelbulle", "Java-bok", "Pilbåge", "Trollstav");
 
     @Test
@@ -174,7 +174,7 @@ class AsciiArtTest {
 
     @Test
     void entranceDoorHasItsOwnFace() {
-        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTRÉDÖRREN"));
+        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTREDORREN"));
         assertNotEquals(AsciiArt.SCHOOL_DOOR, AsciiArt.forName("Entrédörren").orElseThrow());   // inte rummets bild
     }
 
@@ -225,21 +225,5 @@ class AsciiArtTest {
     @Test
     void nullItemHasNoArt() {
         assertTrue(AsciiArt.forItem(null).isEmpty());
-    }
-
-    @Test
-    void yellowWrapsTextInAnsiColour() {
-        assertEquals("\u001B[33mPilbåge\u001B[0m", AsciiArt.yellow("Pilbåge"));
-        assertThrows(IllegalArgumentException.class, () -> AsciiArt.yellow(null));
-    }
-
-    @Test
-    void schoolAndLockedDoorArePlainAsciiAndFitTheConsole() {
-        for (String art : List.of(AsciiArt.SCHOOL, AsciiArt.LOCKED_DOOR)) {
-            assertTrue(isPlainAscii(art));
-            assertTrue(art.lines().allMatch(line -> line.length() <= 60));
-        }
-        assertTrue(AsciiArt.SCHOOL.contains("S K O L A"));
-        assertTrue(AsciiArt.LOCKED_DOOR.contains("K L I C K"));
     }
 }

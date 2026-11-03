@@ -15,7 +15,7 @@ public final class AttackArt {
 
     public static final String MELEE = """
                    |\\
-              o====|=>================-      NÄRSTRID
+              o====|=>================-      NARSTRID
                    |/
             """;
 
@@ -30,7 +30,7 @@ public final class AttackArt {
     public static final String RANGED = """
                 |\\
                 | \\
-              >>|--)------------>    AVSTÅNDSATTACK
+              >>|--)------------>    AVSTANDSATTACK
                 | /
                 |/
             """;
@@ -50,7 +50,7 @@ public final class AttackArt {
     public static final String QUIZ = """
                .--------------------.
                |  JAVAQUIZ      ?   |
-               |  [A]   [B]   [C]   |    CITERA FRÅN JAVAQUIZET
+               |  [A]   [B]   [C]   |    CITERA FRAN JAVAQUIZET
                |  "Vad gor static?" |
                '--------------------'
             """;
@@ -69,46 +69,17 @@ public final class AttackArt {
                | > java  |  ==>  | > java  |
                | Hello!_ |       | Hello!_ |
                '----+----'       '----+----'
-                   _|_               _|_      DELA SKÄRM
+                   _|_               _|_      DELA SKARM
             """;
 
-    // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
-    public static final String POLYMORPHISM = """
-                ______________ ______________
-               | KAP. 18      |              |
-               | Polymorphism | Animal a =   |
-               |              |  new Dog();  |
-               | Animal       | a.speak();   |
-               |  /    \\      |  -> "Voff!"  |
-               | Dog   Cat    |              |
-               |______________|______________|    POLYMORPHISM
-            """;
-
-    // Nästa citat: kapitel 20, ett interface som flera klasser implementerar (som AttackStrategy i spelet)
-    public static final String INTERFACE = """
-                ______________ ________________
-               | KAP. 20      | interface      |
-               | Interface    |  Attack {      |
-               |              |  int hit();    |
-               |  <<Attack>>  | }              |
-               |   /     \\    | class Bow      |
-               | Bow    Staff |  implements .. |
-               |______________|________________|    INTERFACE
-            """;
-
-    // Java-bokens bild för kapitlet som står på tur (JavaBookAttack bläddrar vidare efter varje citat)
-    static String forChapter(String chapter) {
-        return chapter.contains("Interface") ? INTERFACE : POLYMORPHISM;
-    }
-
-    // ── Lektor Martins förklaringar (fas 1 och fas 2) ──
+    // ── Kapten Martins förklaringar (fas 1 och fas 2) ──
 
     public static final String MARTIN_EXPLAINS = """
                .--------------------------------.
                | System.out.println("Hello");   |
                |  // ...och sa en gang till...  |
                '--------------------------------'
-                   blah  blah  blah  blah          MARTIN FÖRKLARAR
+                   blah  blah  blah  blah          MARTIN FORKLARAR
             """;
 
     public static final String MARTIN_UTTERLY = """
@@ -124,7 +95,7 @@ public final class AttackArt {
 
     public static final String SPONGE = """
                 .--------.
-               ( o  o  o  )  ~ ~ >     TVÄTTSVAMP
+               ( o  o  o  )  ~ ~ >     TVATTSVAMP
                 '--------'
             """;
 
@@ -142,15 +113,6 @@ public final class AttackArt {
                 |__|
             """;
 
-    // Vanish i ansiktet – när StädHäxan ser sin Städrustning på hjälten (CleaningWitch.enrage)
-    public static final String VANISH = """
-                 ____
-                |=|_____
-                |VANISH_]>  ~*~*~*~*~   VANISH
-                |    |                  (rakt i ansiktet!)
-                |____|
-            """;
-
     // Attackens namn (name()) -> bilden. Namnen måste vara exakt som i KnowledgeAttack, Martin och CleaningAttack.
     private static final Map<String, String> BY_NAME = Map.ofEntries(
             Map.entry(KnowledgeAttack.DOOMSCROLL.name(), DOOMSCROLL),
@@ -161,8 +123,7 @@ public final class AttackArt {
             Map.entry("Utterly explained", MARTIN_UTTERLY),
             Map.entry(CleaningAttack.SPONGE.name(), SPONGE),
             Map.entry(CleaningAttack.SVINTO.name(), SVINTO),
-            Map.entry(CleaningAttack.CHEMICALS.name(), CHEMICALS),
-            Map.entry(CleaningAttack.VANISH.name(), VANISH));
+            Map.entry(CleaningAttack.CHEMICALS.name(), CHEMICALS));
 
     // Bilden för en attack, eller tomt om den saknar bild. Först på namnet (kunskap, Martin, StädHäxan),
     // sedan på typen (närstrid, magi, avstånd). CleaningAttack ärver RangedAttack men hittas på namnet först.
@@ -171,7 +132,6 @@ public final class AttackArt {
         String art = BY_NAME.get(attack.name());
         if (art != null) return Optional.of(art);
         return switch (attack) {
-            case JavaBookAttack book -> Optional.of(forChapter(book.nextChapter()));   // bilden visas före citatet
             case MeleeAttack m -> Optional.of(MELEE);
             case MagicAttack m -> Optional.of(MAGIC);
             case RangedAttack r -> Optional.of(RANGED);
