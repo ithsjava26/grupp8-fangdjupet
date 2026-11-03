@@ -1,5 +1,22 @@
 # grupp8-fangdjupet
 
+**Fångdjupet** är ett textbaserat rollspel i konsolen, byggt i Java av tre personer i kursen
+Javaprogrammering (grupp 8). Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet,
+Korridoren och städskrubben och till sist Lektionssalen – och slåss mot fiender som JavaFläcken,
+ett troll och en trollkarl, StädHäxan och slutbossen Kapten Martin. Spelaren väljer attack varje
+runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. Grafiken är ren ASCII.
+
+Projektet handlar mest om *hur* det är byggt: tre paket med en ägare var, tre designmönster
+(Strategy, Factory och Observer), JUnit-tester och ett Git-arbetsflöde med feature-grenar,
+pull requests och granskning.
+
+**Köra spelet:** kör `Main` i IntelliJ (gröna play-knappen), eller i terminalen:
+```
+mvn -q compile
+java -cp target/classes se.fangdjupet.Main
+```
+Kräver JDK 27 (se *Kom igång* nedan). Testerna körs med `mvn test`.
+
 ## Kom igång
 
 ### 1. Installera
@@ -73,6 +90,76 @@ När koden är klar på din branch:
 | Strid & karaktärer | `se.fangdjupet.combat` | Robert (`elitrobban89`), A   |
 | Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
 | Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
+
+## Designmönster
+
+### Strategy – hur man slåss (`combat`, Robert)
+**Var:** `AttackStrategy` är ett interface med `calculateDamage(attacker, target)`. `MeleeAttack`,
+`MagicAttack` och `RangedAttack` räknar skadan på var sitt sätt, och i #18 kom `KnowledgeAttack`,
+`CleaningAttack` och `RandomAttack`. En `Character` *har* en strategi och kan byta den mitt i
+striden med `setAttack(...)`: spelaren väljer attack varje runda, och en `Boss` byter till en
+tyngre attack vid halva livet.
+
+**Varför:** en ny attack blir en ny klass i stället för en ändring i `Character` eller `Battle`
+(open/closed). Varje strategi går att testa för sig, och slumpen (`Random`) skickas in så att
+testerna blir likadana varje gång. Alternativet, en `switch` på attacktyp i `Character`, hade
+behövt ändras vid varje ny attack.
+
+### Factory – hur föremål skapas (`items`, Tanaz)
+**Var:** `ItemFactory` skapar vapen, rustningar och drycker utifrån `ItemType` och nivå:
+`createWeapon(ItemType.BOW, "Pilbåge", 1)`. Fabriken väljer räckvidd och bonus, så den som anropar
+behöver inte veta hur ett föremål byggs. Samma idé finns i `Martin.create()` och
+`CleaningWitch.create(random)`, som bygger bossarna.
+
+**Varför:** skapandet ligger på ett ställe. `WorldBuilder` och testerna ber om "en båge på nivå 1"
+och får ett färdigt `Weapon`. Ändras reglerna för bonusen ändras bara fabriken.
+
+### Observer – vem som får veta vad som händer (`game`, Fredrik)
+**Var:** `GameEventListener` har en metod, `onEvent(String)`. `Battle` och `GameEngine` skickar varje
+händelse dit, och `EventBus` skickar vidare till alla registrerade lyssnare, t.ex.
+`ConsoleEventLogger` (skärmen). Testerna registrerar en lista i stället för konsolen.
+
+**Varför:** den som skickar vet inte vem som lyssnar. Spelet skriver aldrig direkt till
+`System.out`, så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
+topplista – läggs till utan att `Battle` eller `GameEngine` ändras.
+
+## Git-samarbetet – reflektion
+
+> **Utkast** – skrivet av Robert. Fredrik och Tanaz fyller i med egna rader under *Våra egna ord*
+> innan inlämningen.
+
+**Hur vi arbetade.** Dag 1 (26 okt) satte vi ihop kontraktet – de gemensamma interfacen,
+`Character` och recorden – och lade in det i `main` via PR #2. Sedan hade var och en sitt paket och
+sina egna `feature/...`-grenar. `main` har en regel: allt går via pull request och kräver ett
+godkännande från någon annan, och ingen kan pusha direkt. CodeRabbit kommenterar varje PR
+automatiskt, och från PR #9 kör GitHub Actions `mvn test` på varje PR.
+
+**Konflikten vi löste.** Tors 29 okt mergades #7 (EventBus), #8 (ItemFactory), #9 (CI) och #10
+(ASCII-grafik) samma dag. #8 ändrade recorden `Weapon`, `Armor` och `Potion`, och när konflikten
+löstes blev både den gamla och den nya koden kvar i `ItemFactory.java`, `ItemType.java` och
+`ItemFactoryTest.java`. `main` kompilerade inte, och CI blev röd. Vi tittade på det tillsammans och
+lagade det i #11: Tanaz nya version behölls, den gamla togs bort, och A:s tester skrevs om till
+de nya records-konstruktorerna.
+
+**Det som fungerade bra.**
+- Kontraktet först: B och C kunde börja direkt och bygga mot typerna innan A:s kod var klar.
+- Regeln på `main` och granskningen: alla PR:ar har godkänts av någon annan innan merge.
+- CI fångade fel som granskningen missade, t.ex. att `main` var röd efter #8 och efter #17
+  (`EventBusTest` anropade `publish`, som hade bytt namn till `onEvent`).
+
+**Det vi skulle göra annorlunda.**
+- Merga mer sällan på samma dag, och dra in `main` i grenen (`git merge main`) och kör
+  `mvn test` innan PR:en mergas – då hade #11 inte behövts.
+- Läsa och svara på CodeRabbits kommentarer före merge. #15 mergades med tre anmärkningar kvar,
+  och #16 fick fixa dem i efterhand.
+- Fördela arbetet jämnare över personerna och veckorna, och öppna PR:ar tidigare i stället för
+  stora PR:ar mot slutet.
+- Slå på att CI måste vara grön för att få merga, inte bara att den körs.
+
+**Våra egna ord.**
+- *Robert:* …
+- *Fredrik:* …
+- *Tanaz:* …
 
 ## Användning av AI
 
@@ -252,6 +339,9 @@ Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` ut
 ### `game/GameState` + `GameSaveFileHandler` – spara och ladda
 `GameState` är en record med hjältens namn, maxHp, hp och rummets nummer (`nextRoom`, 0 = Skoldörren). Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad sparplats, ett saknat värde, fel version eller trasiga data ger `SaveFileException`. Den ärver `IOException`, så kod som fångar `IOException` fångar den också. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i. `GameEngine` använder sparplats 1 i mappen `saves`: spelmenyn 4 sparar och huvudmenyn 2 läser in (se *Rum, vapen och grafik i spelet*).
 
+### `game/GameState` + `GameSaveFileHandler` – spara och ladda
+`GameState` är en record med hjältens namn, maxHp, hp och nästa rum. Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad eller trasig sparfil ger `IOException`. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i.
+
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
 
@@ -267,5 +357,5 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3. `Battle` loggar varje slag, hp-mätare efter varje träff och ett slutmeddelande (se avsnittet om `Battle`) |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
-| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
-| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. `GameEngine` sparar och läser in plats 1 sedan `feature/spara-och-fortsatt`. Inventariet sparas inte än – B:s `Inventory` behövs först |
+| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
+| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. Inventariet sparas inte än – C:s nästa PR, alla tre granskar |
