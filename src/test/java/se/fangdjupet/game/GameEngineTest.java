@@ -336,4 +336,14 @@ class GameEngineTest {
         assertSame(attack, hero.getAttack());
         assertEquals(3, hero.getAttackBonus());
     }
+
+    @Test
+    void cleaningArmorIsRecognised() {
+        Hero hero = robert();
+        assertFalse(GameEngine.wearsCleaningArmor(hero));
+        hero.equip(new Armor(ItemType.HELMET, "Cykelhjälm", 2, 1));
+        assertFalse(GameEngine.wearsCleaningArmor(hero));
+        hero.equip(new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2));
+        assertTrue(GameEngine.wearsCleaningArmor(hero));
+    }
 }

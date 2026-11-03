@@ -3,8 +3,9 @@ package se.fangdjupet.combat;
 // Boss är en fiende som byter till en tyngre attack vid halva livet (bara en gång).
 // Den ärver allt från Enemy (hp, nivå, attack, repliken) och lägger bara till fasbytet.
 public class Boss extends Enemy {
-    private final AttackStrategy phaseTwoAttack;   // den tyngre attacken, sparas tills bossen har halva livet kvar
+    private AttackStrategy phaseTwoAttack;         // den tyngre attacken, sparas tills bossen har halva livet kvar
     private boolean phaseTwo;                      // false tills bytet skett – då blir den true och stannar så
+    private boolean enraged;                       // true när bossen har blivit argare (se enrage)
 
     // Bossen börjar med fas 1-attacken – den skickas vidare till Enemy som vanlig attack
     public Boss(String name, int maxHp, AttackStrategy phaseOneAttack, AttackStrategy phaseTwoAttack, int level) {
@@ -17,6 +18,21 @@ public class Boss extends Enemy {
     // Har bossen bytt till fas 2? (t.ex. för att visa en replik när det händer)
     public boolean isInPhaseTwo() {
         return phaseTwo;
+    }
+
+    // Gör bossen argare: tyngre attacker i båda faserna, bara en gång.
+    // T.ex. Martin när hjälten kommer i Städrustningen (se Martin.enrage).
+    public void enrage(AttackStrategy phaseOne, AttackStrategy phaseTwo) {
+        if (phaseOne == null || phaseTwo == null)
+            throw new IllegalArgumentException("attacks must not be null");
+        if (enraged) return;
+        enraged = true;
+        phaseTwoAttack = phaseTwo;
+        setAttack(this.phaseTwo ? phaseTwo : phaseOne);   // står bossen redan i fas 2 gäller den nya fas 2-attacken
+    }
+
+    public boolean isEnraged() {
+        return enraged;
     }
 
     // Skadan dras av som vanligt. Vid halva livet byter bossen till fas 2-attacken – bara en gång.

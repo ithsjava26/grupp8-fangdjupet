@@ -81,4 +81,60 @@ class MartinTest {
         Battle b = new Battle(message -> { }, hero -> badLuck);
         assertSame(martin, b.fight(h, martin));
     }
+
+    // ── Argare Martin när hjälten bär Städrustningen ──
+
+    private final Hero dummy = new Hero("Robert", 40, new MeleeAttack(1));
+
+    @Test
+    void enragedMartinExplainsHarder() {
+        Boss martin = Martin.create();
+        Martin.enrage(martin);
+        assertTrue(martin.isEnraged());
+        assertEquals(4, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 4 i stället för 3
+        martin.takeDamage(20);                                                      // halva livet: fas 2
+        assertEquals(5, martin.getAttack().calculateDamage(martin, dummy));        // fas 2: kvar på 5
+    }
+
+    @Test
+    void enragedMartinKeepsTheNamesSoTheArtStays() {
+        Boss martin = Martin.create();
+        String before = martin.getAttack().name();
+        Martin.enrage(martin);
+        assertEquals(before, martin.getAttack().name());
+        assertTrue(AttackArt.forAttack(martin.getAttack()).isPresent());
+    }
+
+    @Test
+    void enragedMartinHasANewLine() {
+        Boss martin = Martin.create();
+        Martin.enrage(martin);
+        assertEquals(Martin.ENRAGED_LINE, martin.getLine().orElseThrow());
+    }
+
+    @Test
+    void enrageInPhaseTwoUsesTheNewPhaseTwoAttack() {
+        Boss martin = Martin.create();
+        martin.takeDamage(25);
+        Martin.enrage(martin);
+        assertEquals(5, martin.getAttack().calculateDamage(martin, dummy));
+    }
+
+    @Test
+    void enrageHappensOnlyOnce() {
+        Boss martin = Martin.create();
+        Martin.enrage(martin);
+        martin.enrage(new KnowledgeAttack("x", 99), new KnowledgeAttack("y", 99));   // ignoreras
+        assertEquals(4, martin.getAttack().calculateDamage(martin, dummy));
+    }
+
+    @Test
+    void enrageRejectsNullAttacks() {
+        assertThrows(IllegalArgumentException.class, () -> Martin.create().enrage(null, KnowledgeAttack.QUIZ));
+    }
+
+    @Test
+    void normalMartinIsNotEnraged() {
+        assertFalse(Martin.create().isEnraged());
+    }
 }

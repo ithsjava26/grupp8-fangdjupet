@@ -246,6 +246,11 @@ public class GameEngine {
         }
 
         for (Enemy enemy : enemies) {
+            // Har hjälten hittat Städrustningen blir Martin lite svårare (bara en gång)
+            if (enemy instanceof Boss boss && !boss.isEnraged() && wearsCleaningArmor(hero)) {
+                Martin.enrage(boss);
+                output.onEvent(boss.getName() + " ser Städrustningen och blir arg! Han förklarar hårdare.");
+            }
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
             enemy.getLine().ifPresent(line -> output.onEvent(enemy.getName() + ": \"" + line + "\""));   // fiendens replik
@@ -380,6 +385,11 @@ public class GameEngine {
         AttackStrategy attack = hero.getAttack();
         hero.equip(weapon);       // equip byter attack efter vapnet ...
         hero.setAttack(attack);   // ... så vi lägger tillbaka den spelaren hade
+    }
+
+    // Bär hjälten Städrustningen från städskrubben?
+    static boolean wearsCleaningArmor(Hero hero) {
+        return hero.getArmor().map(a -> WorldBuilder.STADRUSTNING.equals(a.description())).orElse(false);
     }
 
     // Spelmenyn 5: letar i rummet. Det som var gömt (Städrustningen i städskrubben) tas på eller används direkt.
