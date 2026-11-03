@@ -135,6 +135,8 @@ public class AnimatedConsoleLogger implements GameEventListener {
 
     // Hjältens slag: filmen efter vad som hände
     List<String> heroFilm(String t) {
+        if (t.contains("blir påkommen av")) return flying(RED, "[USB]", "  PÅKOMMEN!");        // USB-minnet: Martin ser det
+        if (t.contains("smyger in ett USB-minne")) return flying(GREEN, "[USB]>", "  VIRUS!");  // viruset tar över datorn
         if (t.contains("slinter på sidan")) return slip();   // före missen: raden säger också "missar"
         if (t.contains(" missar ") || t.contains("kastar stressbollen förbi")) return whoosh();
         if (t.contains("delar skärmen")) return screenShare();

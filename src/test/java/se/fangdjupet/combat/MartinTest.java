@@ -60,22 +60,21 @@ class MartinTest {
 
     @Test
     void theJavaBookAloneIsNotEnoughAgainst100Hp() {
-        // Utan slump: boken (14) behöver 8 citat mot 100 hp, och Martin hinner förklara 7 + 7 + 7 + 14 + 14 = 49 > 40
+        // Utan slump: boken (14) behöver 8 citat mot 100 hp, och Martin hinner förklara 7 + 7 + 7 + 15 + 15 = 51 > 40
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         assertNotSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
     }
 
     @Test
-    void theBookTheStressBallAndScreenSharingBeatMartin() {
+    void screenSharingAndTheStressBallNoLongerWinOnTheirOwn() {
         // Utan slump: boken, stressbollen (+5 varje runda) och Dela skärm (+10) när hp är 15 eller lägre.
-        // Bollen och skärmen läker 15 – mer än Martins 14 i fas 2 – så hjälten hinner citera klart.
+        // Bollen och skärmen läker 15 – lika mycket som Martins 15 i fas 2 – så hjälten kommer aldrig framåt.
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 5, 3));
         AttackChooser tactic = hero -> hero.getHp() <= 15 ? KnowledgeAttack.SCREENSHARE : hero.getJavaBookAttack();
-        assertSame(h, new Battle(message -> { }, tactic).fight(h, Martin.create()));
-        assertTrue(h.getHp() > 0);
+        assertNotSame(h, new Battle(message -> { }, tactic).fight(h, Martin.create()));
     }
 
     @Test
@@ -108,7 +107,7 @@ class MartinTest {
         assertTrue(martin.isEnraged());
         assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 8 i stället för 7
         martin.takeDamage(50);                                                      // halva livet: fas 2
-        assertEquals(14, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 14
+        assertEquals(15, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 15
     }
 
     @Test
@@ -132,7 +131,7 @@ class MartinTest {
         Boss martin = Martin.create();
         martin.takeDamage(60);
         Martin.enrage(martin);
-        assertEquals(14, martin.getAttack().calculateDamage(martin, dummy));
+        assertEquals(15, martin.getAttack().calculateDamage(martin, dummy));
     }
 
     @Test

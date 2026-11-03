@@ -21,6 +21,7 @@ public final class AttackMenu {
             List<AttackStrategy> knowledge = new ArrayList<>(Martin.heroChoices());
             knowledge.add(hero.getJavaBookAttack());   // 5. Citera från Java-boken, kapitel 18 / 20 ...
             if (hero.getStressBall().isPresent()) knowledge.add(StressBallThrow.THROW);   // 6. Kasta stressbollen
+            if (hero.hasUsbStick()) knowledge.add(UsbVirusAttack.PLUG_IN);                 // 6/7. Smyg in USB-minnet (ett försök)
             return List.copyOf(knowledge);
         }
         int magic = hero.holds(WeaponRange.MAGIC)
@@ -97,6 +98,7 @@ public final class AttackMenu {
             case KnowledgeAttack k when k.lowPower() != k.power() -> "  (" + k.lowPower() + " eller " + k.power() + " i skada)";
             case KnowledgeAttack k -> "  (" + k.power() + " i skada" + (k.selfDamage() > 0 ? ", kostar dig " + k.selfDamage() + " hp" : "") + ")";
             case JavaBookAttack b -> "  (" + JavaBookAttack.POWER + " i skada, " + JavaBookAttack.SLIP_PERCENT + " % risk att du slinter på sidan)";
+            case UsbVirusAttack u -> "  (" + UsbVirusAttack.SUCCESS_PERCENT + " % chans: viruset tar över datorn och du vinner direkt – annars tar Martin USB-minnet)";
             case StressBallThrow t -> "  (" + StressBallThrow.POWER + " i skada om den träffar – sedan är bollen borta: ingen +5 hp per runda)";
             default -> "";
         };

@@ -81,6 +81,17 @@ public final class AttackArt {
               / \\                         KASTA STRESSBOLLEN
             """;
 
+    // USB-minnet med virus som smygs in i Martins dator
+    public static final String USB_VIRUS = """
+                 ___________
+                |  _______  |      [=USB=]>
+                | | ERROR | |   ~~~~~~~~~~~~~~
+                | | VIRUS | |  SMYG IN USB-MINNET
+                | |_______| |   01001000 01001001
+                |___________|   (20 %% chans)
+                   _|___|_
+            """.formatted();
+
     // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
     public static final String POLYMORPHISM = """
                 ______________ ______________
@@ -167,6 +178,7 @@ public final class AttackArt {
             Map.entry(KnowledgeAttack.STACKOVERFLOW.name(), STACKOVERFLOW),
             Map.entry(KnowledgeAttack.SCREENSHARE.name(), SCREENSHARE),
             Map.entry(StressBallThrow.THROW.name(), STRESS_BALL_THROW),
+            Map.entry(UsbVirusAttack.PLUG_IN.name(), USB_VIRUS),
             Map.entry("Thoroughly explained the Hello World Java to you", MARTIN_EXPLAINS),
             Map.entry("Utterly explained", MARTIN_UTTERLY),
             Map.entry(CleaningAttack.SPONGE.name(), SPONGE),

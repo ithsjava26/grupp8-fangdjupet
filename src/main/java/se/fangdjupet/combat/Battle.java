@@ -103,7 +103,8 @@ public class Battle {
                 listener.onEvent(HpBar.status(hero, 10));
             } else {
                 boolean heroMisses = misses(attack.missPercent());   // slumpen: ibland missar man (Java-boken oftare)
-                damage = heroMisses ? 0 : vary(hero.attack(target));  // bara skadan räknas ut här, hp ändras inte än
+                // bara skadan räknas ut här, hp ändras inte än. USB-minnet (instantWin) varieras inte: allt hp, exakt
+                damage = heroMisses ? 0 : attack.instantWin() ? hero.attack(target) : vary(hero.attack(target));
                 if (heroMisses) {
                     listener.onEvent("Hero: " + hero.getName() + " " + attack.missVerb() + " " + target.getName() + "!");
                 } else {
@@ -111,6 +112,7 @@ public class Battle {
                 }
                 target.takeDamage(damage);                          // nu dras skadan av fienden
                 listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
+                attack.used(hero);                                  // t.ex. USB-minnet: ett försök, sedan är det borta
             }
             hero.takeDamage(hero.getAttack().selfDamage());   // attacken kan kosta hjälten hp
             if(hero.getAttack().selfDamage() > 0) {

@@ -31,8 +31,8 @@ public final class Martin {
 
     // Martins styrka: hp och förklaringarna (fas 1, och fas 2 från halva livet). Arg = i Städrustningen.
     public static final int HP = 100;
-    static final int EXPLAIN = 7, EXPLAIN_HARDER = 14;        // fas 2: dubbelt så hårt som fas 1
-    static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 14;
+    static final int EXPLAIN = 7, EXPLAIN_HARDER = 15;        // fas 2: mer än dubbelt så hårt som fas 1
+    static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 15;
 
     // En ny Martin varje gång: 100 hp, nivå 3. Han förklarar med KnowledgeAttack och
     // byter till den tyngre förklaringen vid halva livet (Boss sköter bytet).
@@ -62,7 +62,7 @@ public final class Martin {
             "Varför ska fälten vara private?",
             "Tredje normalformen? Inga transitiva beroenden!");
 
-    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 14).
+    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 15).
     // Kunskap går ändå rakt igenom rustningen, så försvaret hjälper inte mot honom.
     // Förklaringarna heter likadant, så AttackArt visar samma bilder.
     public static final String ENRAGED_LINE = "Städrustning? Den implementerar inte Shield-interfacet – kunskap kompilerar rakt igenom!";

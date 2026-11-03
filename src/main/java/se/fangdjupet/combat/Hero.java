@@ -18,6 +18,7 @@ public class Hero extends Character {
     private Armor armor;     // null = ingen rustning
     private boolean javaBook; //Plocka upp boken i sista rummet
     private StressBall stressBall;   // null = ingen stressboll i fickan
+    private boolean usbStick = true; // USB-minnet med virus: ett försök mot Martin, sedan är det borta
     private final EnumSet<WeaponRange> pickedUp = EnumSet.noneOf(WeaponRange.class);   // räckvidderna hjälten har haft i handen
     private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
 
@@ -129,6 +130,17 @@ public class Hero extends Character {
         int before = getHp();
         heal(stressBall.hpPerTurn());
         return getHp() - before;
+    }
+
+    // Har hjälten kvar USB-minnet? Ett försök per äventyr (UsbVirusAttack)
+    public boolean hasUsbStick() {
+        return usbStick;
+    }
+
+    // Försöket är gjort: USB-minnet är borta. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.
+    void loseUsbStick() {
+        usbStick = false;
+        if (getAttack() instanceof UsbVirusAttack) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);
     }
 
     // Bollen är kastad på Martin: borta ur fickan. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.

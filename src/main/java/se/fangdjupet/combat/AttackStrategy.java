@@ -26,4 +26,8 @@ public interface AttackStrategy {
 
     // Ordet i loggen när attacken missar: "Robert missar Troll!"
     default String missVerb() { return "missar"; }
+    // Vinner attacken direkt när den lyckas (USB-minnet)? Då varierar Battle inte skadan, och målet faller alltid.
+    default boolean instantWin() { return false; }
+    // Anropas efter hjältens försök, lyckat eller inte – t.ex. är USB-minnet borta efteråt
+    default void used(Hero hero) { }
 }

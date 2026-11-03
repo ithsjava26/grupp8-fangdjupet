@@ -127,4 +127,13 @@ class AnimatedConsoleLoggerTest {
         assertEquals("[#---------]", AnimatedConsoleLogger.bar(1, 40, 10), "lite liv kvar syns");
         assertEquals("[----------]", AnimatedConsoleLogger.bar(0, 40, 10));
     }
+
+    @Test
+    void theUsbStickHasItsOwnFilm() {
+        logger.onEvent("Hero: Robert smyger in ett USB-minne med virus i datorn hos Lektor Martin skada: 100");
+        assertTrue(out.toString().contains("VIRUS!"));
+        logger.onEvent("Hero: Robert försöker smyga in ett USB-minne, men blir påkommen av Lektor Martin!");
+        assertTrue(out.toString().contains("PÅKOMMEN!"));
+        assertLineComesLast("Hero: Robert försöker smyga in ett USB-minne, men blir påkommen av Lektor Martin!");
+    }
 }

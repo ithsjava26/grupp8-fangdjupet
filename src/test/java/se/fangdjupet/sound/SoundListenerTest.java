@@ -244,4 +244,12 @@ class SoundListenerTest {
         assertEquals("music bossFast", speaker.last());
         assertTrue(Song.SONGS.get("bossFast").bpm() > Song.SONGS.get("boss").bpm(), "snabbare");
     }
+
+    @Test
+    void theUsbStickZapsOrBuzzes() {
+        sound.onEvent("Hero: Robert smyger in ett USB-minne med virus i datorn hos Lektor Martin skada: 100");
+        assertEquals("sfx zap", speaker.last());
+        sound.onEvent("Hero: Robert försöker smyga in ett USB-minne, men blir påkommen av Lektor Martin!");
+        assertEquals("sfx buzz", speaker.last());
+    }
 }
