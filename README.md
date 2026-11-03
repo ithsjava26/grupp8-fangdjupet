@@ -132,7 +132,7 @@ Frida (ingen Character)     A – ger två drycker före Martin
 Item (sealed interface)             GameEventListener (interface)
  ├─ Weapon   record                  ├─ EventBus            C, PR 1
  ├─ Armor    record                  ├─ ConsoleEventLogger  C, PR 1
- └─ Potion   record                  └─ FileLogger          C (inte klar)
+ └─ Potion   record                  └─ FileLogger          C – fangdjupet.log
 ```
 
 ### `combat/AttackStrategy` – hur man slåss
@@ -165,7 +165,17 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 
 ### Rum, vapen och grafik i spelet
 - `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller bara Martins fyra `KnowledgeAttack` när hjälten har Java-boken. `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
-- **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
+- **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, 4. Spara äventyret, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
+- **Inte förbi en levande fiende:** spelmenyn 2 går bara vidare när rummet är rensat. Annars skriver spelet `Entrédörren står i vägen! Besegra rummets fiender innan du går vidare.` (`GameEngine.blockedBy(room)`). Det gäller också efter rundtaket, där hjälten kan vinna på mest hp fast fienden lever.
+- **Visa hjältens utrustning** (spelmenyn 3, `GameEngine.equipment(hero)`): hp-mätaren, vapnet, rustningen, attacken och Java-boken, till exempel:
+  ```
+  Robert  [########--] 34/40
+  Vapen: Pilbåge (+3 i skada)
+  Rustning: ingen
+  Attack: Närstrid
+  ```
+- **Spara och fortsätta:** spelmenyn 4 sparar hjältens namn, maxHp, hp och rummets nummer på sparplats 1 i mappen `saves` (`Äventyret är sparat: Kafferummet, 34/40 hp.`). En gammal sparning skrivs över. Huvudmenyn 2 läser in den: `Välkommen tillbaka, Robert!`, och hjälten står **i början av det sparade rummet** med samma hp. Rummen före är avklarade och fienderna där kommer inte tillbaka, men vapnen som låg där tar hjälten med sig (`GameEngine.fastForward`). Finns ingen sparning skriver spelet `Det finns inget sparat äventyr. Välj 1 för att starta ett nytt.` En trasig sparfil ger `Sparfilen går inte att läsa: ...` och spelet fortsätter. Inventariet sparas inte, och vapnens bonus slumpas på nytt (`ItemFactory.createWeapon`).
+- **Loggfil:** `Main` registrerar en `FileLogger` på `EventBus`, så allt som händer också skrivs till `fangdjupet.log`. Färgkoderna runt GAME OVER tas bort i filen. Går filen inte att skriva fortsätter spelet ändå. `saves/` och `fangdjupet.log` ligger i `.gitignore`.
 - **Föremål plockas upp automatiskt** när hjälten kommer in i rummet (`GameEngine.pickUpAll`), som Java-boken. Ett vapen hamnar i handen och ger sin bonus i skada (`Du har nu Pilbåge i handen: +4 i skada.`), men attacken byts inte: pilbågen (avstånd 5) är svagare än närstrid (10), och den som trycker Enter ska inte få sämre attack. Avstånd och magi väljs i attackmenyn. 1000 simulerade spel: 818 vinster med vapnen i handen, 54 om pilbågen hade bytt attack.
 - `AsciiArt.forRoom(rumsnamn)` ger en ASCII-bild för Skoldörren, Kafferummet (kaffeautomaten med JAVA-skylten), Korridoren och städskrubben och Lektionssalen (tom `Optional` för okända rum). `showCurrentRoom()` visar den, och dessutom det hjälten plockar upp (`Du hittar och plockar upp: Pilbåge` med bild).
 - `AsciiArt.forName(namn)` ger en bild för fiender, saker och personer: JavaFläcken, Troll, Trollkarl, StädHäxan, Kapten Martin, Frida, kaffekoppen, kanelbullen, Java-boken, pilbågen och trollstaven. Den visas när fienden dyker upp, när man tar kaffet eller kanelbullen, när Frida kommer och när man plockar upp något.
@@ -237,10 +247,10 @@ Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklass
 `sealed ... permits` betyder att exakt de tre recorden får vara ett `Item`; en fjärde stoppas av kompilatorn. Records är ren data – Java skriver konstruktor och getters. Här kopplas B:s föremål in i A:s strid: `Hero.equip(Weapon)` ger `getAttackBonus()`.
 
 ### `game/GameEventListener` – vem som får veta vad som händer
-Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och senare `FileLogger` (fil).
+Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och `FileLogger` (filen `fangdjupet.log`, en rad per händelse, färgkoderna borttagna).
 
 ### `game/GameState` + `GameSaveFileHandler` – spara och ladda
-`GameState` är en record med hjältens namn, maxHp, hp och nästa rum. Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad eller trasig sparfil ger `IOException`. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i.
+`GameState` är en record med hjältens namn, maxHp, hp och rummets nummer (`nextRoom`, 0 = Skoldörren). Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad sparplats, ett saknat värde, fel version eller trasiga data ger `SaveFileException`. Den ärver `IOException`, så kod som fångar `IOException` fångar den också. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i. `GameEngine` använder sparplats 1 i mappen `saves`: spelmenyn 4 sparar och huvudmenyn 2 läser in (se *Rum, vapen och grafik i spelet*).
 
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
@@ -258,4 +268,4 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3. `Battle` loggar varje slag, hp-mätare efter varje träff och ett slutmeddelande (se avsnittet om `Battle`) |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
 | ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
-| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. Inventariet sparas inte än – C:s nästa PR, alla tre granskar |
+| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. `GameEngine` sparar och läser in plats 1 sedan `feature/spara-och-fortsatt`. Inventariet sparas inte än – B:s `Inventory` behövs först |

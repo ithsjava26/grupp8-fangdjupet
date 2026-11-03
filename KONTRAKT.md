@@ -3,10 +3,9 @@
 ## Medlemmar
 | Namn | GitHub |
 |------|--------|
-|      |        |
-|      |        |
-|      |        |
-|      |        |
+| Robert Andersson Kopler | `elitrobban89` |
+| Tanaz Daraee | `TanazDaraee` |
+| Fredrik Nylén | `KOFFEE439` |
 
 ## Mål
 - Vad vi vill uppnå med projektet: Lära oss mer om Java och Git. Samarbete.
@@ -26,9 +25,9 @@ Tanaz jobbar Fredagar
 ## Roller och ansvar
 | Område | Ansvarig |
 |--------|----------|
-| game   |          |
-| combat |          |
-| items  |          |
+| game – spelmotor, spara och logg (C) | Fredrik |
+| combat – strid och karaktärer (A) | Robert |
+| items – föremål (B) | Tanaz |
 
 ## Arbetsflöde i Git
 - Ingen pushar direkt till `main`. Allt går via egna brancher (`feature/<vad-du-gör>`) och pull requests.
@@ -48,9 +47,10 @@ Tanaz jobbar Fredagar
 ## Underskrifter
 Genom att skriva sitt namn nedan godkänner man kontraktet.
 
+Var och en skriver själv in sitt datum.
+
 | Namn | Datum |
 |------|-------|
-|      |       |
-|      |       |
-|      |       |
-|      |       |
+| Robert Andersson Kopler | |
+| Tanaz Daraee | |
+| Fredrik Nylén | |
