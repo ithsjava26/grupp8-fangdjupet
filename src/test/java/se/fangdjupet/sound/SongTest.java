@@ -83,7 +83,8 @@ class SongTest {
         }
         for (String name : List.of("blip", "shoot", "magic", "slash", "smart", "whoosh", "hurt", "gulp",
                 "pickup", "slam", "alert", "laugh", "find", "club", "zap", "splat", "hiss", "fizz", "blah",
-                "page", "slip", "chime", "boing", "squeak", "clang", "clank", "munch", "lowhp")) {
+                "page", "slip", "chime", "boing", "squeak", "clang", "clank", "munch", "lowhp",
+                "steps", "rummage", "nope", "save", "buzz", "sparkle", "fanfare", "swap", "locked", "talk", "bag", "drop", "bye")) {
             RetroSpeaker speaker = RetroSpeaker.offline();
             speaker.sfx(name);
             assertAudible(name, speaker.render(0.6));

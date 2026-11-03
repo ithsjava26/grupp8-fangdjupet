@@ -96,7 +96,30 @@ public final class SoundListener implements GameEventListener {
             speaker.sfx("find");
         } else if (t.startsWith("Du plockar upp:")) {
             speaker.sfx("pickup");
+        } else {
+            String other = otherSound(t);
+            if (other != null) speaker.sfx(other);
         }
+    }
+
+    // Allt utanför striden som inte har ett ljud ovan: gå, leta, spara, fel val, Frida, repliker ...
+    static String otherSound(String t) {
+        if (t.startsWith("Du går till ")) return "steps";
+        if (t.startsWith("Du letar i ")) return "rummage";
+        if (t.equals("Du hittar inget här.")) return "nope";
+        if (t.startsWith("Äventyret är sparat")) return "save";
+        if (t.startsWith("Ogiltigt val") || t.startsWith("Kunde inte spara") || t.startsWith("Sparfilen går inte")
+                || t.equals("Starta ett äventyr först.") || t.startsWith("Det finns ingen") || t.startsWith("Det finns inget sparat")
+                || t.startsWith("Du är redan i ")) return "buzz";
+        if (t.endsWith(" dyker upp!")) return "sparkle";            // Frida (fienderna har fått sitt ljud ovan)
+        if (t.equals("Äventyret börjar!") || t.startsWith("Välkommen tillbaka")) return "fanfare";
+        if (t.startsWith("Du byter till ")) return "swap";
+        if (t.contains(" är låst.") || t.contains(" står i vägen")) return "locked";
+        if (t.startsWith("Du låter ")) return "drop";
+        if (t.equals("Visa hjältens utrustning.")) return "bag";
+        if (t.equals("Tack för att du spelade!")) return "bye";
+        if (t.matches("[^:\"]{1,30}: \".*")) return t.startsWith(se.fangdjupet.combat.Martin.NAME) ? "blah" : "talk";   // Namn: "replik"
+        return null;
     }
 
     // Hjältens rad: boken bläddrar (eller slinter), Dela skärm klingar, stressbollen säger boing – annars attackens ljud

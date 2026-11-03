@@ -187,6 +187,64 @@ public final class RetroSpeaker implements Speaker {
                 tone("square", 988, t, 0.09, 0.1).sfx();
                 tone("square", 988, t + 0.16, 0.09, 0.1).sfx();
             }
+            // ---- utanför striden: gå, leta, spara, prata ----
+            case "steps" -> {   // fotsteg till nästa rum: klapp-klapp-klapp
+                for (int i = 0; i < 4; i++) {
+                    noise(t + i * 0.16, 0.05, 0.4, 'l', 700, 0, 2).crushed();
+                    tone("sine", 70, t + i * 0.16, 0.06, 0.3).from(140, 0.03).sfx();
+                }
+            }
+            case "rummage" -> {   // letar: prassel i lådor och papper
+                for (int i = 0; i < 6; i++) noise(t + i * 0.07, 0.05, 0.25, 'b', 1800 + (i % 3) * 900, 0, 3).sfx();
+            }
+            case "nope" -> {   // hittar inget: buu-buu
+                tone("square", 220, t, 0.16, 0.14).lowpass(1500, 0, 1).sfx();
+                tone("square", 165, t + 0.18, 0.3, 0.14).from(185, 0.2).lowpass(1200, 0, 1).sfx();
+            }
+            case "save" -> {   // sparat: diskettens bip-bip-blipp
+                tone("square", 1760, t, 0.05, 0.1).sfx();
+                tone("square", 1760, t + 0.08, 0.05, 0.1).sfx();
+                tone("triangle", Song.frequency(84), t + 0.18, 0.25, 0.14).sfx();
+                noise(t + 0.02, 0.15, 0.08, 'h', 5000, 0, 1).sfx();
+            }
+            case "buzz" -> tone("square", 110, t, 0.22, 0.16).detune(30).crushed();   // fel val: brrrt
+            case "sparkle" -> {   // Frida dyker upp: glitter som stiger
+                for (int i = 0; i < 7; i++)
+                    tone("triangle", Song.frequency(84 + (i * 5) % 12 + (i / 3) * 12), t + i * 0.05, 0.12, 0.08).sfx();
+            }
+            case "fanfare" -> {   // äventyret börjar: ta-ta-ta-taaa
+                int[] up = {0, 0, 0, 5};
+                double[] len = {0.1, 0.1, 0.1, 0.45};
+                double at = t;
+                for (int i = 0; i < up.length; i++) {
+                    tone("square", Song.frequency(67 + up[i]), at, len[i], 0.12).sfx();
+                    tone("triangle", Song.frequency(55 + up[i]), at, len[i], 0.14).sfx();
+                    at += len[i] + 0.03;
+                }
+            }
+            case "swap" -> {   // byter attack: klick-klack
+                tone("square", 900, t, 0.03, 0.1).sfx();
+                tone("square", 1350, t + 0.07, 0.03, 0.1).sfx();
+            }
+            case "locked" -> {   // låst: handtaget skramlar
+                for (int i = 0; i < 3; i++) noise(t + i * 0.09, 0.06, 0.35, 'b', 1200, 0, 6).crushed();
+                tone("sine", 90, t + 0.3, 0.12, 0.3).sfx();
+            }
+            case "talk" -> {   // någon pratar: små bubbel-ljud
+                int[] up = {0, 4, 2, 5};
+                for (int i = 0; i < up.length; i++)
+                    tone("square", Song.frequency(69 + up[i]), t + i * 0.07, 0.05, 0.08).lowpass(2500, 0, 1).sfx();
+            }
+            case "bag" -> {   // utrustningen: blixtlåset dras upp
+                noise(t, 0.25, 0.25, 'b', 1500, 5000, 4).sfx();
+                tone("square", 400, t, 0.25, 0.04).from(200, 0.25).sfx();
+            }
+            case "drop" -> tone("sine", 80, t, 0.18, 0.4).from(260, 0.12).sfx();   // lämnar kvar: duns
+            case "bye" -> {   // tack för att du spelade: tre toner nedåt
+                int[] down = {12, 7, 0};
+                for (int i = 0; i < down.length; i++)
+                    tone("triangle", Song.frequency(72 + down[i]), t + i * 0.16, 0.2, 0.14).sfx();
+            }
             default -> { }
         }
     }

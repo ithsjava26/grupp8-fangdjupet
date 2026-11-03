@@ -182,6 +182,40 @@ class SoundListenerTest {
     }
 
     @Test
+    void everythingOutsideTheFightHasASoundToo() {
+        String[][] lines = {
+                {"Du går till Kafferummet.", "steps"},
+                {"Du letar i Lektionssalen ...", "rummage"},
+                {"Du hittar inget här.", "nope"},
+                {"Äventyret är sparat: Skoldörren, 40/40 hp.", "save"},
+                {"Ogiltigt val. Försök igen.", "buzz"},
+                {"Du är redan i Kafferummet.", "buzz"},
+                {"Frida dyker upp!", "sparkle"},
+                {"Äventyret börjar!", "fanfare"},
+                {"Välkommen tillbaka, Robert!", "fanfare"},
+                {"Du byter till Avståndsattack.", "swap"},
+                {"Lektionssalen är låst. Du har inte hittat vägen dit än.", "locked"},
+                {"Entrédörren står i vägen! Besegra rummets fiender innan du går vidare.", "locked"},
+                {"Du låter Pilbåge ligga kvar. Den finns kvar om du kommer tillbaka.", "drop"},
+                {"Visa hjältens utrustning.", "bag"},
+                {"Tack för att du spelade!", "bye"},
+                {"Frida: \"Du ser trött ut!\"", "talk"},
+                {"Lektor Martin: \"Let me explain Hello World to you...\"", "blah"},
+        };
+        for (String[] line : lines) {
+            sound.onEvent(line[0]);
+            assertEquals("sfx " + line[1], speaker.last(), line[0]);
+        }
+    }
+
+    @Test
+    void anOrdinaryDescriptionIsSilent() {
+        int before = speaker.played.size();
+        sound.onEvent("Du står utanför skolan. Dörren är tung.");
+        assertEquals(before, speaker.played.size());
+    }
+
+    @Test
     void enterGivesABlip() {
         sound.keyPressed();
         assertEquals("sfx blip", speaker.last());
