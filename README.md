@@ -108,7 +108,7 @@ Grov uppskattning om man kodar själv: tester, PR och granskning av någon annan
 | | PR 2 (start): `Inventory` (streams, generics) och `ItemText` | 4–6 h |
 | | **Summa** | **≈ 6–9 h** |
 | **C – Motor** | PR 1: `EventBus`, `ConsoleLogger`, `FileLogger` med tester | 3–4 h |
-| | PR 2 (start): `GameState`, `SaveManager`, `SaveFileException` med tester | 4–6 h |
+| | PR 2 (start): `GameState` och `GameSaveFileHandler` – mergad som #15 | 4–6 h |
 | | **Summa** | **≈ 7–10 h** |
 
 Räkna med ungefär 1 h extra per person för merge-konflikter och granskning.
@@ -152,6 +152,9 @@ Abstrakt – man skapar en `Hero` eller `Enemy`, aldrig en `Character`. Subklass
 ### `game/GameEventListener` – vem som får veta vad som händer
 Observer-mönstret: A:s `Battle` anropar `onEvent("Hjälten gör 7 i skada")` utan att veta vem som lyssnar. C:s `EventBus` skickar vidare till alla registrerade lyssnare, t.ex. `ConsoleEventLogger` (skärm) och senare `FileLogger` (fil).
 
+### `game/GameState` + `GameSaveFileHandler` – spara och ladda
+`GameState` är en record med hjältens namn, maxHp, hp och nästa rum. Konstruktorn kastar `IllegalArgumentException` om något är orimligt (tomt namn, maxHp ≤ 0, hp utanför 0–maxHp, negativt rum). `GameSaveFileHandler(sparmapp)` har `save(state, slot)`, `load(slot)` och `listSaveSlots()`. Sparplatser är 1 och uppåt. En saknad eller trasig sparfil ger `IOException`. `save` skriver först till en temporär fil, så att den gamla sparningen finns kvar om något går fel mitt i.
+
 ### Varför kontraktet finns
 Alla kan bygga parallellt från dag 1: B skriver `new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 4, 1)` och C skickar händelser innan A:s kod är klar. Bryter någon mot kontraktet kompilerar inte koden – felen syns direkt, inte när allt kopplas ihop. Ändras kontraktet senare sker det via en egen liten PR som alla granskar.
 
@@ -168,4 +171,4 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3 |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
 | ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Bara ren ASCII (`#` `-` `\|` `/`), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
-| Sparfilen | A, B, C | – | en rad per sak, fält åtskilda med `;`: `hero;<namn>;<hp>`, `room;<rummets namn>`, en rad per föremål – C:s PR 2, alla tre granskar |
+| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. Inventariet sparas inte än – C:s nästa PR, alla tre granskar |
