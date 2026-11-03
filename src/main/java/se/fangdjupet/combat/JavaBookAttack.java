@@ -32,7 +32,7 @@ public class JavaBookAttack implements AttackStrategy {
         return "Citera från Java-boken, " + nextChapter();
     }
 
-    // I loggen: "Robert citerar kapitel 18: Polymorphism för Kapten Martin skada: 5"
+    // I loggen: "Robert citerar kapitel 18: Polymorphism för Lektor Martin skada: 5"
     @Override
     public String verb() {
         return "citerar " + (lastRead == null ? nextChapter() : lastRead) + " för";

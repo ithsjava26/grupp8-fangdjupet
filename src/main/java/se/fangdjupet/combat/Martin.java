@@ -2,12 +2,12 @@ package se.fangdjupet.combat;
 
 import java.util.List;
 
-// Fabrik för den sista bossen, Kapten Martin, och hjältens attacker mot honom.
+// Fabrik för den sista bossen, Lektor Martin, och hjältens attacker mot honom.
 // Bara statiska metoder – som ItemFactory och Frida skapar man inga Martin-objekt.
 public final class Martin {
     private Martin() {}                 // ingen ska skriva new Martin()
 
-    public static final String NAME = "Kapten Martin";
+    public static final String NAME = "Lektor Martin";
     public static final String ANGRY = NAME + " ser Städrustningen och blir arg! Han förklarar hårdare.";
 
     // En ny Martin varje gång: 40 hp, nivå 3. Han förklarar med KnowledgeAttack och

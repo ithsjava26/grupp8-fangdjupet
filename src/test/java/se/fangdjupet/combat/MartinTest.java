@@ -11,7 +11,7 @@ class MartinTest {
     @Test
     void martinIsABoss() {
         Boss martin = Martin.create();
-        assertEquals("Kapten Martin", martin.getName());
+        assertEquals("Lektor Martin", martin.getName());
         assertEquals(40, martin.getMaxHp());
     }
 

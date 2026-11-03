@@ -101,7 +101,7 @@ public final class AttackArt {
         return chapter.contains("Interface") ? INTERFACE : POLYMORPHISM;
     }
 
-    // ── Kapten Martins förklaringar (fas 1 och fas 2) ──
+    // ── Lektor Martins förklaringar (fas 1 och fas 2) ──
 
     public static final String MARTIN_EXPLAINS = """
                .--------------------------------.

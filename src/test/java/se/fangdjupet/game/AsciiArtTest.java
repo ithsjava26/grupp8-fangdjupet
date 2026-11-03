@@ -24,7 +24,7 @@ class AsciiArtTest {
     // ── Bilder för fiender, saker och personer (namnen i GameEngine och WorldBuilder) ──
 
     private static final List<String> THING_NAMES = List.of(
-            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Kapten Martin", "Frida",
+            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Lektor Martin", "Frida",
             "en kopp kaffe", "en kanelbulle", "Java-bok", "Pilbåge", "Trollstav");
 
     @Test
@@ -45,7 +45,7 @@ class AsciiArtTest {
 
     @Test
     void martinAndFridaUseTheirPortraits() {
-        assertEquals(AsciiArt.MARTIN, AsciiArt.forName("Kapten Martin").orElseThrow());
+        assertEquals(AsciiArt.MARTIN, AsciiArt.forName("Lektor Martin").orElseThrow());
         assertEquals(AsciiArt.FRIDA, AsciiArt.forName("Frida").orElseThrow());
     }
 

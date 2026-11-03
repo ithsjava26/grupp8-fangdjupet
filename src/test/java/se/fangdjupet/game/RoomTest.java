@@ -85,7 +85,7 @@ class RoomTest {
 
     private World world() {
         return new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
     }
 
     @Test
@@ -198,7 +198,7 @@ class RoomTest {
     @Test
     void fridaWaitsInTheCorridorBeforeMartin() {
         World world = new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
         assertTrue(world.getCurrentRoom().getFrida().isEmpty());          // Skoldörren
         world.moveForward();
         assertTrue(world.getCurrentRoom().getFrida().isEmpty());          // Kafferummet
@@ -216,7 +216,7 @@ class RoomTest {
     @Test
     void cleaningWitchThreatensWithChemicals() {
         World world = new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
         world.moveForward();
         world.moveForward();                                   // Kafferummet → Korridoren och städskrubben
         Room room = world.getCurrentRoom();

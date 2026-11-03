@@ -324,7 +324,7 @@ public final class AsciiArt {
             Map.entry("Troll", TROLL),
             Map.entry("Trollkarl", WIZARD),
             Map.entry("StädHäxan", WITCH),
-            Map.entry("Kapten Martin", MARTIN),
+            Map.entry("Lektor Martin", MARTIN),
             Map.entry("Frida", FRIDA),
             Map.entry("en kopp kaffe", COFFEE_CUP),
             Map.entry("en kanelbulle", CINNAMON_BUN),
