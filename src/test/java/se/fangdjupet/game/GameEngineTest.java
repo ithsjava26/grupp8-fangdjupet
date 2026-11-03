@@ -293,4 +293,57 @@ class GameEngineTest {
         assertEquals(33, hero.getHp());
         assertEquals("Korridoren och städskrubben", loadedWorld.getCurrentRoom().getName());
     }
+
+    // ── Leta i rummet (spelmenyn 5) och Städrustningen ──
+
+    @Test
+    void gameMenuCanSearchTheRoom() {
+        String menu = GameEngine.menu(new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of()));
+        assertTrue(menu.contains("5. Leta i rummet"));
+    }
+
+    @Test
+    void cleaningArmorIsHiddenInTheCleaningCupboard() {
+        World world = GameEngine.newWorld(new Random(1));
+        world.moveForward();                                   // Kafferummet
+        world.moveForward();                                   // Korridoren och städskrubben
+        List<se.fangdjupet.items.Item> found = world.getCurrentRoom().search();
+        Armor armor = (Armor) found.getFirst();
+        assertEquals(WorldBuilder.STADRUSTNING, armor.description());
+        assertEquals(20, armor.defense());
+    }
+
+    @Test
+    void otherRoomsHaveNothingHidden() {
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(world.getCurrentRoom().search().isEmpty());   // Skoldörren
+        world.moveForward();
+        assertTrue(world.getCurrentRoom().search().isEmpty());   // Kafferummet
+    }
+
+    @Test
+    void cleaningArmorGivesTwentyDefense() {
+        Hero hero = robert();
+        hero.equip(new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2));
+        assertEquals(20, hero.getDefense());
+    }
+
+    @Test
+    void equipKeepingAttackKeepsTheChosenAttack() {
+        Hero hero = robert();
+        var attack = hero.getAttack();
+        GameEngine.equipKeepingAttack(hero, new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 3, 1));
+        assertSame(attack, hero.getAttack());
+        assertEquals(3, hero.getAttackBonus());
+    }
+
+    @Test
+    void cleaningArmorIsRecognised() {
+        Hero hero = robert();
+        assertFalse(GameEngine.wearsCleaningArmor(hero));
+        hero.equip(new Armor(ItemType.HELMET, "Cykelhjälm", 2, 1));
+        assertFalse(GameEngine.wearsCleaningArmor(hero));
+        hero.equip(new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2));
+        assertTrue(GameEngine.wearsCleaningArmor(hero));
+    }
 }

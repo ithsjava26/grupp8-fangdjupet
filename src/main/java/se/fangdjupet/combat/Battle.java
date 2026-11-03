@@ -2,8 +2,10 @@ package se.fangdjupet.combat;
 
 import se.fangdjupet.game.GameEventListener;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // En strid mellan hjälten och en eller flera fiender. fight(...) kör runda efter runda tills
@@ -18,6 +20,7 @@ public class Battle {
 
     private final AttackChooser chooser;   // frågas före varje hjältens slag
     private final Random random;           // null = ingen slump: skadan blir exakt (testerna)
+    private boolean attackArt;             // visa AttackArt-bilder? Av som standard, så loggen blir kort i testerna
 
     public Battle(GameEventListener listener) {
         this(listener, hero -> null);      // utan val: hjälten behåller sin attack
@@ -46,6 +49,14 @@ public class Battle {
         this.random = random;
     }
 
+    // Slår på bilderna: när spelaren väljer en attack (DoomScrolla, StackOverflow ...) och första gången
+    // en boss använder en attack (Svinto, Martins förklaringar ...). Returnerar striden, så att man kan
+    // kedja: new Battle(output, chooser, random).withAttackArt().fight(hero, enemies)
+    public Battle withAttackArt() {
+        this.attackArt = true;
+        return this;
+    }
+
     // Kör hela striden, berättar vem som vann och returnerar vinnaren
     public Character fight(Hero hero, Enemy enemy) {
         return fight(hero, List.of(enemy));                // en vanlig strid = en grupp med en fiende
@@ -67,11 +78,15 @@ public class Battle {
     // Går tills hjälten eller alla fiender är döda, eller rundtaket nås.
     private Character runFight(Hero hero, List<Enemy> enemies) {
         int round = 0;
+        Set<String> bossAttacksShown = new HashSet<>();   // varje bossattack visas med bild bara en gång per strid
         // Så länge hjälten och minst en fiende lever och taket inte nåtts – slåss
         while (hero.isAlive() && anyAlive(enemies) && round < MAX_ROUNDS) {
             round++;
             AttackStrategy chosen = chooser.choose(hero);   // spelaren väljer attack för den här rundan
-            if (chosen != null) hero.setAttack(chosen);
+            if (chosen != null) {
+                hero.setAttack(chosen);
+                showArt(chosen);                            // bilden för det spelaren valde, t.ex. DoomScrolla
+            }
             Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
             boolean heroMisses = misses();                  // slumpen: ibland missar man
             int damage = heroMisses ? 0 : vary(hero.attack(target));   // bara skadan räknas ut här, hp ändras inte än
@@ -91,6 +106,10 @@ public class Battle {
                 if (!enemy.isAlive()) continue;                // döda fiender slår inte
                 boolean enemyMisses = misses();
                 damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut
+                // Efter attack(): då vet RandomAttack vilket kast det blev (svamp eller Svinto)
+                if (enemy instanceof Boss && bossAttacksShown.add(enemy.getAttack().name())) {
+                    showArt(enemy.getAttack());
+                }
                 if (enemyMisses) {
                     listener.onEvent("Enemy: " + enemy.getName() + " missar " + hero.getName() + "!");
                 } else {
@@ -116,6 +135,12 @@ public class Battle {
         if (!hero.isAlive()) return firstAlive(enemies);
         int enemyHp = enemies.stream().mapToInt(Character::getHp).sum();
         return hero.getHp() > enemyHp ? hero : firstAlive(enemies);
+    }
+
+    // Skickar attackens bild till loggen, utan text blockets sista radbrytning – om bilderna är på
+    private void showArt(AttackStrategy attack) {
+        if (!attackArt) return;
+        AttackArt.forAttack(attack).ifPresent(art -> listener.onEvent(art.stripTrailing()));
     }
 
     // Slumpen (bara med Random): MISS_PERCENT % av slagen missar
