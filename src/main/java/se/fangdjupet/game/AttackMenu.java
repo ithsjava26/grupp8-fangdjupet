@@ -24,16 +24,19 @@ public final class AttackMenu {
     public static List<String> lines(List<AttackStrategy> options) {
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < options.size(); i++) {
-            AttackStrategy attack = options.get(i);
-            String label = switch (attack) {
-                case MeleeAttack m -> "Närstrid";
-                case MagicAttack m -> "Magi";
-                case RangedAttack r -> "Avståndsattack";
-                default -> attack.name();             // KnowledgeAttack visar sin egen text
-            };
-            lines.add((i + 1) + ". " + label);       // numret är positionen + 1
+            lines.add((i + 1) + ". " + label(options.get(i)));   // numret är positionen + 1
         }
         return lines;
+    }
+
+    // Attackens namn på svenska, t.ex. "Närstrid". Används i menyn och i "Visa hjältens utrustning".
+    public static String label(AttackStrategy attack) {
+        return switch (attack) {
+            case MeleeAttack m -> "Närstrid";
+            case MagicAttack m -> "Magi";
+            case RangedAttack r -> "Avståndsattack";
+            default -> attack.name();             // KnowledgeAttack visar sin egen text
+        };
     }
 
     // Spelarens val: ett nummer i menyn ger den attacken. Enter, text eller fel nummer ger null = behåll.

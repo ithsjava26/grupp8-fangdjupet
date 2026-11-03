@@ -6,7 +6,11 @@ import se.fangdjupet.items.Item;
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Weapon;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -14,16 +18,29 @@ import java.util.stream.Collectors;
 // Spelets huvudloop (Fredrik): menyn, rummen och vad varje val gör.
 // Striderna lämnas över till Battle, och allt som skrivs ut går via output (Observer).
 public class GameEngine {
+    static final int SAVE_SLOT = 1;               // spelet använder en sparplats
+    private static final int HERO_MAX_HP = 40;
+
     private final GameEventListener output;
+    private final GameSaveFileHandler saves;      // sparar och läser in äventyret
     private final Random random = new Random();   // slumpen i striderna
     private boolean running;
 
-    // output = dit allt skrivs, i spelet en EventBus med konsolen
+    // output = dit allt skrivs, i spelet en EventBus med konsolen. Sparfilerna hamnar i mappen saves.
     public GameEngine(GameEventListener output) {
+        this(output, new GameSaveFileHandler(Path.of("saves")));
+    }
+
+    // Med en egen sparhanterare, t.ex. en tillfällig mapp i testerna
+    public GameEngine(GameEventListener output, GameSaveFileHandler saves) {
         if (output == null) {
             throw new IllegalArgumentException("output must not be null");
         }
+        if (saves == null) {
+            throw new IllegalArgumentException("saves must not be null");
+        }
         this.output = output;
+        this.saves = saves;
     }
 
     // Visar menyn och kör valen tills spelaren väljer e
@@ -60,6 +77,7 @@ public class GameEngine {
                 1. Strid mot rummets fiende
                 2. Gå till ett annat rum
                 3. Visa hjältens utrustning
+                4. Spara äventyret
                 e. Avsluta
                 """;
     }
@@ -78,6 +96,7 @@ public class GameEngine {
                 case "1" -> fightRoomEnemy();
                 case "2" -> moveToAnotherRoom();
                 case "3" -> showEquipment();
+                case "4" -> saveAdventure();
                 case "e" -> exitGame();
                 default -> output.onEvent("Ogiltigt val. Försök igen.");
             }
@@ -98,31 +117,110 @@ public class GameEngine {
         output.onEvent("Starta nytt äventyr.");
         IO.print("Vad heter hjälten? ");
         String heroName = IO.readln().trim();
+        if (heroName.isBlank()) heroName = "Hjälten";   // ett tomt namn går inte att spara
 
-        hero = new Hero(heroName, 40, new MeleeAttack(10));
-
-        Enemy doorEnemy = new Enemy("Entrédörren", 15, new MeleeAttack(5), 1);   // liten fiende
-        Enemy corridorEnemy = CleaningWitch.create(random);   // kastar tvättsvamp och Svinto, sedan sprayar hon kemikalier
-        Enemy coffeeEnemy = new Enemy("JavaFläcken", 15, new MeleeAttack(4), 1);   // liten fiende
-        Enemy finalEnemy = Martin.create();   // bossen: byter till tyngre förklaringar vid halva livet
-
-        world = new WorldBuilder().build(
-                doorEnemy, corridorEnemy, coffeeEnemy, finalEnemy);
+        hero = new Hero(heroName, HERO_MAX_HP, new MeleeAttack(10));
+        world = newWorld(random);
 
         output.onEvent("Äventyret börjar!");
         showCurrentRoom();
     }
 
-    // Huvudmenyn 2: inte klar – ska läsa in sparfilen
-    private void continueAdventure() {
-        output.onEvent("Fortsätt sparat äventyr.");
-        // Läs in sparfilen här.
+    // Fienderna och de fyra rummen, likadana varje gång – både för ett nytt och ett sparat äventyr
+    static World newWorld(Random random) {
+        Enemy doorEnemy = new Enemy("Entrédörren", 15, new MeleeAttack(5), 1);   // liten fiende
+        Enemy corridorEnemy = CleaningWitch.create(random);   // kastar tvättsvamp och Svinto, sedan sprayar hon kemikalier
+        Enemy coffeeEnemy = new Enemy("JavaFläcken", 15, new MeleeAttack(4), 1);   // liten fiende
+        Enemy finalEnemy = Martin.create();   // bossen: byter till tyngre förklaringar vid halva livet
+
+        return new WorldBuilder().build(
+                doorEnemy, corridorEnemy, coffeeEnemy, finalEnemy);
     }
 
-    // Spelmenyn 3: inte klar – ska visa hjältens föremål
+    // Huvudmenyn 2: läser in sparplats 1 och fortsätter i början av det sparade rummet
+    private void continueAdventure() {
+        output.onEvent("Fortsätt sparat äventyr.");
+        GameState state;
+        try {
+            if (!saves.listSaveSlots().contains(SAVE_SLOT)) {
+                output.onEvent("Det finns inget sparat äventyr. Välj 1 för att starta ett nytt.");
+                return;
+            }
+            state = saves.load(SAVE_SLOT);
+        } catch (IOException e) {   // även SaveFileException: trasig fil, fel version, saknat värde
+            output.onEvent("Sparfilen går inte att läsa: " + e.getMessage());
+            return;
+        }
+
+        Hero loadedHero = heroFrom(state);
+        World loadedWorld = newWorld(random);
+        if (!loadedHero.isAlive() || !fastForward(loadedHero, loadedWorld, state.nextRoom())) {
+            output.onEvent("Sparfilen går inte att använda: hjälten är död eller rummet finns inte.");
+            return;
+        }
+
+        hero = loadedHero;
+        world = loadedWorld;
+        output.onEvent("Välkommen tillbaka, " + hero.getName() + "!");
+        output.onEvent(HpBar.status(hero, 10));
+        showCurrentRoom();
+    }
+
+    // Spelmenyn 4: sparar hjältens namn, hp och rummet på sparplats 1 (en gammal sparning skrivs över)
+    private void saveAdventure() {
+        Room room = world.getCurrentRoom();
+        try {
+            saves.save(stateOf(hero, world), SAVE_SLOT);
+            output.onEvent("Äventyret är sparat: " + room.getName() + ", " + hero.getHp() + "/" + hero.getMaxHp() + " hp.");
+            output.onEvent("Fortsätter du senare börjar du från början av " + room.getName() + ".");
+        } catch (IOException e) {
+            output.onEvent("Kunde inte spara: " + e.getMessage());
+        }
+    }
+
+    // Det som sparas: namn, maxHp, hp och numret på rummet hjälten är i (0 = Skoldörren)
+    static GameState stateOf(Hero hero, World world) {
+        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getCurrentRoomIndex());
+    }
+
+    // Hjälten från en sparning: närstrid som i ett nytt äventyr, och det hp hen hade när det sparades
+    static Hero heroFrom(GameState state) {
+        Hero hero = new Hero(state.heroName(), state.heroMaxHp(), new MeleeAttack(10));
+        hero.takeDamage(state.heroMaxHp() - state.heroHp());
+        return hero;
+    }
+
+    // Går fram till det sparade rummet. Rummen före är redan avklarade: fienderna där hoppas över,
+    // men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
+    static boolean fastForward(Hero hero, World world, int roomIndex) {
+        while (world.getCurrentRoomIndex() < roomIndex) {
+            pickUpAll(hero, world.getCurrentRoom());
+            if (!world.moveForward()) return false;
+        }
+        return true;
+    }
+
+    // Spelmenyn 3: hp, vapen, rustning, attack och Java-boken
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
-        // Skriv ut hjältens föremål här.
+        equipment(hero).forEach(output::onEvent);
+    }
+
+    // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
+    static List<String> equipment(Hero hero) {
+        List<String> lines = new ArrayList<>();
+        lines.add(HpBar.status(hero, 10));
+        lines.add("Vapen: " + hero.getWeapon()
+                .map(w -> w.description() + " (+" + w.damageBonus() + " i skada)")
+                .orElse("inget"));
+        lines.add("Rustning: " + hero.getArmor()
+                .map(a -> a.description() + " (försvar " + a.defense() + ")")
+                .orElse("ingen"));
+        lines.add("Attack: " + AttackMenu.label(hero.getAttack()));
+        if (hero.hasJavaBook()) {
+            lines.add("Java-boken: ja – mot Martin hjälper bara kunskap");
+        }
+        return lines;
     }
 
     // Spelmenyn 1: striden mot rummets fiender (en våg i taget).
@@ -219,10 +317,16 @@ public class GameEngine {
         }
     }
 
-    // Spelmenyn 2: går till nästa rum (kollar inte om det finns fiender kvar)
+    // Spelmenyn 2: går till nästa rum – men bara när rummets fiender är besegrade
     private void moveToAnotherRoom() {
         if (world == null) {
             output.onEvent("Starta ett äventyr först.");
+            return;
+        }
+
+        Optional<String> blocked = blockedBy(world.getCurrentRoom());
+        if (blocked.isPresent()) {
+            output.onEvent(blocked.get());
             return;
         }
 
@@ -231,6 +335,15 @@ public class GameEngine {
         } else {
             output.onEvent("Det finns inga fler rum.");
         }
+    }
+
+    // Står någon i vägen? Lever en fiende i rummet får hjälten inte gå förbi den.
+    // Tomt = vägen är fri. Även efter rundtaket, där hjälten kan vinna fast fienden lever.
+    static Optional<String> blockedBy(Room room) {
+        List<Enemy> enemies = room.getEnemies();
+        if (enemies.isEmpty()) return Optional.empty();
+        String names = enemies.stream().map(Enemy::getName).collect(Collectors.joining(" och "));
+        return Optional.of(names + " står i vägen! Besegra rummets fiender innan du går vidare.");
     }
 
     // Menyval e: avslutar loopen i run()
