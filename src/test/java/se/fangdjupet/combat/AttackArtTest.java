@@ -23,7 +23,7 @@ class AttackArtTest {
         return List.of(
                 new MeleeAttack(10), new MagicAttack(6), new RangedAttack(5, new Random()),
                 KnowledgeAttack.DOOMSCROLL, KnowledgeAttack.QUIZ,
-                KnowledgeAttack.STACKOVERFLOW, KnowledgeAttack.SCREENSHARE, new JavaBookAttack(),
+                KnowledgeAttack.STACKOVERFLOW, KnowledgeAttack.SCREENSHARE, new JavaBookAttack(), StressBallThrow.THROW,
                 phaseOne, phaseTwo,
                 CleaningAttack.SPONGE, CleaningAttack.SVINTO, CleaningAttack.CHEMICALS);
     }
@@ -76,6 +76,12 @@ class AttackArtTest {
         assertEquals(AttackArt.MELEE, AttackArt.forAttack(new MeleeAttack(3)).orElseThrow());
         assertEquals(AttackArt.MAGIC, AttackArt.forAttack(new MagicAttack(3)).orElseThrow());
         assertEquals(AttackArt.RANGED, AttackArt.forAttack(new RangedAttack(3, new Random(1))).orElseThrow());
+    }
+
+    @Test
+    void theStressBallFliesTowardsMartin() {
+        String art = AttackArt.forAttack(StressBallThrow.THROW).orElseThrow();
+        assertTrue(art.contains("KASTA STRESSBOLLEN"), art);
     }
 
     @Test

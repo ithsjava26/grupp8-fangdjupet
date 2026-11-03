@@ -51,7 +51,7 @@ public final class AttackArt {
                .--------------------.
                |  JAVAQUIZ      ?   |
                |  [A]   [B]   [C]   |    CITERA FRÅN JAVAQUIZET
-               |  "Vad gor static?" |
+               |  "Vad gör static?" |
                '--------------------'
             """;
 
@@ -70,6 +70,15 @@ public final class AttackArt {
                | Hello!_ |       | Hello!_ |
                '----+----'       '----+----'
                    _|_               _|_      DELA SKÄRM
+            """;
+
+    // Stressbollen flyger i en båge mot Martin – och är sedan borta
+    public static final String STRESS_BALL_THROW = """
+                      .  -  ~  -  .
+                  . '               ' .
+               o/                       (@)  SQUISH!
+              /|                         |
+              / \\                         KASTA STRESSBOLLEN
             """;
 
     // Java-boken uppslagen på kapitel 18: en Animal som kan vara både Dog och Cat
@@ -106,7 +115,7 @@ public final class AttackArt {
     public static final String MARTIN_EXPLAINS = """
                .--------------------------------.
                | System.out.println("Hello");   |
-               |  // ...och sa en gang till...  |
+               |  // ...och så en gång till...  |
                '--------------------------------'
                    blah  blah  blah  blah          MARTIN FÖRKLARAR
             """;
@@ -114,7 +123,7 @@ public final class AttackArt {
     public static final String MARTIN_UTTERLY = """
                .--------------------------------.
                | public static void main(...) { |
-               |   // rad... for... rad...      |
+               |   // rad... för... rad...      |
                | }                              |
                '--------------------------------'
                  zzz      zzz      zzz             UTTERLY EXPLAINED
@@ -157,6 +166,7 @@ public final class AttackArt {
             Map.entry(KnowledgeAttack.QUIZ.name(), QUIZ),
             Map.entry(KnowledgeAttack.STACKOVERFLOW.name(), STACKOVERFLOW),
             Map.entry(KnowledgeAttack.SCREENSHARE.name(), SCREENSHARE),
+            Map.entry(StressBallThrow.THROW.name(), STRESS_BALL_THROW),
             Map.entry("Thoroughly explained the Hello World Java to you", MARTIN_EXPLAINS),
             Map.entry("Utterly explained", MARTIN_UTTERLY),
             Map.entry(CleaningAttack.SPONGE.name(), SPONGE),

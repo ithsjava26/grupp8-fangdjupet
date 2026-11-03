@@ -636,7 +636,7 @@ public class GameEngine {
 
     // Hjälten tar föremålet: vapnet i handen, rustningen på sig, drycken dricks direkt
     private void take(Item item) {
-        switch (item) {   // Item är sealed: Weapon, Armor eller Potion – inget default behövs
+        switch (item) {   // Item är sealed: Weapon, Armor, Potion eller StressBall – inget default behövs
             case Armor armor -> {
                 hero.equip(armor);
                 output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
