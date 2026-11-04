@@ -32,6 +32,7 @@ class VanteTest {
         assertEquals("Här ligger: Vante (+3 i försvar)", GameEngine.itemHere(VANTE));
         assertEquals("Plocka upp Vante? (j/n): ", GameEngine.takeQuestion(VANTE));
         assertTrue(AsciiArt.forItem(VANTE).isPresent(), "vanten har en egen bild");
+        assertTrue(GameEngine.leftBehind(VANTE).contains("slår igen"), "säger man nej går den inte att hämta senare");
     }
 
     @Test

@@ -42,7 +42,8 @@ public class AnimatedConsoleLogger implements GameEventListener {
     private final boolean style;            // tydligare grafik med färger och block (ConsoleStyle) – av i testerna
     private Supplier<Optional<String>> heroName = Optional::empty;   // vems hp-mätare som är hjältens
     private String heroBar;                 // stridspanelen: hjältens och fiendens senaste hp-rad
-    private String enemyBar;
+    private final Map<String, String> enemyBars = new HashMap<>();   // senaste hp-raden för varje fiende
+    private String foe;   // fienden i panelen: den som slogs sist
     private boolean inGearPanel;            // mellan rubriken och sista raden i "Visa hjältens utrustning"
 
     public AnimatedConsoleLogger() {
@@ -110,6 +111,7 @@ public class AnimatedConsoleLogger implements GameEventListener {
         } else if (t.startsWith("Hero: ")) {
             play(withDamage(heroFilm(t), t));
         } else if (t.startsWith("Enemy: ")) {
+            foe = attacker(t);
             play(t.contains(" missar ") ? whoosh() : withDamage(impact(enemyWord(t)), t));
         } else if (t.startsWith("Fiende ") && t.endsWith(" dyker upp!")) {
             forgetFight();
@@ -136,15 +138,29 @@ public class AnimatedConsoleLogger implements GameEventListener {
     private String hpRow(String line, String name, String hp) {
         if (inGearPanel) return ConsoleStyle.DIM + "│ " + ConsoleStyle.RESET + ConsoleStyle.line(line);
         if (heroName.get().filter(name::equals).isPresent()) heroBar = line;
-        else enemyBar = line;
+        else {
+            enemyBars.put(name, line);
+            foe = name;
+        }
+        String enemyBar = foe == null ? null : enemyBars.get(foe);
         String row = heroBar == null || enemyBar == null ? ConsoleStyle.line(line) : ConsoleStyle.battle(heroBar, enemyBar);
-        if (hp.equals("0") && line.equals(enemyBar)) enemyBar = null;   // fienden är borta: inte kvar i nästa panel
+        if (hp.equals("0") && name.equals(foe)) {   // fienden är borta: inte kvar i nästa panel
+            enemyBars.remove(foe);
+            foe = null;
+        }
         return row;
+    }
+
+    // Fienden som slår nu. Saknar den hp-rad visar panelen bara hjälten, inte en annan fiendes rad.
+    private String attacker(String line) {
+        String rest = line.substring("Enemy: ".length());
+        return enemyBars.keySet().stream().filter(name -> rest.startsWith(name + " ")).findFirst().orElse(null);
     }
 
     private void forgetFight() {
         heroBar = null;
-        enemyBar = null;
+        enemyBars.clear();
+        foe = null;
     }
 
     // ── Bilder och repliker ──

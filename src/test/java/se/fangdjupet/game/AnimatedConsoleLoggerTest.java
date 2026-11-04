@@ -158,4 +158,46 @@ class AnimatedConsoleLoggerTest {
         assertTrue(out.toString().contains("PÅKOMMEN!"));
         assertLineComesLast("Hero: Robert försöker smyga in ett USB-minne, men blir påkommen av Lektor Martin!");
     }
+
+    // Panelen med riktig stil: bara det som skrivs efter den sista raden räknas, utan färgkoder
+    private final StringBuilder styled = new StringBuilder();
+    private final AnimatedConsoleLogger panel = new AnimatedConsoleLogger(styled::append, ms -> { }, true)
+            .followHero(() -> java.util.Optional.of("Robert"));
+
+    private String lastPanelRow(String line) {
+        styled.setLength(0);
+        panel.onEvent(line);
+        return styled.toString().replaceAll("\u001B\\[[0-9;]*m", "");
+    }
+
+    @Test
+    void panelenVisarFiendenSomSlar() {
+        panel.onEvent("Fiende Troll dyker upp!");
+        panel.onEvent("Fiende Trollkarl dyker upp!");
+        panel.onEvent("Robert  [##########] 40/40");
+        panel.onEvent("Troll  [#####-----] 6/12");
+        panel.onEvent("Trollkarl  [#####-----] 12/24");
+
+        panel.onEvent("Enemy: Troll slår Robert skada: 7");
+        assertTrue(lastPanelRow("Robert  [########--] 33/40").contains("6/12"), "Trollet slog: dess rad syns");
+
+        panel.onEvent("Enemy: Trollkarl skjuter Robert skada: 6");
+        String row = lastPanelRow("Robert  [######----] 27/40");
+        assertTrue(row.contains("12/24"), "Trollkarlen slog: dess rad syns");
+        assertFalse(row.contains("6/12"), "inte Trollets gamla rad");
+    }
+
+    @Test
+    void okandFiendeVisarBaraHjalten() {
+        panel.onEvent("Fiende Troll dyker upp!");
+        panel.onEvent("Fiende Trollkarl dyker upp!");
+        panel.onEvent("Robert  [##########] 40/40");
+        panel.onEvent("Troll  [#####-----] 6/12");
+
+        panel.onEvent("Enemy: Trollkarl skjuter Robert skada: 6");
+        String row = lastPanelRow("Robert  [########--] 34/40");
+
+        assertTrue(row.contains("34/40"));
+        assertFalse(row.contains("vs"), "ingen gammal fiende bredvid hjälten");
+    }
 }

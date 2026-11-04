@@ -128,14 +128,13 @@ topplista – läggs till utan att `Battle` eller `GameEngine` ändras. Så kom 
 
 ## Git-samarbetet – reflektion
 
-> **Utkast** – skrivet av Robert. Fredrik och Tanaz fyller i med egna rader under *Våra egna ord*
-> innan inlämningen.
-
 **Hur vi arbetade.** Dag 1 (26 okt) satte vi ihop kontraktet – de gemensamma interfacen,
 `Character` och recorden – och lade in det i `main` via PR #2. Sedan hade var och en sitt paket och
 sina egna `feature/...`-grenar. `main` har en regel: allt går via pull request och kräver ett
 godkännande från någon annan, och ingen kan pusha direkt. CodeRabbit kommenterar varje PR
 automatiskt, och från PR #9 kör GitHub Actions `mvn test` på varje PR.
+
+**Konflikterna i början.** Det var tufft i början när kontraktet ändrades mycket. När vi fick in basen med de första taskarna från alla under första veckan mognade projektet, och vi började få en vision kring hur spelet skulle fungera och vilka regler det har.
 
 **Konflikten vi löste.** Tors 29 okt mergades #7 (EventBus), #8 (ItemFactory), #9 (CI) och #10
 (ASCII-grafik) samma dag. #8 ändrade recorden `Weapon`, `Armor` och `Potion`, och när konflikten
@@ -158,11 +157,6 @@ de nya records-konstruktorerna.
 - Fördela arbetet jämnare över personerna och veckorna, och öppna PR:ar tidigare i stället för
   stora PR:ar mot slutet.
 - Slå på redan från början att CI måste vara grön för att få merga, inte bara att den körs. Det kom på plats först 4 nov.
-
-**Våra egna ord.**
-- *Robert:* Konflikterna var tuffa i början när kontraktet ändrades mycket, men när vi fick in basen med de första taskarna från alla under första veckan mognade projektet. Då började vi få en vision kring hur spelet skulle fungera och vilka regler det har.
-- *Fredrik:* …
-- *Tanaz:* …
 
 ## Användning av AI
 
