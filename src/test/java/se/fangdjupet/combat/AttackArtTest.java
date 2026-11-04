@@ -14,17 +14,21 @@ class AttackArtTest {
         return s.chars().allMatch(ch -> ch < 128 || "åäöÅÄÖéÉ".indexOf(ch) >= 0);
     }
 
-    // Alla attacker som finns i spelet: hjältens, Martins två faser och StädHäxans tre kast
+    // Alla attacker som finns i spelet: hjältens, Martins fyra steg och StädHäxans tre kast
     private static List<AttackStrategy> allAttacks() {
         Boss martin = Martin.create();
         AttackStrategy phaseOne = martin.getAttack();
         martin.takeDamage((martin.getMaxHp() + 1) / 2);   // halva livet (75 → 37)                  // halva livet: fas 2
         AttackStrategy phaseTwo = martin.getAttack();
+        martin.takeDamage(martin.getHp() - 30);
+        AttackStrategy persistent = martin.getAttack();
+        martin.takeDamage(martin.getHp() - 15);
+        AttackStrategy furious = martin.getAttack();
         return List.of(
                 new MeleeAttack(10), new MagicAttack(6), new RangedAttack(5, new Random()),
                 KnowledgeAttack.DOOMSCROLL, KnowledgeAttack.QUIZ,
                 KnowledgeAttack.STACKOVERFLOW, KnowledgeAttack.SCREENSHARE, new JavaBookAttack(), StressBallThrow.THROW, UsbVirusAttack.PLUG_IN,
-                phaseOne, phaseTwo,
+                phaseOne, phaseTwo, persistent, furious,
                 CleaningAttack.SPONGE, CleaningAttack.SVINTO, CleaningAttack.CHEMICALS);
     }
 

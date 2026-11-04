@@ -153,6 +153,24 @@ public final class AttackArt {
                  zzz      zzz      zzz             UTTERLY EXPLAINED
             """;
 
+    public static final String MARTIN_PERSISTENTLY = """
+               .--------------------------------.
+               | // och en gang till...         |
+               | // och en gang till...         |
+               | // och en gang till...         |
+               '--------------------------------'
+                 igen!  igen!  igen!   PERSISTENTLY EXPLAINED
+            """;
+
+    public static final String MARTIN_ANGRILY = """
+               .--------------------------------.
+               | System.out.println("VARFOR");  |
+               | throw new DuFattarInteError(); |
+               | // HAR DU INTE LAST KAPITLET?! |
+               '--------------------------------'
+                 !!!!   !!!!   !!!!    ANGRILY EXPLAINED
+            """;
+
     // ── StädHäxans kast ──
 
     public static final String SPONGE = """
@@ -204,6 +222,8 @@ public final class AttackArt {
             Map.entry(UsbVirusAttack.PLUG_IN.name(), USB_VIRUS),
             Map.entry("Thoroughly explained the Hello World Java to you", MARTIN_EXPLAINS),
             Map.entry("Utterly explained", MARTIN_UTTERLY),
+            Map.entry("Persistently explained", MARTIN_PERSISTENTLY),
+            Map.entry("Angrily explained", MARTIN_ANGRILY),
             Map.entry(CleaningAttack.SPONGE.name(), SPONGE),
             Map.entry(CleaningAttack.SVINTO.name(), SVINTO),
             Map.entry(CleaningAttack.CHEMICALS.name(), CHEMICALS),
