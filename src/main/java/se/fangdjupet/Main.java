@@ -26,6 +26,8 @@ public class Main {
         EventBus eventBus = new EventBus();
         GameEngine game = new GameEngine(eventBus);
 
+        //Observer är grundidén: spelet skickar bara text med onEvent(...) och vet inte vem som lyssnar. Därför kan testerna läsa samma händelser som konsolen visar.
+
         // Musik och ljud: först på bussen, så att smällen hörs när filmen i konsolen börjar.
         // Finns inget ljud (eller -Dfangdjupet.ljud=av) blir det tyst.
         RetroSpeaker.open().ifPresent(speaker -> {
