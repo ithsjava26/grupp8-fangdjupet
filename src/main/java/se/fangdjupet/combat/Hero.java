@@ -2,6 +2,8 @@ package se.fangdjupet.combat;
 
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Inventory;
+import se.fangdjupet.items.Item;
 import se.fangdjupet.items.StressBall;
 import se.fangdjupet.items.Weapon;
 import se.fangdjupet.items.WeaponRange;
@@ -13,6 +15,7 @@ import java.util.Random;
 // Hero är spelaren. Ärver hp, attack, heal m.m. från Character.
 public class Hero extends Character {
     private static final int WEAPON_STRENGTH = 5;   // grundstyrkan när vapnet väljer attack
+    private static final int BACKPACK_SIZE = 10;    // spelet har fem saker som hamnar här (drycker dricks direkt), så ryggsäcken räcker
 
     private Weapon weapon;   // null = inget vapen
     private Armor armor;     // null = ingen rustning
@@ -21,6 +24,7 @@ public class Hero extends Character {
     private boolean usbStick = true; // USB-minnet med virus: ett försök mot Martin, sedan är det borta
     private final EnumSet<WeaponRange> pickedUp = EnumSet.noneOf(WeaponRange.class);   // räckvidderna hjälten har haft i handen
     private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
+    private final Inventory inventory = new Inventory(BACKPACK_SIZE);   // ryggsäcken: allt hjälten bär med sig
 
     // Skickar vidare till Characters konstruktor
     public Hero(String name, int maxHp, AttackStrategy attack) {
@@ -33,6 +37,7 @@ public class Hero extends Character {
         if (weapon == null)
             throw new IllegalArgumentException("weapon must not be null");
         this.weapon = weapon;
+        keep(weapon);   // ett vapen som byts ut ligger kvar i ryggsäcken
         pickedUp.add(weapon.range());   // låser upp attacken: pilbågen avstånd, staven magi
         switch (weapon.range()) {
             case RANGED -> setAttack(new RangedAttack(WEAPON_STRENGTH, new Random()));
@@ -45,6 +50,19 @@ public class Hero extends Character {
     // Tar på en rustning (ersätter den gamla)
     public void equip(Armor armor) {
         this.armor = armor;
+        if (armor != null) keep(armor);
+    }
+
+    // Ryggsäcken med allt hjälten har plockat upp (visas i "Visa hjältens utrustning")
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    // Lägger föremålet i ryggsäcken, en gång – det som redan finns där läggs inte till igen
+    private void keep(Item item) {
+        if (!inventory.getAll().contains(item)) {
+            inventory.add(item);
+        }
     }
 
     // Attackbonus kommer från vapnet – men bara när attacken passar vapnet:
@@ -118,6 +136,7 @@ public class Hero extends Character {
         if (ball == null)
             throw new IllegalArgumentException("ball must not be null");
         stressBall = ball;
+        keep(ball);
     }
 
     public Optional<StressBall> getStressBall() {
@@ -150,6 +169,7 @@ public class Hero extends Character {
 
     // Bollen är kastad på Martin: borta ur fickan. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.
     void throwAwayStressBall() {
+        if (stressBall != null) inventory.remove(stressBall);
         stressBall = null;
         if (getAttack() instanceof StressBallThrow) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);
     }

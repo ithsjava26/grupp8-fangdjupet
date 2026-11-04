@@ -253,7 +253,7 @@ public class GameEngine {
         return true;
     }
 
-    // Spelmenyn 3: hp, vapen, rustning, attack och Java-boken
+    // Spelmenyn 3: hp, vapen, rustning, attack, Java-boken och ryggsäcken
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
@@ -281,6 +281,10 @@ public class GameEngine {
         }
         hero.getStressBall().ifPresent(ball -> lines.add("Stressboll: i fickan (+" + ball.hpPerTurn()
                 + " hp per runda, eller kasta den på Martin)"));
+        List<Item> backpack = hero.getInventory().getAll();
+        if (!backpack.isEmpty()) {
+            lines.add("Ryggsäck: " + backpack.stream().map(Item::description).collect(Collectors.joining(", ")));
+        }
         return lines;
     }
 

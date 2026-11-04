@@ -227,6 +227,25 @@ class GameEngineTest {
     }
 
     @Test
+    void equipmentShowsTheBackpack() {
+        Hero robert = robert();
+        robert.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Svärd", 1, 1));
+        GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
+        assertTrue(GameEngine.equipment(robert).contains("Ryggsäck: Svärd, Pilbåge"),
+                GameEngine.equipment(robert).toString());
+    }
+
+    @Test
+    void fastForwardFillsTheBackpackAgain() {
+        Hero hero = GameEngine.newHero("Robert", 40);
+        World world = GameEngine.newWorld(new Random(1));
+        GameEngine.fastForward(hero, world, 2);
+        assertEquals(hero.getWeapon().orElseThrow().description(),
+                hero.getInventory().getAll().getLast().description());
+        assertTrue(hero.getInventory().size() >= 2, hero.getInventory().getAll().toString());
+    }
+
+    @Test
     void equipmentShowsTheJavaBook() {
         Hero robert = robert();
         robert.pickUpJavaBook();
