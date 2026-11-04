@@ -3,6 +3,7 @@ package se.fangdjupet.game;
 import se.fangdjupet.combat.*;
 
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Brasklapp;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
@@ -264,6 +265,7 @@ public class GameEngine {
             case Weapon weapon -> equipAndAim(hero, weapon);
             case Armor armor -> hero.equip(armor);
             case StressBall ball -> hero.pickUp(ball);
+            case Brasklapp note -> hero.takeBrasklapp(note);
             case Potion potion -> { }   // drycker dricks direkt och ligger aldrig i ryggsäcken
         }
     }
@@ -359,6 +361,9 @@ public class GameEngine {
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
             enemy.getLine().ifPresent(line -> output.onEvent(enemy.getName() + ": \"" + line + "\""));   // fiendens replik
+            if (Martin.NAME.equals(enemy.getName()) && hero.getKnowledgeDefense() > 0) {
+                output.onEvent("Du drar på dig vanten: Martins förklaringar tar " + hero.getKnowledgeDefense() + " mindre.");
+            }
         }
 
         // Battle sköter striden och loggen; spelaren väljer attack inför varje runda
@@ -464,6 +469,11 @@ public class GameEngine {
             output.onEvent(hero.getName() + " dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp)");
             output.onEvent(HpBar.status(hero, 10));
         }
+        output.onEvent(frida.getName() + ": \"" + Frida.SURPRISE + "\"");
+        Brasklapp note = frida.brasklapp();
+        AsciiArt.forItem(note).ifPresent(art -> AsciiArt.show(output, art));
+        output.onEvent(Frida.NOTE_GIVEN);
+        hero.takeBrasklapp(note);
     }
 
     // Spelmenyn 2: går till nästa rum – men bara när rummets fiender är besegrade
@@ -689,7 +699,11 @@ public class GameEngine {
 
     // Hjälten tar föremålet: vapnet i handen, rustningen på sig, drycken dricks direkt
     private void take(Item item) {
-        switch (item) {   // Item är sealed: Weapon, Armor, Potion eller StressBall – inget default behövs
+        switch (item) {   // Item är sealed: alla sorter måste stå här, så inget default behövs
+            case Brasklapp note -> {
+                hero.takeBrasklapp(note);
+                output.onEvent("Du stoppar " + note.description() + " i fickan: den går att läsa upp mot Martin, en gång.");
+            }
             case Armor armor -> {
                 hero.equip(armor);
                 output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
@@ -721,6 +735,7 @@ public class GameEngine {
             case Armor a -> "+" + a.defense() + " i försvar";
             case Potion p -> "+" + p.healAmount() + " hp";
             case StressBall b -> "+" + b.hpPerTurn() + " hp per runda";
+            case Brasklapp n -> n.power() + " i skada mot Martin";
         };
         return "Här ligger: " + item.description() + " (" + bonus + ")";
     }

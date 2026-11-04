@@ -80,4 +80,9 @@ public abstract class Character {
     public abstract int getAttackBonus();   // Hero: vapnet. Enemy: nivån.
 
     public abstract int getDefense();       // Hero: rustningen. Enemy: halva nivån.
+
+    // Kunskap går rakt igenom rustningen. Det här är det enda som tar udden av den (Hero: vanten).
+    public int getKnowledgeDefense() {
+        return 0;
+    }
 }

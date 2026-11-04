@@ -2,6 +2,8 @@ package se.fangdjupet.combat;
 
 import se.fangdjupet.items.Potion;
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Brasklapp;
+import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Inventory;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.StressBall;
@@ -21,6 +23,7 @@ public class Hero extends Character {
     private Armor armor;     // null = ingen rustning
     private boolean javaBook; //Plocka upp boken i sista rummet
     private StressBall stressBall;   // null = ingen stressboll i fickan
+    private Brasklapp brasklapp;     // null = ingen brasklapp, eller redan använd
     private boolean usbStick = true; // USB-minnet med virus: ett försök mot Martin, sedan är det borta
     private final EnumSet<WeaponRange> pickedUp = EnumSet.noneOf(WeaponRange.class);   // räckvidderna hjälten har haft i handen
     private final JavaBookAttack bookAttack = new JavaBookAttack();   // citera ur boken: kapitel 18, sedan 20 ...
@@ -102,6 +105,15 @@ public class Hero extends Character {
         return pickedUp.contains(range);
     }
 
+    // Vanten från Entrédörren: så mycket mindre tar Martins förklaringar. Den räknas från ryggsäcken,
+    // så den hjälper även när Städrustningen har tagit rustningens plats.
+    public static final int GLOVE_VS_KNOWLEDGE = 2;
+
+    @Override
+    public int getKnowledgeDefense() {
+        return inventory.findByType(ItemType.GLOVE).isEmpty() ? 0 : GLOVE_VS_KNOWLEDGE;
+    }
+
     // Försvar kommer från rustningen, 0 utan rustning
     @Override
     public int getDefense() {
@@ -134,6 +146,25 @@ public class Hero extends Character {
 
     public boolean hasJavaBook() {
         return javaBook;
+    }
+
+    // Brasklappen från Frida, tills den är använd mot Martin
+    public void takeBrasklapp(Brasklapp note) {
+        if (note == null)
+            throw new IllegalArgumentException("note must not be null");
+        brasklapp = note;
+        keep(note);
+    }
+
+    public Optional<Brasklapp> getBrasklapp() {
+        return Optional.ofNullable(brasklapp);
+    }
+
+    // DROP TABLE är uppläst: brasklappen är borta. Nästa runda (Enter = behåll) citerar hjälten ur boken i stället.
+    void useBrasklapp() {
+        if (brasklapp != null) inventory.remove(brasklapp);
+        brasklapp = null;
+        if (getAttack() instanceof BrasklappAttack) setAttack(javaBook ? bookAttack : KnowledgeAttack.STACKOVERFLOW);
     }
 
     // Stressbollen i fickan (från Leta i Lektionssalen)

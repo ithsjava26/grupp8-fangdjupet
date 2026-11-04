@@ -6,6 +6,8 @@ public enum ItemType {
     SHIELD,
     POTION,
     HELMET,
+    GLOVE,
+    NOTE,
     SPEAR,
     BOW,
     STAFF,

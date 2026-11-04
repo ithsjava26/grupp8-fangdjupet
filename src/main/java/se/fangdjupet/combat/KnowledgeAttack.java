@@ -58,13 +58,11 @@ public class KnowledgeAttack implements AttackStrategy {
         return new KnowledgeAttack(name, 0, 0, 0, heal, null);
     }
 
-    // Krävs av AttackStrategy. Försvaret räknas inte – kunskap går rakt igenom.
+    // Krävs av AttackStrategy. Försvaret räknas inte – kunskap går rakt igenom. Bara vanten dämpar den.
     @Override
     public int calculateDamage(Character attacker, Character target) {
-        if (coin != null) {
-            return coin.nextBoolean() ? power : lowPower;   // krona = det gick bra, klave = det gick dåligt
-        }
-        return power;
+        int damage = coin == null || coin.nextBoolean() ? power : lowPower;   // krona = det gick bra, klave = det gick dåligt
+        return Math.max(0, damage - target.getKnowledgeDefense());
     }
 
     // Namnet i stället för klassnamnet, så menyn visar "DoomScrolla" och inte "KnowledgeAttack"

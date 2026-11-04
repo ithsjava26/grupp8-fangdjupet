@@ -1,6 +1,7 @@
 package se.fangdjupet.game;
 
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Brasklapp;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
@@ -129,6 +130,7 @@ public class GameSaveFileHandler {
             case Armor a -> line("armor", a, "-", a.defense());
             case Potion p -> line("potion", p, "-", p.healAmount());
             case StressBall b -> line("stressball", b, "-", b.hpPerTurn());
+            case Brasklapp n -> line("brasklapp", n, "-", n.power());
         };
     }
 
@@ -154,6 +156,7 @@ public class GameSaveFileHandler {
             case "armor" -> new Armor(type, description, power, level);
             case "potion" -> new Potion(type, description, power, level);
             case "stressball" -> new StressBall(type, description, power, level);
+            case "brasklapp" -> new Brasklapp(type, description, power, level);
             default -> throw new IllegalArgumentException("Okänd sorts föremål: " + fields[0]);
         };
     }

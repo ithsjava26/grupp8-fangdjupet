@@ -184,6 +184,15 @@ public final class AttackArt {
                 |____|
             """;
 
+    // DROP TABLE: golvet under Martin ger vika
+    public static final String DROP_TABLE = """
+                DROP TABLE martin;
+                ___________    ___________
+                |_|_|_|_|_/ \\/ \\_|_|_|_|_|
+                         /  /\\  \\
+                        /  /  \\  \\     GOLVET SKAKAR
+            """;
+
     // Attackens namn (name()) -> bilden. Namnen måste vara exakt som i KnowledgeAttack, Martin och CleaningAttack.
     private static final Map<String, String> BY_NAME = Map.ofEntries(
             Map.entry(KnowledgeAttack.DOOMSCROLL.name(), DOOMSCROLL),
@@ -191,6 +200,7 @@ public final class AttackArt {
             Map.entry(KnowledgeAttack.STACKOVERFLOW.name(), STACKOVERFLOW),
             Map.entry(KnowledgeAttack.SCREENSHARE.name(), SCREENSHARE),
             Map.entry(StressBallThrow.THROW.name(), STRESS_BALL_THROW),
+            Map.entry(BrasklappAttack.DROP_TABLE.name(), DROP_TABLE),
             Map.entry(UsbVirusAttack.PLUG_IN.name(), USB_VIRUS),
             Map.entry("Thoroughly explained the Hello World Java to you", MARTIN_EXPLAINS),
             Map.entry("Utterly explained", MARTIN_UTTERLY),
