@@ -57,6 +57,11 @@ public class GameEngine {
     }
 
     // Hjältens attack just nu, om ett äventyr pågår – ljudet låter olika för magi, avstånd och närstrid
+    // Hjältens namn, tomt innan äventyret har börjat (stridspanelen i konsolen)
+    public Optional<String> heroName() {
+        return Optional.ofNullable(hero).map(Hero::getName);
+    }
+
     public Optional<AttackStrategy> heroAttack() {
         return Optional.ofNullable(hero).map(Hero::getAttack);
     }
@@ -79,9 +84,16 @@ public class GameEngine {
     }
 
     private void showMenu() {
-        if (world != null) IO.println(ConsoleStyle.map(roomMap(world)));   // kartan över rummen syns hela tiden i spelet
-        else IO.println(AsciiArt.SCHOOL.stripTrailing()); // skolbyggnaden, bara ovanför huvudmenyn
-        IO.println(ConsoleStyle.menu(menu(world == null ? null : world.getCurrentRoom())));   // färger bara i en riktig konsol
+        if (world != null) {
+            if (ConsoleStyle.enabled()) {   // statusraden: rummet, hp och attacken, bara i en riktig konsol
+                IO.println(ConsoleStyle.status(world.getCurrentRoom().getName(), HpBar.status(hero, 10),
+                        AttackMenu.label(hero.getAttack())));
+            }
+            IO.println(ConsoleStyle.panel(ConsoleStyle.map(roomMap(world))));   // kartan syns hela tiden i spelet
+        } else {
+            IO.println(AsciiArt.SCHOOL.stripTrailing());   // skolbyggnaden, bara ovanför huvudmenyn
+        }
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(menu(world == null ? null : world.getCurrentRoom()))));   // färger bara i en riktig konsol
         IO.print(ConsoleStyle.prompt("Välj ett alternativ: "));
     }
 
@@ -286,6 +298,7 @@ public class GameEngine {
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
+        IO.print(ConsoleStyle.gearEnd());   // stänger panelen i en riktig konsol
         // Bilder på allt hjälten bär: vapnet (t.ex. pilbågen), rustningen (t.ex. Städrustningen),
         // Java-boken och stressbollen
         hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
@@ -407,7 +420,7 @@ public class GameEngine {
         output.onEvent(AsciiArt.yellow(refreshment.line()));
         showArt(potion.description());                 // kaffekoppen eller kanelbullen
         output.onEvent(HpBar.status(hero, 10));
-        IO.print(AsciiArt.yellow(takeQuestion(potion)));
+        IO.print(ConsoleStyle.tint(AsciiArt.yellow(takeQuestion(potion))));
         if (wantsIt(readln())) {
             drinkRefreshment(refreshment);
         } else {
@@ -461,8 +474,8 @@ public class GameEngine {
         }
 
         // Spelaren väljer själv: kartan och rummen med siffror, Enter = stanna kvar
-        IO.println(ConsoleStyle.map(roomMap(world)));
-        IO.println(ConsoleStyle.menu(roomChoices(world)));
+        IO.println(ConsoleStyle.panel(ConsoleStyle.map(roomMap(world))));
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(roomChoices(world)), "Rum"));
         IO.print(ConsoleStyle.prompt("Välj rum (Enter = stanna kvar): "));
         goTo(readln().trim());
     }
@@ -745,7 +758,7 @@ public class GameEngine {
         for (Item item : items) {
             output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
-            IO.print(AsciiArt.yellow(takeQuestion(item)));
+            IO.print(ConsoleStyle.tint(AsciiArt.yellow(takeQuestion(item))));
             if (wantsIt(readln())) {
                 room.removeItem(item);
                 if (!(item instanceof Potion)) output.onEvent("Du plockar upp: " + item.description());
@@ -768,7 +781,8 @@ public class GameEngine {
         Enemy foe = currentFoes.stream().filter(Enemy::isAlive).findFirst().orElse(null);
         List<AttackStrategy> options = AttackMenu.options(hero, foe);
         IO.println(ConsoleStyle.prompt("Välj attack (Enter = behåll):"));
-        AttackMenu.lines(hero, options).forEach(line -> IO.println(ConsoleStyle.menu(line)));   // pilbågens och stavens attack gulmarkerade
+        // pilbågens och stavens attack gulmarkerade
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(String.join("\n", AttackMenu.lines(hero, options))), "Attacker"));
         IO.print(ConsoleStyle.prompt("Ditt val: "));
         return AttackMenu.choose(options, readln());
     }

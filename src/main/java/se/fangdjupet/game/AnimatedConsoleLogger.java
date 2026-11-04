@@ -29,13 +29,21 @@ public class AnimatedConsoleLogger implements GameEventListener {
 
     private static final String YELLOW = "\u001B[33m", RED = "\u001B[31m", CYAN = "\u001B[36m",
             MAGENTA = "\u001B[35m", GREEN = "\u001B[32m", RESET = "\u001B[0m";
+    private static final String FLASH = "\u001B[7m";   // omvända färger: hela raden blinkar till
+    private static final String GEAR_TITLE = "Visa hjältens utrustning.";
     private static final Pattern HP_BAR = Pattern.compile("(.+?)  \\[([#-]+)\\] (\\d+)/(\\d+)");
+    private static final Pattern GEAR_ROW = Pattern.compile("(Vapen|Rustning|Attack|Java-boken|Stressboll|Ryggsäck): .+");
+    private static final Pattern DAMAGE = Pattern.compile(" skada: (\\d+)$");
 
     private final Consumer<String> print;   // skriver utan radbrytning
     private final IntConsumer pause;        // väntar så många millisekunder
     private Supplier<Optional<AttackStrategy>> heroAttack = Optional::empty;   // magi eller pil? (båda "skjuter")
     private final Map<String, Integer> lastHp = new HashMap<>();              // för hp-mätarens film
     private final boolean style;            // tydligare grafik med färger och block (ConsoleStyle) – av i testerna
+    private Supplier<Optional<String>> heroName = Optional::empty;   // vems hp-mätare som är hjältens
+    private String heroBar;                 // stridspanelen: hjältens och fiendens senaste hp-rad
+    private String enemyBar;
+    private boolean inGearPanel;            // mellan rubriken och sista raden i "Visa hjältens utrustning"
 
     public AnimatedConsoleLogger() {
         this(IO::print, AnimatedConsoleLogger::sleep, true);
@@ -49,9 +57,16 @@ public class AnimatedConsoleLogger implements GameEventListener {
     // style = true: raderna färgas och hp-mätarna ritas med block (ConsoleStyle)
     AnimatedConsoleLogger(Consumer<String> print, IntConsumer pause, boolean style) {
         if (print == null || pause == null) throw new IllegalArgumentException("print and pause must not be null");
-        this.print = print;
+        this.print = style ? text -> print.accept(ConsoleStyle.tint(text)) : print;
         this.pause = pause;
         this.style = style;
+    }
+
+    // Hjältens namn (GameEngine.heroName): då hamnar hjälten till vänster i stridspanelen
+    public AnimatedConsoleLogger followHero(Supplier<Optional<String>> heroName) {
+        if (heroName == null) throw new IllegalArgumentException("heroName must not be null");
+        this.heroName = heroName;
+        return this;
     }
 
     // Vilken attack hjälten har i handen just nu (GameEngine.heroAttack): pilen och magin ser olika ut
@@ -71,6 +86,8 @@ public class AnimatedConsoleLogger implements GameEventListener {
     public void onEvent(String message) {
         if (message == null) return;
         String t = message.replaceAll("\u001B\\[[0-9;]*m", "");   // utan färgkoder, för att känna igen raden
+        Matcher bar = HP_BAR.matcher(t);
+        inGearPanel = t.equals(GEAR_TITLE) || inGearPanel && (bar.matches() || GEAR_ROW.matcher(t).matches());
         if (message.contains("\n")) {
             drawLineByLine(message);
             return;
@@ -79,26 +96,55 @@ public class AnimatedConsoleLogger implements GameEventListener {
             typeSpeech(message);
             return;
         }
-        Matcher bar = HP_BAR.matcher(t);
         if (bar.matches()) {
             drainHpBar(bar.group(1), bar.group(2).length(), Integer.parseInt(bar.group(3)), Integer.parseInt(bar.group(4)));
+            if (style) {
+                print.accept(hpRow(t, bar.group(1), bar.group(3)) + "\n");
+                return;
+            }
+        } else if (t.startsWith("Du går till ")) {
+            play(wipe());
         } else if (t.startsWith("Du letar i ") && t.endsWith(" ...")) {
             searchDots(message);
             return;
         } else if (t.startsWith("Hero: ")) {
-            play(heroFilm(t));
+            play(withDamage(heroFilm(t), t));
         } else if (t.startsWith("Enemy: ")) {
-            play(t.contains(" missar ") ? whoosh() : impact(enemyWord(t)));
+            play(t.contains(" missar ") ? whoosh() : withDamage(impact(enemyWord(t)), t));
         } else if (t.startsWith("Fiende ") && t.endsWith(" dyker upp!")) {
+            forgetFight();
             play(alarm(t.contains("Martin")));
         } else if (t.matches(".+ vinner (mot .+|Fångdjupet)!")) {
+            forgetFight();
             play(stars());
+        } else if (t.contains("besegrades av")) {
+            forgetFight();
+            play(knockOut());
+        } else if (t.matches(".*\\(\\+\\d+ hp\\).*")) {
+            play(glow());
         } else if (t.startsWith("Du hittar") && !t.startsWith("Du hittar inget")) {
             play(sparkle());
         } else if (t.contains("klämmer stressbollen")) {
             play(squeeze());
         }
         print.accept((style ? ConsoleStyle.line(message) : message) + "\n");
+    }
+
+    // ── Stridspanelen ──
+
+    // En hp-rad: i striden hjälten och fienden sida vid sida, med den andras senaste värde. Annars raden som den är.
+    private String hpRow(String line, String name, String hp) {
+        if (inGearPanel) return ConsoleStyle.DIM + "│ " + ConsoleStyle.RESET + ConsoleStyle.line(line);
+        if (heroName.get().filter(name::equals).isPresent()) heroBar = line;
+        else enemyBar = line;
+        String row = heroBar == null || enemyBar == null ? ConsoleStyle.line(line) : ConsoleStyle.battle(heroBar, enemyBar);
+        if (hp.equals("0") && line.equals(enemyBar)) enemyBar = null;   // fienden är borta: inte kvar i nästa panel
+        return row;
+    }
+
+    private void forgetFight() {
+        heroBar = null;
+        enemyBar = null;
     }
 
     // ── Bilder och repliker ──
@@ -137,7 +183,9 @@ public class AnimatedConsoleLogger implements GameEventListener {
     private void play(List<String> frames) {
         if (frames.isEmpty()) return;
         for (String frame : frames) {
-            print.accept("\r" + frame + RESET);
+            // Fyll ut raden, så att inget ligger kvar från en bredare bild
+            int rest = Math.max(0, WIDTH + 12 - ConsoleStyle.plain(frame).length());
+            print.accept("\r" + frame + RESET + " ".repeat(rest));
             pause.accept(FRAME_MS);
         }
         print.accept("\r" + " ".repeat(WIDTH + 12) + "\r");   // sudda filmen, sedan kommer den vanliga raden
@@ -215,11 +263,49 @@ public class AnimatedConsoleLogger implements GameEventListener {
         return frames;
     }
 
-    // Fiendens smäll: växer fram och blir ett ord
+    // Fiendens smäll: raden blinkar till, smällen växer fram och ordet skakar
     static List<String> impact(String word) {
         String at = " ".repeat(WIDTH / 2 - 4);
-        return List.of(RED + at + "   *", RED + at + "  ***", RED + at + " *****", RED + at + "* " + word + " *",
-                RED + at + "* " + word + " *", RED + at + "  " + word);
+        String hit = "* " + word + " *";
+        return List.of(flash(RED), RED + at + "   *", RED + at + "  ***", RED + at + " *****", RED + at + hit,
+                RED + at.substring(3) + hit, RED + at + "   " + hit, RED + at.substring(2) + hit, RED + at + " " + hit,
+                RED + at + hit, RED + at + "  " + word);
+    }
+
+    // Hela raden blinkar till i färgen
+    static String flash(String color) {
+        return color + FLASH + " ".repeat(WIDTH + 12);
+    }
+
+    // Skadan stiger ur filmen, som siffrorna på webben: "−14"
+    static List<String> withDamage(List<String> film, String t) {
+        Matcher damage = DAMAGE.matcher(t);
+        if (!damage.find()) return film;
+        List<String> frames = new ArrayList<>(film);
+        String number = "−" + damage.group(1);
+        String at = " ".repeat(WIDTH / 2);
+        frames.add(YELLOW + at + ".  " + number);
+        frames.add(YELLOW + at + "   " + number + "  .");
+        frames.add(YELLOW + at + "      " + number);
+        return frames;
+    }
+
+    // Ett svep över raden när hjälten går till ett annat rum
+    static List<String> wipe() {
+        List<String> frames = new ArrayList<>();
+        for (int x = 0; x <= WIDTH; x += 8) frames.add(CYAN + "░".repeat(x) + "▒▓");
+        for (int x = 0; x <= WIDTH; x += 11) frames.add(CYAN + " ".repeat(x) + "░".repeat(WIDTH - x));
+        return frames;
+    }
+
+    // Hjälten faller: raden blinkar, och bokstäverna glider isär
+    static List<String> knockOut() {
+        return List.of(flash(RED), RED + "  K.O.", RED + "  K . O .", RED + "  K  .  O  .", RED + "  K  .  O  .");
+    }
+
+    // Hp kommer tillbaka: något grönt stiger
+    static List<String> glow() {
+        return List.of(GREEN + "  +", GREEN + "  + +", GREEN + "  + + +", GREEN + "  + + +  hp!");
     }
 
     // Varje fiende smäller på sitt sätt (samma som SoundListener.enemySound)

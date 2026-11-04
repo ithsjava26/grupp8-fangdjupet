@@ -18,8 +18,8 @@ class AnimatedConsoleLoggerTest {
 
     @Test
     void ordinaryLinesArePrintedAtOnce() {
-        logger.onEvent("Du går till Kafferummet.");
-        assertEquals("Du går till Kafferummet.\n", out.toString());
+        logger.onEvent("Det luktar kaffe.");
+        assertEquals("Det luktar kaffe.\n", out.toString());
         assertTrue(pauses.isEmpty());
     }
 
@@ -119,6 +119,28 @@ class AnimatedConsoleLoggerTest {
         String s = out.toString();
         int wipe = s.lastIndexOf("\r" + " ".repeat(AnimatedConsoleLogger.WIDTH + 12) + "\r");
         assertTrue(wipe > 0 && s.indexOf("Robert vinner mot Troll!") > wipe, s);
+    }
+
+    @Test
+    void theDamageRisesOutOfTheFilm() {
+        List<String> film = AnimatedConsoleLogger.withDamage(List.of("smäll"), "Hero: Robert skjuter Troll skada: 14");
+        assertEquals("smäll", film.getFirst());
+        assertTrue(film.getLast().contains("−14"), film.toString());
+        assertEquals(List.of("smäll"), AnimatedConsoleLogger.withDamage(List.of("smäll"), "Hero: Robert missar Troll!"));
+    }
+
+    @Test
+    void theHitFlashesAndTheWordShakes() {
+        List<String> film = AnimatedConsoleLogger.impact("BAM!");
+        assertTrue(film.getFirst().contains("\u001B[7m"), "raden blinkar");
+        assertTrue(film.stream().filter(frame -> frame.contains("* BAM! *")).distinct().count() > 2, "ordet skakar");
+    }
+
+    @Test
+    void walkingKnockOutAndHealingHaveTheirOwnFilms() {
+        assertTrue(AnimatedConsoleLogger.wipe().stream().anyMatch(frame -> frame.contains("▓")));
+        assertTrue(AnimatedConsoleLogger.knockOut().getLast().contains("K  .  O"));
+        assertTrue(AnimatedConsoleLogger.glow().getLast().contains("hp!"));
     }
 
     @Test
