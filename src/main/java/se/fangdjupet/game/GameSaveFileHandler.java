@@ -108,10 +108,15 @@ public class GameSaveFileHandler {
     }
 
     // item.0, item.1 ... tills numret saknas. En gammal sparfil har inga, och då blir listan tom.
+    // Finns fler item-nycklar än vi läste har filen en lucka, och då är den trasig.
     private List<Item> readItems(Properties properties) {
         List<Item> items = new ArrayList<>();
         for (int i = 0; properties.getProperty(ITEM_KEY + i) != null; i++) {
             items.add(decode(properties.getProperty(ITEM_KEY + i)));
+        }
+        long saved = properties.stringPropertyNames().stream().filter(key -> key.startsWith(ITEM_KEY)).count();
+        if (saved != items.size()) {
+            throw new IllegalArgumentException("Ett föremål saknas i sparfilen");
         }
         return items;
     }

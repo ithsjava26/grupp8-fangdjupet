@@ -119,6 +119,15 @@ class GameSaveFileHandlerTest {
     }
 
     @Test
+    void aGapInTheItemsGivesSaveFileException() throws IOException {
+        Files.writeString(dir.resolve("save-1.properties"),
+                "version=1\nheroName=Aria\nheroMaxHp=30\nheroHp=12\nnextRoom=2\n"
+                        + "item.0=armor;SHIELD;-;2;1;Sköld\nitem.2=stressball;STRESSBALL;-;6;3;Boll\n");
+
+        assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
+    }
+
+    @Test
     void saveFileExceptionIsAnIOException() {
         // Kod som redan fångar IOException fångar även SaveFileException
         assertInstanceOf(IOException.class, new SaveFileException("trasig"));

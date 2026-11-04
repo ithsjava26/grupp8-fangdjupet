@@ -58,11 +58,16 @@ public class Hero extends Character {
         return inventory;
     }
 
-    // Lägger föremålet i ryggsäcken, en gång – det som redan finns där läggs inte till igen
+    // Lägger föremålet i ryggsäcken, en gång – det som redan finns där läggs inte till igen.
+    // Det hjälten bär ska alltid synas där, så en full ryggsäck växer i stället för att tappa föremålet.
     private void keep(Item item) {
-        if (!inventory.getAll().contains(item)) {
-            inventory.add(item);
+        if (inventory.getAll().contains(item)) {
+            return;
         }
+        if (inventory.isFull()) {
+            inventory.setCapacity(inventory.size() + 1);
+        }
+        inventory.add(item);
     }
 
     // Attackbonus kommer från vapnet – men bara när attacken passar vapnet:

@@ -207,6 +207,16 @@ class HeroTest {
     }
 
     @Test
+    void aFullBackpackGrowsSoEverythingTheHeroCarriesIsThere() {
+        Hero h = hero();
+        h.getInventory().setCapacity(1);
+        h.equip(SWORD);
+        h.equip(BOW);
+        assertEquals(BOW, h.getWeapon().orElseThrow());
+        assertEquals(java.util.List.of(SWORD, BOW), h.getInventory().getAll());
+    }
+
+    @Test
     void takingOffArmorWithNullLeavesTheBackpackAlone() {
         Hero h = hero();
         h.equip((Armor) null);
