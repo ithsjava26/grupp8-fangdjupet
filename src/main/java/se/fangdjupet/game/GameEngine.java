@@ -205,7 +205,7 @@ public class GameEngine {
 
         Hero loadedHero = heroFrom(state);
         World loadedWorld = newWorld(random);
-        if (!loadedHero.isAlive() || !fastForward(loadedHero, loadedWorld, state.nextRoom())) {
+        if (!loadedHero.isAlive() || !resume(loadedHero, loadedWorld, state)) {
             output.onEvent("Sparfilen går inte att använda: hjälten är död eller rummet finns inte.");
             return;
         }
@@ -217,7 +217,7 @@ public class GameEngine {
         showCurrentRoom();
     }
 
-    // Spelmenyn 4: sparar hjältens namn, hp och rummet på sparplats 1 (en gammal sparning skrivs över)
+    // Spelmenyn 4: sparar hjältens namn, hp, rummet och ryggsäcken på sparplats 1 (en gammal sparning skrivs över)
     private void saveAdventure() {
         Room room = world.getRooms().get(world.getFurthestRoomIndex());   // där hjälten fortsätter
         try {
@@ -229,22 +229,51 @@ public class GameEngine {
         }
     }
 
-    // Det som sparas: namn, maxHp, hp och numret på rummet längst fram som hjälten har nått (0 = Skoldörren).
+    // Det som sparas: namn, maxHp, hp, ryggsäcken och numret på rummet längst fram som hjälten har nått (0 = Skoldörren).
     // Har hjälten gått tillbaka till Kafferummet från Korridoren fortsätter hen ändå i Korridoren –
     // rummen före är rensade, annars hade hjälten inte kommit dit.
     static GameState stateOf(Hero hero, World world) {
-        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex());
+        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex(),
+                hero.getInventory().getAll());
     }
 
-    // Hjälten från en sparning: svärdet som i ett nytt äventyr, och det hp hen hade när det sparades
+    // Hjälten från en sparning: svärdet som i ett nytt äventyr, det hp hen hade och allt i ryggsäcken
     static Hero heroFrom(GameState state) {
         Hero hero = newHero(state.heroName(), state.heroMaxHp());
         hero.takeDamage(state.heroMaxHp() - state.heroHp());
+        state.items().forEach(item -> giveBack(hero, item));
         return hero;
     }
 
-    // Går fram till det sparade rummet. Rummen före är redan avklarade: fienderna där hoppas över,
-    // men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
+    // Föremålen kommer i den ordning hjälten fick dem: varje vapen låser upp sin attack, och det sista
+    // hamnar i handen – samma vapen som när det sparades, eftersom man inte kan byta tillbaka till ett gammalt.
+    private static void giveBack(Hero hero, Item item) {
+        switch (item) {
+            case Weapon weapon -> equipAndAim(hero, weapon);
+            case Armor armor -> hero.equip(armor);
+            case StressBall ball -> hero.pickUp(ball);
+            case Potion potion -> { }   // drycker dricks direkt och ligger aldrig i ryggsäcken
+        }
+    }
+
+    // Går till det sparade rummet. Det hjälten redan har tas bort ur världen, så Städrustningen inte går att
+    // hitta två gånger, och det hen lämnade ligger kvar i rummen. Svärdet finns alltid i ryggsäcken, så en
+    // sparning utan föremål är en gammal sparfil: då hämtas vapnen från rummen före (fastForward).
+    static boolean resume(Hero hero, World world, GameState state) {
+        if (state.items().isEmpty()) {
+            return fastForward(hero, world, state.nextRoom());
+        }
+        for (Item item : hero.getInventory().getAll()) {
+            world.getRooms().forEach(room -> room.forget(item));
+        }
+        while (world.getCurrentRoomIndex() < state.nextRoom()) {
+            if (!world.moveForward()) return false;
+        }
+        return true;
+    }
+
+    // En gammal sparfil, utan föremål: går fram till det sparade rummet. Rummen före är redan avklarade:
+    // fienderna där hoppas över, men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
     static boolean fastForward(Hero hero, World world, int roomIndex) {
         while (world.getCurrentRoomIndex() < roomIndex) {
             pickUpAll(hero, world.getCurrentRoom());

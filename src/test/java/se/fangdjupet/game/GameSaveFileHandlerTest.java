@@ -2,6 +2,13 @@ package se.fangdjupet.game;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Item;
+import se.fangdjupet.items.ItemType;
+import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.StressBall;
+import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,6 +82,40 @@ class GameSaveFileHandlerTest {
 
         SaveFileException e = assertThrows(SaveFileException.class, () -> new GameSaveFileHandler(dir).load(1));
         assertInstanceOf(NumberFormatException.class, e.getCause());
+    }
+
+    @Test
+    void allKindsOfItemsSurviveTheFileInOrder() throws IOException {
+        GameSaveFileHandler handler = new GameSaveFileHandler(dir);
+        List<Item> items = List.of(
+                new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 4, 1),
+                new Armor(ItemType.SHIELD, "Städrustningen; med hink", 20, 2),
+                new Potion(ItemType.POTION, "en kopp kaffe", 30, 1),
+                new StressBall(ItemType.STRESSBALL, "Stressboll", 6, 3));
+
+        handler.save(new GameState("Aria", 30, 12, 3, items), 1);
+
+        assertEquals(items, handler.load(1).items());
+    }
+
+    @Test
+    void anOldSaveFileHasNoItems() throws IOException {
+        Files.writeString(dir.resolve("save-1.properties"),
+                "version=1\nheroName=Aria\nheroMaxHp=30\nheroHp=12\nnextRoom=2\n");
+
+        assertEquals(new GameState("Aria", 30, 12, 2), new GameSaveFileHandler(dir).load(1));
+    }
+
+    @Test
+    void brokenItemsGiveSaveFileException() throws IOException {
+        GameSaveFileHandler handler = new GameSaveFileHandler(dir);
+        for (String item : List.of("weapon;BOW", "hatt;SHIELD;-;2;1;Hatt", "armor;NOPE;-;2;1;Sköld",
+                "armor;SHIELD;-;x;1;Sköld", "weapon;BOW;NOPE;4;1;Pilbåge", "stressball;STRESSBALL;-;0;3;Boll")) {
+            Files.writeString(dir.resolve("save-1.properties"),
+                    "version=1\nheroName=Aria\nheroMaxHp=30\nheroHp=12\nnextRoom=2\nitem.0=" + item + "\n");
+
+            assertThrows(SaveFileException.class, () -> handler.load(1), item);
+        }
     }
 
     @Test

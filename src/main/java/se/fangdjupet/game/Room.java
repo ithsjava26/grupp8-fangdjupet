@@ -164,6 +164,13 @@ public class Room {
         items.add(item);
     }
 
+    // Hjälten har redan föremålet från en sparning, så det ska varken ligga här eller vara gömt här.
+    // Vi jämför namnet: bonusen slumpas när världen byggs, så det nya föremålet är inte lika med det sparade.
+    public void forget(Item item) {
+        items.removeIf(here -> here.description().equals(item.description()));
+        hidden.removeIf(here -> here.description().equals(item.description()));
+    }
+
     // Tar bort föremålet från rummet – true om det fanns där
     public boolean removeItem(Item item) {
         return items.remove(item);
