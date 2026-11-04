@@ -4,7 +4,7 @@
 Javaprogrammering (grupp 8). Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet,
 Korridoren och städskrubben och till sist Lektionssalen – och slåss mot fiender som JavaFläcken,
 ett troll och en trollkarl, StädHäxan och slutbossen Lektor Martin. Spelaren väljer attack varje
-runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. Grafiken är ren ASCII.
+runda, plockar upp vapen och får hjälp av kaffe, kanelbullar och Frida. All grafik ritas med tecken i konsolen.
 
 Projektet handlar mest om *hur* det är byggt: tre paket med en ägare var, tre designmönster
 (Strategy, Factory och Observer), JUnit-tester och ett Git-arbetsflöde med feature-grenar,
@@ -76,7 +76,7 @@ När koden är klar på din branch:
 1. GitHub Actions (`.github/workflows/tester.yml`) kör `mvn test` automatiskt på varje PR och varje push till `main`. Mergea bara när kontrollen **Tester** är grön.
 2. Granskaren läser koden under fliken **Files changed**, kommenterar vid behov och väljer **Review changes → Approve**.
 3. Ska något ändras: fixa på samma branch, committa och pusha igen – pull requesten uppdateras automatiskt.
-4. När den är godkänd: klicka **Merge pull request** → **Confirm merge** och sedan **Delete branch**.
+4. När den är godkänd: klicka **Squash and merge** → **Confirm squash and merge** och sedan **Delete branch**. `main` tillåter bara squash, så PR:en blir en commit där.
 5. Efter merge, hämta senaste koden lokalt:
    ```
    git checkout main
@@ -92,12 +92,14 @@ När koden är klar på din branch:
 | Föremål            | `se.fangdjupet.items`  | Tanaz (`TanazDaraee`), B     |
 | Spelmotor & spara  | `se.fangdjupet.game`   | Fredrik (`KOFFEE439`), C     |
 
+Paketet `se.fangdjupet.sound` (musik och ljud) kom till i #22. Det är ett extrapaket utöver de tre, byggt av Robert.
+
 ## Designmönster
 
 ### Strategy – hur man slåss (`combat`, Robert)
 **Var:** `AttackStrategy` är ett interface med `calculateDamage(attacker, target)`. `MeleeAttack`,
 `MagicAttack` och `RangedAttack` räknar skadan på var sitt sätt, och i #18 kom `KnowledgeAttack`,
-`CleaningAttack` och `RandomAttack`, och i #22 `JavaBookAttack` och `StressBallThrow`. En `Character` *har* en strategi och kan byta den mitt i
+`CleaningAttack` och `RandomAttack`, i #22 `JavaBookAttack` och `StressBallThrow`, och i #23 `UsbVirusAttack` och `LavaLampSmash`. En `Character` *har* en strategi och kan byta den mitt i
 striden med `setAttack(...)`: spelaren väljer attack varje runda, och en `Boss` byter till en
 tyngre attack vid halva livet.
 
@@ -118,10 +120,10 @@ och får ett färdigt `Weapon`. Ändras reglerna för bonusen ändras bara fabri
 ### Observer – vem som får veta vad som händer (`game`, Fredrik)
 **Var:** `GameEventListener` har en metod, `onEvent(String)`. `Battle` och `GameEngine` skickar varje
 händelse dit, och `EventBus` skickar vidare till alla registrerade lyssnare, t.ex.
-`ConsoleEventLogger` (skärmen). Testerna registrerar en lista i stället för konsolen.
+`ConsoleEventLogger` eller `AnimatedConsoleLogger` (skärmen) och `FileLogger` (loggfilen). Testerna registrerar en lista i stället för konsolen.
 
-**Varför:** den som skickar vet inte vem som lyssnar. Spelet skriver aldrig direkt till
-`System.out`, så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
+**Varför:** den som skickar vet inte vem som lyssnar. Spelets händelser går aldrig direkt till
+`System.out` (bara menyerna, kartan och frågorna skrivs med `IO.println`), så testerna kan läsa allt som händer, och en ny lyssnare – en loggfil eller en
 topplista – läggs till utan att `Battle` eller `GameEngine` ändras. Så kom ljudet till i #22: `sound/SoundListener` är bara en lyssnare till på `EventBus`, som spelar musik och ljud efter raderna den får.
 
 ## Git-samarbetet – reflektion
@@ -259,14 +261,14 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 - **Grafik:** efter varje träff loggas den träffades hp som ASCII-mätare via `HpBar.status(character, 10)`, till exempel `Troll  [######----] 6/10`. Den som dör visar en tom mätare (`[----------] 0/10`). En attack som kostar anfallaren hp (`selfDamage`) ger också en mätare för anfallaren.
 
 ### Rum, vapen och grafik i spelet
-- `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller, när hjälten har Java-boken, Martins fyra `KnowledgeAttack` och **5. Citera från Java-boken** (`JavaBookAttack`, en per hjälte via `Hero.getJavaBookAttack()`): första gången *kapitel 18: Polymorphism*, nästa runda *kapitel 20: Interface*, sedan från början igen. 5 i skada och kostar ingenting (StackOverflow gör 6 men kostar 1 hp). Loggen visar kapitlet: `Hero: Robert citerar kapitel 18: Polymorphism för Lektor Martin skada: 5`, och bilden är boken uppslagen på rätt kapitel (`AttackArt.POLYMORPHISM`, `AttackArt.INTERFACE`). `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
-- **Hjälten börjar med ett svärd** (`GameEngine.newHero`): `Du har Svärd i handen: +1 i närstrid.` Svärdet syns under Visa utrustning, och närstriden blir **5 + 1 = 6** (`AttackMenu.MELEE`, `SWORD_BONUS`). I början finns bara `1. Närstrid` i attackmenyn: **magi och avstånd låses upp** först när man plockar upp staven eller pilbågen (`Hero.hasPickedUp`), och finns sedan kvar även när ett annat vapen tar platsen i handen – fast svaga (4) utan vapnet. Attacken för vapnet i handen är **gulmarkerad** i attackmenyn (`AttackMenu.lines(hero, options)`), t.ex. `2. Avståndsattack` med pilbågen. Svärdet räcker inte: 4000 simulerade spel med bara svärdet gav **4 %** vinster (85 % dör mot Trollet och Trollkarlen), med pilbågen och staven **76 %** vinster och **89 %** fram till Martin.
+- `GameEngine` kör striden med `Battle` (spelmenyn 1) och frågar spelaren vilken attack som ska användas varje runda (Enter behåller den nuvarande). Menyn kommer från `game/AttackMenu`: `options(hero)` ger närstrid, magi och avstånd – eller, när hjälten har Java-boken, Martins fyra `KnowledgeAttack` och **5. Citera från Java-boken** (`JavaBookAttack`, en per hjälte via `Hero.getJavaBookAttack()`): första gången *kapitel 18: Polymorphism*, nästa runda *kapitel 20: Interface*, sedan från början igen. 14 i skada, kostar ingenting men har 30 % risk att slinta (StackOverflow gör 11 men kostar 3 hp). Loggen visar kapitlet: `Hero: Robert citerar kapitel 18: Polymorphism för Lektor Martin skada: 14`, och bilden är boken uppslagen på rätt kapitel (`AttackArt.POLYMORPHISM`, `AttackArt.INTERFACE`). `lines(...)` ger menyraderna och `choose(options, inmatning)` gör om det spelaren skrev till en attack (`null` = behåll). Den går att testa utan tangentbord.
+- **Hjälten börjar med ett svärd** (`GameEngine.newHero`): `Du har Svärd i handen: +1 i närstrid.` Svärdet syns under Visa utrustning, och närstriden blir **5 + 1 = 6** (`AttackMenu.MELEE`, `SWORD_BONUS`). I början finns bara `1. Närstrid` i attackmenyn: **magi och avstånd låses upp** först när man plockar upp staven eller pilbågen (`Hero.hasPickedUp`), och finns sedan kvar även när ett annat vapen tar platsen i handen – fast svaga (4) utan vapnet. Attacken för vapnet i handen är **gulmarkerad** i attackmenyn (`AttackMenu.lines(hero, options)`), t.ex. `2. Avståndsattack` med pilbågen. Svärdet räcker inte: 4000 simulerade spel (från före den svårare balansen) med bara svärdet gav **4 %** vinster (85 % dör mot Trollet och Trollkarlen), med pilbågen och staven **76 %** vinster och **89 %** fram till Martin.
 - **Vapnen gör skillnad** (`AttackMenu`, `Hero.getAttackBonus`): svärdet är svagt. Pilbågen gör avståndsattacken till **13** + halva bågens bonus (`BOW_RANGED`, 20 % miss), och Trollstaven gör magin till **8 + stavens bonus** (`STAFF_MAGIC`, går rakt igenom rustningen). Utan vapnet i handen är magi och avstånd bara 4. Vapnets bonus hjälper bara sin egen attack – en pilbåge gör inte närstriden starkare (spjutet hjälper både närstrid och avstånd). Den som plockar upp pilbågen eller staven byter direkt till vapnets attack (`GameEngine.equipAndAim`, `AttackMenu.forWeapon`): `Du byter till Avståndsattack.` – Java-boken mot Martin går före. Simulerat 4000 gånger fram till Martin (kaffet och kanelbullen tagna): med pilbågen mot Trollet och Trollkarlen och staven mot StädHäxan tar man sig förbi **88 %**, med bara knytnävarna (närstrid 7, före svärdet) **36 %** (förut var det tvärtom: 94 % med närstrid och 3–9 % med pilbågen).
 - **Två menyer** (`GameEngine.menu(room)`): utan äventyr visas **huvudmenyn** (1. Starta nytt äventyr, 2. Fortsätt sparat äventyr, e. Avsluta). I spelet visas **spelmenyn** med rummets namn som rubrik (1. Strid mot rummets fiende, 2. Gå till ett annat rum, 3. Visa hjältens utrustning, 4. Spara äventyret, 5. Leta i rummet, e. Avsluta). Efter game over och efter vinsten kommer huvudmenyn tillbaka.
 - **Gå till ett annat rum – spelaren väljer** (spelmenyn 2): spelet visar kartan och rummen med siffror, och spelaren väljer vart (Enter = stanna kvar):
   ```
   Vart vill du gå?
-  1. Skoldörren  (rensat)
+  1. Skoldörren  (låst)
   2. Kafferummet  (du är här)
   3. Korridoren och städskrubben  (nytt rum)
   4. Lektionssalen  (låst)
@@ -276,7 +278,7 @@ Strategy-mönstret: attacken går att byta mitt i striden med `setAttack(...)`. 
 - **Kartan syns hela tiden** (`GameEngine.roomMap(world)`), ovanför spelmenyn och i "Gå till ett annat rum". Rummen ligger som en slinga, med streck i ren ASCII och namnen med å, ä och ö:
   ```
   KARTA  @ du är här  x rensat  ! fiender  ? nytt  # låst
-  [x] Skoldörren    -- [@] Kafferummet
+  [#] Skoldörren    -- [@] Kafferummet
                         |
   [#] Lektionssalen -- [#] Korridoren
   ```
@@ -418,5 +420,5 @@ Där modulerna möts. **Bestämt** = står i kontraktet och ändras bara via en 
 | Vad en strid returnerar | A ↔ C | `attack(target)` returnerar skadan, drar inte av hp | `Battle.fight(hero, enemy)` returnerar vinnaren (`Character`) – A:s PR 3 |
 | Händelser når loggen | A ↔ C | `GameEventListener.onEvent(String)` | `Battle` får en `GameEventListener` i konstruktorn; C:s `EventBus` skickas in – A:s PR 3. `Battle` loggar varje slag, hp-mätare efter varje träff och ett slutmeddelande (se avsnittet om `Battle`) |
 | Inventariet sparas | B ↔ C | alla föremål har `type()`, `description()` och `level()` | sparas som `sword;3`; B lägger till en metod som läser tillbaka raden (gamla `ItemFactory.create("sword", 3)` togs bort i #8) – B:s nästa PR och C:s PR 2 |
-| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – all utskrift, även grafiken, går via lyssnaren och aldrig direkt till `System.out` | Streck och tecken i ren ASCII (`#` `-` `\|` `/`), texterna med å, ä och ö (FÅNGDJUPET, SKOLDÖRREN, PILBÅGE …), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10; rumskartan kommer med C:s `World` |
-| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. `GameEngine` sparar och läser in plats 1 sedan `feature/spara-och-fortsatt`. Inventariet sparas inte än – B:s `Inventory` behövs först |
+| ASCII-grafik i konsolen | A ↔ C | `GameEventListener.onEvent(String)` – spelets händelser, även grafiken, går via lyssnaren och inte direkt till `System.out` (menyerna, kartan och frågorna skrivs med `IO.println`) | Streck och tecken i ren ASCII (`#` `-` `\|` `/`), texterna med å, ä och ö (FÅNGDJUPET, SKOLDÖRREN, PILBÅGE …), ingen JavaFX/Swing och inga nya beroenden. A:s `HpBar.render(character, width)` ger `[#####-----]` för 20/40 hp och `HpBar.status(...)` hela raden `Troll  [#######---] 28/40` för `Battle`-loggen, som använder den sedan PR 3. C:s `AsciiArt` har `TITLE`, `MARTIN`, `FRIDA`, `banner(text)` och `show(listener, art)`. Mergat i #10. Rumskartan kom i #22 (`GameEngine.roomMap`). Sedan #23 ritar `ConsoleStyle` hp-mätarna som färgade block i en riktig konsol; loggfilen och webben får vanlig text |
+| Sparfilen | A, B, C | – | #15 valde en `.properties`-fil per sparplats, `save-<nr>.properties`, med nycklarna `version`, `heroName`, `heroMaxHp`, `heroHp` och `nextRoom` (rummets nummer) i stället för `;`-raderna i det första förslaget. `GameEngine` sparar och läser in plats 1 sedan #20. Inventariet sparas inte än – B:s `Inventory` behövs först |
