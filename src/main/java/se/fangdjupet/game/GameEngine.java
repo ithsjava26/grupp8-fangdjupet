@@ -443,7 +443,7 @@ public class GameEngine {
 
     // När spelaren säger nej
     static String leftBehind(Item item) {
-        if (WorldBuilder.VANTE.equals(item.description())) {   // dörren slår igen: hit kommer man inte tillbaka
+        if (WorldBuilder.ULLVANTAR.equals(item.description())) {   // dörren slår igen: hit kommer man inte tillbaka
             return "Du låter " + item.description() + " ligga kvar. När Entrédörren slår igen bakom dig är de borta.";
         }
         return item instanceof Potion

@@ -82,9 +82,9 @@ class BrasklappTest {
     }
 
     @Test
-    void sparfilenBeharVantenOchBrasklappen() throws IOException {
+    void sparfilenBeharUllvantarnaOchBrasklappen() throws IOException {
         GameSaveFileHandler handler = new GameSaveFileHandler(dir);
-        List<Item> items = List.of(new Armor(ItemType.GLOVE, WorldBuilder.VANTE, 5, 1), note);
+        List<Item> items = List.of(new Armor(ItemType.GLOVE, WorldBuilder.ULLVANTAR, 5, 1), note);
         GameState state = new GameState("Robin", 40, 12, 3, items);
 
         handler.save(state, 1);

@@ -226,7 +226,7 @@ public final class AsciiArt {
                 |______________________|    en enda gang
             """;
 
-    public static final String MITTEN = """
+    public static final String ULLVANTAR = """
                   .---.
                  /     \\__        ULLVANTAR
                 |       |  \\      +5 i forsvar, +10 hp
@@ -359,7 +359,7 @@ public final class AsciiArt {
             Map.entry("Trollstav", STAFF),
             Map.entry(WorldBuilder.STRESSBOLL, STRESS_BALL),
             Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR),
-            Map.entry(WorldBuilder.VANTE, MITTEN),
+            Map.entry(WorldBuilder.ULLVANTAR, ULLVANTAR),
             Map.entry("Brasklapp", BRASKLAPP));
 
     // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
@@ -377,7 +377,7 @@ public final class AsciiArt {
             ItemType.STAFF, STAFF,
             ItemType.SHIELD, SHIELD,
             ItemType.HELMET, HELMET,
-            ItemType.GLOVE, MITTEN,
+            ItemType.GLOVE, ULLVANTAR,
             ItemType.NOTE, BRASKLAPP,
             ItemType.POTION, POTION,
             ItemType.STRESSBALL, STRESS_BALL);

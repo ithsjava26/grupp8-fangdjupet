@@ -19,7 +19,7 @@ public class WorldBuilder {
 
     // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
     public static final String STADRUSTNING = "Städrustning";
-    public static final String VANTE = "Ullvantar";
+    public static final String ULLVANTAR = "Ullvantar";
     public static final String STRESSBOLL = "Stressboll";
     public static final int STRESS_BALL_HEAL = 6;   // stressbollen i fickan: så mycket hp ger den varje runda mot Martin
 
@@ -39,9 +39,9 @@ public class WorldBuilder {
                 "Skoldörren",
                 "Du står utanför skolan.",
                 doorEnemy,
-                // Hänger på Entrédörren: man kan ta den före striden. Går hjälten in utan den är den borta,
+                // Hänger på Entrédörren: man kan ta dem före striden. Går hjälten in utan dem är de borta,
                 // för dörren slår igen bakom hen.
-                List.of(new Armor(ItemType.GLOVE, VANTE, 5, 1))
+                List.of(new Armor(ItemType.GLOVE, ULLVANTAR, 5, 1))
         );
 
         // De riktiga fienderna: trollet och trollkarlen gömmer sig i kafferummet och

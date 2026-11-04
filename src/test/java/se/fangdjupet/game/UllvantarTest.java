@@ -16,57 +16,57 @@ import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemType;
 
 // Ullvantarna på Entrédörren: +5 i försvar, +10 hp, syns i ryggsäcken och gör Martin lite lättare
-class VanteTest {
+class UllvantarTest {
 
-    private static final Armor VANTE = new Armor(ItemType.GLOVE, WorldBuilder.VANTE, 5, 1);
+    private static final Armor ULLVANTAR = new Armor(ItemType.GLOVE, WorldBuilder.ULLVANTAR, 5, 1);
     private static final Armor STADRUSTNING = new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2);
 
     private final Hero hero = GameEngine.newHero("Robin", 40);
 
     @Test
-    void vantenLiggerVidEntredorrenInnanStriden() {
+    void ullvantarnaLiggerVidEntredorrenInnanStriden() {
         Room door = GameEngine.newWorld(new Random(1)).getCurrentRoom();
 
         assertEquals("Skoldörren", door.getName());
-        assertEquals(List.of(VANTE), door.getItems());
-        assertEquals("Här ligger: Ullvantar (+5 i försvar)", GameEngine.itemHere(VANTE));
-        assertEquals("Plocka upp Ullvantar? (j/n): ", GameEngine.takeQuestion(VANTE));
-        assertTrue(AsciiArt.forItem(VANTE).isPresent(), "vanten har en egen bild");
-        assertTrue(GameEngine.leftBehind(VANTE).contains("slår igen"), "säger man nej går den inte att hämta senare");
+        assertEquals(List.of(ULLVANTAR), door.getItems());
+        assertEquals("Här ligger: Ullvantar (+5 i försvar)", GameEngine.itemHere(ULLVANTAR));
+        assertEquals("Plocka upp Ullvantar? (j/n): ", GameEngine.takeQuestion(ULLVANTAR));
+        assertTrue(AsciiArt.forItem(ULLVANTAR).isPresent(), "ullvantarna har en egen bild");
+        assertTrue(GameEngine.leftBehind(ULLVANTAR).contains("slår igen"), "säger man nej går den inte att hämta senare");
     }
 
     @Test
-    void vantenSkyddarMotEntredorrenOchSynsIRyggsacken() {
+    void ullvantarnaSkyddarMotEntredorrenOchSynsIRyggsacken() {
         Enemy door = new Enemy("Entrédörren", 20, new MeleeAttack(6), 1);
         int bare = door.attack(hero);
 
-        hero.equip(VANTE);
+        hero.equip(ULLVANTAR);
 
         assertEquals(bare - 5, door.attack(hero));
-        assertTrue(hero.getInventory().getAll().contains(VANTE));
+        assertTrue(hero.getInventory().getAll().contains(ULLVANTAR));
     }
 
     @Test
-    void utanVantenGarMartinRaktIgenomRustningen() {
+    void utanUllvantarnaGarMartinRaktIgenomRustningen() {
         hero.equip(STADRUSTNING);
 
         assertEquals(7, Martin.create().attack(hero));
     }
 
     @Test
-    void vantenDamparMartinsForklaringar() {
-        hero.equip(VANTE);
+    void ullvantarnaDamparMartinsForklaringar() {
+        hero.equip(ULLVANTAR);
 
         assertEquals(5, Martin.create().attack(hero));
     }
 
     @Test
-    void vantenHjalperMotMartinAvenUnderStadrustningen() {
-        hero.equip(VANTE);
+    void ullvantarnaHjalperMotMartinAvenUnderStadrustningen() {
+        hero.equip(ULLVANTAR);
         hero.equip(STADRUSTNING);
 
         assertEquals(20, hero.getDefense(), "Städrustningen sitter på");
-        assertEquals(5, Martin.create().attack(hero), "vanten i ryggsäcken hjälper ändå");
+        assertEquals(5, Martin.create().attack(hero), "ullvantarna i ryggsäcken hjälper ändå");
     }
 
     @Test
@@ -89,7 +89,7 @@ class VanteTest {
 
     @Test
     void sparfilenGerInte10HpTill() {
-        hero.equip(VANTE);
+        hero.equip(ULLVANTAR);
         hero.warmUp();
         hero.takeDamage(8);
 
@@ -103,7 +103,7 @@ class VanteTest {
     void stadrustningenSitterPaNarBadaKommerTillbaka() {
         Hero loaded = GameEngine.newHero("Robin", 40);
 
-        List.of(VANTE, STADRUSTNING).forEach(loaded::equip);
+        List.of(ULLVANTAR, STADRUSTNING).forEach(loaded::equip);
 
         assertEquals(20, loaded.getDefense());
         assertEquals(2, loaded.getKnowledgeDefense());
