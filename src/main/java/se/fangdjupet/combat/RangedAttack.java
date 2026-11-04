@@ -21,7 +21,12 @@ public class RangedAttack implements AttackStrategy {
         if (random.nextInt(100) < 20) {
             return 0;
         }
-        return Math.max(0, strength + attacker.getAttackBonus() / 2 - target.getDefense());
+        return Math.max(0, strength + attacker.getAttackBonus() / 2 - defenseOf(target));
+    }
+
+    // Hur mycket av skadan målets försvar tar bort. En attack som går rakt igenom rustningen skriver över den.
+    protected int defenseOf(Character target) {
+        return target.getDefense();
     }
     // Pilar skjuts, de slås inte
     @Override

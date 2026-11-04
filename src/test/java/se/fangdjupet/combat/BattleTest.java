@@ -482,11 +482,11 @@ class BattleTest {
     @Test
     void worksWithRealStrategies() {
         // Riktiga strategier i stället för lambdor: kunskap mot närstrid
-        Hero h = new Hero("Robin", 30, KnowledgeAttack.QUIZ);         // 4 skada, ignorerar försvar
+        Hero h = new Hero("Robin", 30, KnowledgeAttack.QUIZ);         // 7 skada, ignorerar försvar
         Enemy e = new Enemy("Troll", 20, new MeleeAttack(2), 2);      // 2 + 2 − 0 = 4 skada
-        // Robin: 30 / 4 → behöver 8 slag på sig. Trollet: 20 / 4 → dör på 5:e slaget.
+        // Robin: 30 / 4 → behöver 8 slag på sig. Trollet: 20 / 7 → dör på 3:e slaget.
         assertSame(h, battle().fight(h, e));
-        assertEquals(14, h.getHp());                  // trollet hann slå 4 gånger: 30 − 16
+        assertEquals(22, h.getHp());                  // trollet hann slå 2 gånger: 30 − 8
     }
 
     // ── Flera fiender samtidigt (trollet och trollkarlen i kafferummet) ──
@@ -653,6 +653,54 @@ class BattleTest {
         Hero h = hero(20, 5);
         luckyBattle(new ArrayList<>(), rolls(99, 2)).fight(h, enemy(10, 0));
         assertEquals(20, h.getHp());
+    }
+
+    // ── Bilder för attackerna (withAttackArt) ──
+
+    @Test
+    void noAttackArtUnlessTurnedOn() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> KnowledgeAttack.DOOMSCROLL).fight(hero(50, 5), enemy(10, 1));
+        assertFalse(log.contains(AttackArt.DOOMSCROLL.stripTrailing()));
+    }
+
+    @Test
+    void chosenAttackIsShownBeforeTheHit() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> KnowledgeAttack.DOOMSCROLL).withAttackArt().fight(hero(50, 5), enemy(10, 1));
+        int art = log.indexOf(AttackArt.DOOMSCROLL.stripTrailing());
+        assertTrue(art >= 0, log.toString());
+        assertTrue(log.get(art + 1).startsWith("Hero: Robin"), "bilden kommer före slaget");
+    }
+
+    @Test
+    void enterKeepsAttackWithoutArt() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add, hero -> null).withAttackArt().fight(hero(50, 5), enemy(10, 1));
+        assertTrue(log.stream().noneMatch(l -> l.contains("NARSTRID") || l.contains("DOOMSCROLLA")), log.toString());
+    }
+
+    @Test
+    void ordinaryEnemyAttacksHaveNoArt() {
+        List<String> log = new ArrayList<>();
+        new Battle(log::add).withAttackArt()
+                .fight(hero(50, 5), new Enemy("Troll", 10, new MeleeAttack(3), 1));
+        assertFalse(log.contains(AttackArt.MELEE.stripTrailing()));
+    }
+
+    @Test
+    void eachBossAttackIsShownOncePerFight() {
+        // Martin: 40 hp, hjälten gör 5 per runda = 8 rundor. Fas 1 och fas 2 visas en gång var.
+        List<String> log = new ArrayList<>();
+        new Battle(log::add).withAttackArt().fight(hero(500, 5), Martin.create());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_EXPLAINS.stripTrailing()::equals).count());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_UTTERLY.stripTrailing()::equals).count());
+    }
+
+    @Test
+    void withAttackArtReturnsTheSameBattle() {
+        Battle b = battle();
+        assertSame(b, b.withAttackArt());
     }
 
     @Test

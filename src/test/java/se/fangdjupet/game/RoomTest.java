@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.MagicAttack;
 import se.fangdjupet.combat.MeleeAttack;
+import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.ItemType;
 
 import java.util.List;
 
@@ -83,7 +85,7 @@ class RoomTest {
 
     private World world() {
         return new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
     }
 
     @Test
@@ -107,7 +109,9 @@ class RoomTest {
         assertEquals("Troll", together.get(0).getName());
         assertEquals("Trollkarl", together.get(1).getName());
         assertEquals(12, together.get(0).getMaxHp());
-        assertEquals(16, together.get(1).getMaxHp());
+        assertEquals(24, together.get(1).getMaxHp());                  // trollkarlen tål två pilar
+        assertEquals(9 + 2, together.get(0).getAttack().calculateDamage(together.get(0), new se.fangdjupet.combat.Hero("R", 40, new se.fangdjupet.combat.MeleeAttack(1))), "trollet slår 9 + nivån");
+        assertEquals(7, together.get(1).getAttack().calculateDamage(together.get(1), new se.fangdjupet.combat.Hero("R", 40, new se.fangdjupet.combat.MeleeAttack(1))), "trollkarlen trollar 7");
         assertInstanceOf(MagicAttack.class, together.get(1).getAttack());   // trollkarlen använder magi
         assertEquals("Thou shall not pass!", together.get(1).getLine().orElseThrow());
     }
@@ -196,7 +200,7 @@ class RoomTest {
     @Test
     void fridaWaitsInTheCorridorBeforeMartin() {
         World world = new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
         assertTrue(world.getCurrentRoom().getFrida().isEmpty());          // Skoldörren
         world.moveForward();
         assertTrue(world.getCurrentRoom().getFrida().isEmpty());          // Kafferummet
@@ -214,11 +218,56 @@ class RoomTest {
     @Test
     void cleaningWitchThreatensWithChemicals() {
         World world = new WorldBuilder().build(enemy("Entrédörren"), enemy("StädHäxan"),
-                enemy("JavaFläcken"), enemy("Kapten Martin"));
+                enemy("JavaFläcken"), enemy("Lektor Martin"));
         world.moveForward();
         world.moveForward();                                   // Kafferummet → Korridoren och städskrubben
         Room room = world.getCurrentRoom();
         assertEquals("StädHäxan", room.getEnemy().getName());
         assertTrue(room.getEnemy().getLine().orElseThrow().contains("kemikalier"));
+    }
+
+    // ── Gömda föremål: hittas bara om man letar (spelmenyn 5) ──
+
+    @Test
+    void hiddenItemIsFoundOnlyOnce() {
+        Armor armor = new Armor(ItemType.SHIELD, "Städrustning", 20, 2);
+        Room room = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(armor);
+        assertEquals(List.of(armor), room.search());
+        assertTrue(room.search().isEmpty(), "andra gången finns inget kvar");
+    }
+
+    @Test
+    void hiddenItemIsNotPickedUpWhenYouEnter() {
+        Room room = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
+        assertTrue(room.getItems().isEmpty());   // det som plockas upp direkt är något annat än det gömda
+    }
+
+    @Test
+    void roomWithoutHiddenItemsFindsNothing() {
+        assertTrue(coffeeRoom(enemy("JavaFläcken")).search().isEmpty());
+    }
+
+    @Test
+    void hidingNullIsNotAllowed() {
+        assertThrows(IllegalArgumentException.class, () -> coffeeRoom().withHiddenItem(null));
+    }
+
+    @Test
+    void somethingToFindWhileItemsOrHiddenThingsAreLeft() {
+        Room empty = coffeeRoom(enemy("JavaFläcken"));
+        assertFalse(empty.hasSomethingToFind());
+        Room hidden = coffeeRoom(enemy("JavaFläcken")).withHiddenItem(new Armor(ItemType.SHIELD, "Städrustning", 20, 2));
+        assertTrue(hidden.hasSomethingToFind());
+        hidden.search();
+        assertFalse(hidden.hasSomethingToFind());
+    }
+
+    @Test
+    void aRefreshmentYouSaidNoToStaysInTheRoom() {
+        Room room = new Room("Kafferummet", "Det luktar kaffe.", (Enemy) null, List.of());
+        assertFalse(room.hasSomethingToFind());
+        room.leaveItem(new se.fangdjupet.items.Potion(ItemType.POTION, "en kopp kaffe", 30, 1));
+        assertTrue(room.hasSomethingToFind(), "Leta i rummet blir gul");
+        assertEquals("en kopp kaffe", room.getItems().getFirst().description());
     }
 }

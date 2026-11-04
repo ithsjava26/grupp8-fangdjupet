@@ -8,5 +8,6 @@ public enum ItemType {
     HELMET,
     SPEAR,
     BOW,
-    STAFF
+    STAFF,
+    STRESSBALL
 }

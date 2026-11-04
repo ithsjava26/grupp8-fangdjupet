@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AsciiArtTest {
 
-    // Sant om alla tecken är vanlig ASCII (0–127) – annars kan Windows-konsolen visa ?
+    // Sant om alla tecken är vanlig ASCII (0–127) eller svenska å, ä, ö och é (som resten av spelets text)
     private boolean isPlainAscii(String s) {
-        return s.chars().allMatch(ch -> ch < 128);
+        return s.chars().allMatch(ch -> ch < 128 || "åäöÅÄÖéÉ".indexOf(ch) >= 0);
     }
 
     @Test
@@ -24,7 +24,7 @@ class AsciiArtTest {
     // ── Bilder för fiender, saker och personer (namnen i GameEngine och WorldBuilder) ──
 
     private static final List<String> THING_NAMES = List.of(
-            "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Kapten Martin", "Frida",
+            "Entrédörren", "JavaFläcken", "Troll", "Trollkarl", "StädHäxan", "Lektor Martin", "Frida",
             "en kopp kaffe", "en kanelbulle", "Java-bok", "Pilbåge", "Trollstav");
 
     @Test
@@ -45,7 +45,7 @@ class AsciiArtTest {
 
     @Test
     void martinAndFridaUseTheirPortraits() {
-        assertEquals(AsciiArt.MARTIN, AsciiArt.forName("Kapten Martin").orElseThrow());
+        assertEquals(AsciiArt.MARTIN, AsciiArt.forName("Lektor Martin").orElseThrow());
         assertEquals(AsciiArt.FRIDA, AsciiArt.forName("Frida").orElseThrow());
     }
 
@@ -90,10 +90,10 @@ class AsciiArtTest {
 
     @Test
     void eachRoomShowsItsOwnLabel() {
-        assertTrue(AsciiArt.SCHOOL_DOOR.contains("SKOLDORREN"));
+        assertTrue(AsciiArt.SCHOOL_DOOR.contains("SKOLDÖRREN"));
         assertTrue(AsciiArt.COFFEE_ROOM.contains("KAFFERUMMET"));
         assertTrue(AsciiArt.CORRIDOR.contains("KORRIDOREN"));
-        assertTrue(AsciiArt.CORRIDOR.contains("STADSKRUBBEN"));
+        assertTrue(AsciiArt.CORRIDOR.contains("STÄDSKRUBBEN"));
         assertTrue(AsciiArt.CLASSROOM.contains("LEKTIONSSALEN"));
     }
 
@@ -166,6 +166,19 @@ class AsciiArtTest {
     }
 
     @Test
+    void victoryIsPlainAsciiAndFitsTheConsole() {
+        assertTrue(isPlainAscii(AsciiArt.VICTORY));
+        assertTrue(AsciiArt.VICTORY.lines().allMatch(line -> line.length() <= 60));
+        assertTrue(AsciiArt.VICTORY.contains("V A N N"));
+    }
+
+    @Test
+    void entranceDoorHasItsOwnFace() {
+        assertTrue(AsciiArt.forName("Entrédörren").orElseThrow().contains("ENTRÉDÖRREN"));
+        assertNotEquals(AsciiArt.SCHOOL_DOOR, AsciiArt.forName("Entrédörren").orElseThrow());   // inte rummets bild
+    }
+
+    @Test
     void redWrapsTextInAnsiColour() {
         // ESC[31m = röd text, ESC[0m = tillbaka till vanlig färg
         assertEquals("\u001B[31mGAME OVER\u001B[0m", AsciiArt.red("GAME OVER"));
@@ -174,5 +187,59 @@ class AsciiArtTest {
     @Test
     void redRejectsNull() {
         assertThrows(IllegalArgumentException.class, () -> AsciiArt.red(null));
+    }
+
+    // ── Föremålen: bild på namnet, annars på sorten ──
+
+    @Test
+    void itemArtByNameFirst() {
+        var bow = new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.BOW,
+                se.fangdjupet.items.WeaponRange.RANGED, "Pilbåge", 3, 1);
+        assertEquals(AsciiArt.BOW, AsciiArt.forItem(bow).orElseThrow());
+    }
+
+    @Test
+    void itemArtByTypeWhenTheNameHasNoPicture() {
+        var sword = new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.SWORD,
+                se.fangdjupet.items.WeaponRange.MELEE, "Rostigt svärd", 4, 1);
+        var helmet = new se.fangdjupet.items.Armor(se.fangdjupet.items.ItemType.HELMET, "Cykelhjälm", 2, 1);
+        assertEquals(AsciiArt.SWORD, AsciiArt.forItem(sword).orElseThrow());
+        assertEquals(AsciiArt.HELMET, AsciiArt.forItem(helmet).orElseThrow());
+    }
+
+    @Test
+    void cleaningArmorHasItsOwnPicture() {
+        var armor = new se.fangdjupet.items.Armor(se.fangdjupet.items.ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2);
+        assertEquals(AsciiArt.CLEANING_ARMOR, AsciiArt.forItem(armor).orElseThrow());   // inte skölden
+    }
+
+    @Test
+    void everyItemTypeHasPlainAsciiArt() {
+        for (String art : List.of(AsciiArt.SWORD, AsciiArt.SPEAR, AsciiArt.SHIELD, AsciiArt.HELMET,
+                AsciiArt.POTION, AsciiArt.CLEANING_ARMOR)) {
+            assertTrue(isPlainAscii(art));
+            assertTrue(art.lines().allMatch(line -> line.length() <= 60));
+        }
+    }
+
+    @Test
+    void nullItemHasNoArt() {
+        assertTrue(AsciiArt.forItem(null).isEmpty());
+    }
+
+    @Test
+    void yellowWrapsTextInAnsiColour() {
+        assertEquals("\u001B[33mPilbåge\u001B[0m", AsciiArt.yellow("Pilbåge"));
+        assertThrows(IllegalArgumentException.class, () -> AsciiArt.yellow(null));
+    }
+
+    @Test
+    void schoolAndLockedDoorArePlainAsciiAndFitTheConsole() {
+        for (String art : List.of(AsciiArt.SCHOOL, AsciiArt.LOCKED_DOOR)) {
+            assertTrue(isPlainAscii(art));
+            assertTrue(art.lines().allMatch(line -> line.length() <= 60));
+        }
+        assertTrue(AsciiArt.SCHOOL.contains("S K O L A"));
+        assertTrue(AsciiArt.LOCKED_DOOR.contains("K L I C K"));
     }
 }

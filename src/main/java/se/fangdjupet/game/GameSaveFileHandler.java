@@ -71,7 +71,7 @@ public class GameSaveFileHandler {
             properties.load(in);
         } catch (IllegalArgumentException e) {
             // Properties.load kastar detta vid en trasig unicode-escape i filen
-            throw new IOException("Sparfilen innehåller ogiltiga data", e);
+            throw new SaveFileException("Sparfilen innehåller ogiltiga data", e);
         }
 
         String version = required(properties, "version");

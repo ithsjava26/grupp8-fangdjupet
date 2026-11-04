@@ -2,8 +2,10 @@ package se.fangdjupet.combat;
 
 import se.fangdjupet.game.GameEventListener;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // En strid mellan hjälten och en eller flera fiender. fight(...) kör runda efter runda tills
@@ -12,12 +14,12 @@ import java.util.stream.Collectors;
 // så Battle bryr sig inte om hur skadan räknas, bara att den räknas.
 public class Battle {
     private static final int MAX_ROUNDS = 100;    // rundtak: en strid får aldrig fastna
-    private static final int MISS_PERCENT = 10;   // så ofta ett slag missar när slumpen är på
 
     private final GameEventListener listener;     // dit loggen skickas, t.ex. konsolen eller ett test
 
     private final AttackChooser chooser;   // frågas före varje hjältens slag
     private final Random random;           // null = ingen slump: skadan blir exakt (testerna)
+    private boolean attackArt;             // visa AttackArt-bilder? Av som standard, så loggen blir kort i testerna
 
     public Battle(GameEventListener listener) {
         this(listener, hero -> null);      // utan val: hjälten behåller sin attack
@@ -46,6 +48,29 @@ public class Battle {
         this.random = random;
     }
 
+    // Slår på bilderna: när spelaren väljer en attack (DoomScrolla, StackOverflow ...) och första gången
+    // en boss använder en attack (Svinto, Martins förklaringar ...). Returnerar striden, så att man kan
+    // kedja: new Battle(output, chooser, random).withAttackArt().fight(hero, enemies)
+    public Battle withAttackArt() {
+        this.attackArt = true;
+        return this;
+    }
+
+    // Lavalampan i fas 2: första gången tar bossen fram den (med bild), sedan bubblar den och ger hp varje runda
+    private void lavaLamp(Boss boss, Set<Boss> shown) {
+        if (shown.add(boss)) {
+            listener.onEvent(boss.getName() + " tar fram en lavalampa och ställer den på katedern! Den ger honom +"
+                    + boss.lavaLampHeal() + " hp varje runda – krossa den!");
+            if (attackArt) listener.onEvent(AttackArt.LAVA_LAMP);
+        }
+        int before = boss.getHp();
+        boss.heal(boss.lavaLampHeal());
+        if (boss.getHp() > before) {
+            listener.onEvent("Lavalampan bubblar: " + boss.getName() + " +" + (boss.getHp() - before) + " hp");
+            listener.onEvent(HpBar.status(boss, 10));
+        }
+    }
+
     // Kör hela striden, berättar vem som vann och returnerar vinnaren
     public Character fight(Hero hero, Enemy enemy) {
         return fight(hero, List.of(enemy));                // en vanlig strid = en grupp med en fiende
@@ -67,21 +92,51 @@ public class Battle {
     // Går tills hjälten eller alla fiender är döda, eller rundtaket nås.
     private Character runFight(Hero hero, List<Enemy> enemies) {
         int round = 0;
+        Set<String> bossAttacksShown = new HashSet<>();   // varje bossattack visas med bild bara en gång per strid
+        Set<Boss> lavaLampsShown = new HashSet<>();       // lavalampan tas fram en gång (fas 2)
         // Så länge hjälten och minst en fiende lever och taket inte nåtts – slåss
         while (hero.isAlive() && anyAlive(enemies) && round < MAX_ROUNDS) {
             round++;
-            AttackStrategy chosen = chooser.choose(hero);   // spelaren väljer attack för den här rundan
-            if (chosen != null) hero.setAttack(chosen);
-            Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
-            boolean heroMisses = misses();                  // slumpen: ibland missar man
-            int damage = heroMisses ? 0 : vary(hero.attack(target));   // bara skadan räknas ut här, hp ändras inte än
-            if (heroMisses) {
-                listener.onEvent("Hero: " + hero.getName() + " missar " + target.getName() + "!");
-            } else {
-                listener.onEvent("Hero: " + hero.getName() + " " + hit(hero.getAttack(), target, damage));
+            int squeezed = hero.squeezeStressBall();        // stressbollen i fickan: +6 hp varje runda
+            if (squeezed > 0) {
+                listener.onEvent(hero.getName() + " klämmer stressbollen: +" + squeezed + " hp");
+                listener.onEvent(HpBar.status(hero, 10));
             }
-            target.takeDamage(damage);                          // nu dras skadan av fienden
-            listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
+            AttackStrategy chosen = chooser.choose(hero);   // spelaren väljer attack för den här rundan
+            if (chosen != null) {
+                hero.setAttack(chosen);
+                showArt(chosen);                            // bilden för det spelaren valde, t.ex. DoomScrolla
+            }
+            Enemy target = firstAlive(enemies);            // hjälten slår den första fienden som lever
+            AttackStrategy attack = hero.getAttack();
+            int damage = 0;
+            if (attack instanceof LavaLampSmash) {
+                // Lavalampan: ingen skada på bossen, men den slutar ge hp. Hjältens tur går åt.
+                boolean smashed = target instanceof Boss boss && boss.smashLavaLamp();
+                listener.onEvent("Hero: " + hero.getName() + (smashed
+                        ? " krossar lavalampan! Lavan rinner ut över katedern – " + target.getName() + " får inga fler hp av den."
+                        : " letar efter en lavalampa att krossa, men det finns ingen."));
+                attack.used(hero);                                  // sedan tillbaka till boken
+            } else if (attack.selfHeal() > 0) {
+                // T.ex. Dela skärm: hjälten tar över lektionen och får tid – hp i stället för skada, missar aldrig
+                int before = hero.getHp();
+                hero.heal(attack.selfHeal());
+                listener.onEvent("Hero: " + hero.getName() + " " + attack.verb() + ": +" + (hero.getHp() - before)
+                        + " hp, ingen skada på " + target.getName());
+                listener.onEvent(HpBar.status(hero, 10));
+            } else {
+                boolean heroMisses = misses(attack.missPercent());   // slumpen: ibland missar man (Java-boken oftare)
+                // bara skadan räknas ut här, hp ändras inte än. USB-minnet (instantWin) varieras inte: allt hp, exakt
+                damage = heroMisses ? 0 : attack.instantWin() ? hero.attack(target) : vary(hero.attack(target));
+                if (heroMisses) {
+                    listener.onEvent("Hero: " + hero.getName() + " " + attack.missVerb() + " " + target.getName() + "!");
+                } else {
+                    listener.onEvent("Hero: " + hero.getName() + " " + hit(attack, target, damage));
+                }
+                target.takeDamage(damage);                          // nu dras skadan av fienden
+                listener.onEvent(HpBar.status(target, 10));         // grafik: hp-mätare för fienden
+                attack.used(hero);                                  // t.ex. USB-minnet: ett försök, sedan är det borta
+            }
             hero.takeDamage(hero.getAttack().selfDamage());   // attacken kan kosta hjälten hp
             if(hero.getAttack().selfDamage() > 0) {
                 listener.onEvent(HpBar.status(hero, 10));// grafik: hp-mätare för hjälten, 10 tecken bred
@@ -89,8 +144,14 @@ public class Battle {
             if (!anyAlive(enemies) || !hero.isAlive()) break;   // ingen av de döda slår mer
             for (Enemy enemy : enemies) {                     // fiendernas tur, en i taget
                 if (!enemy.isAlive()) continue;                // döda fiender slår inte
-                boolean enemyMisses = misses();
+                if (enemy instanceof Boss boss && boss.lavaLampStanding()) lavaLamp(boss, lavaLampsShown);   // Martin i fas 2
+                enemy.nextTaunt().ifPresent(taunt -> listener.onEvent(enemy.getName() + ": \"" + taunt + "\""));   // t.ex. Martins Java-fråga
+                boolean enemyMisses = misses(enemy.getAttack().missPercent());
                 damage = enemyMisses ? 0 : vary(enemy.attack(hero));   // fiendens tur: skadan räknas ut
+                // Efter attack(): då vet RandomAttack vilket kast det blev (svamp eller Svinto)
+                if (enemy instanceof Boss && bossAttacksShown.add(enemy.getAttack().name())) {
+                    showArt(enemy.getAttack());
+                }
                 if (enemyMisses) {
                     listener.onEvent("Enemy: " + enemy.getName() + " missar " + hero.getName() + "!");
                 } else {
@@ -118,9 +179,15 @@ public class Battle {
         return hero.getHp() > enemyHp ? hero : firstAlive(enemies);
     }
 
-    // Slumpen (bara med Random): MISS_PERCENT % av slagen missar
-    private boolean misses() {
-        return random != null && random.nextInt(100) < MISS_PERCENT;
+    // Skickar attackens bild till loggen, utan text blockets sista radbrytning – om bilderna är på
+    private void showArt(AttackStrategy attack) {
+        if (!attackArt) return;
+        AttackArt.forAttack(attack).ifPresent(art -> listener.onEvent(art.stripTrailing()));
+    }
+
+    // Slumpen (bara med Random): percent % av slagen missar – oftast 10 % (AttackStrategy.USUAL_MISS_PERCENT)
+    private boolean misses(int percent) {
+        return random != null && random.nextInt(100) < percent;
     }
 
     // Slagets rad i loggen. 0 i skada (bomkast eller för bra försvar) skrivs som en miss.

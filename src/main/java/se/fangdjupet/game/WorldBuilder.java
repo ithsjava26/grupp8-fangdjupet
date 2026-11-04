@@ -1,8 +1,10 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemFactory;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.StressBall;
 
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.Frida;
@@ -14,6 +16,11 @@ import java.util.List;
 // Bygger spelvärlden (Fredrik): de fyra rummen i rad, med fiender, föremål och extra saker.
 // Skoldörren → Kafferummet → Korridoren och städskrubben → Lektionssalen.
 public class WorldBuilder {
+
+    // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
+    public static final String STADRUSTNING = "Städrustning";
+    public static final String STRESSBOLL = "Stressboll";
+    public static final int STRESS_BALL_HEAL = 6;   // stressbollen i fickan: så mycket hp ger den varje runda mot Martin
 
     public World build(
             Enemy doorEnemy,
@@ -36,8 +43,9 @@ public class WorldBuilder {
 
         // De riktiga fienderna: trollet och trollkarlen gömmer sig i kafferummet och
         // hoppar fram tillsammans när JavaFläcken är besegrad. Trollkarlen använder magi.
-        Enemy troll = new Enemy("Troll", 12, new MeleeAttack(7), 2);
-        Enemy wizard = new Enemy("Trollkarl", 16, new MagicAttack(6), 2)
+        // Trollet slår hårt (9 + nivån), trollkarlen tål två pilar och trollar 7 rakt igenom rustningen
+        Enemy troll = new Enemy("Troll", 12, new MeleeAttack(9), 2);
+        Enemy wizard = new Enemy("Trollkarl", 24, new MagicAttack(7), 2)
                 .withLine("Thou shall not pass!");
         Room coffeeRoom = new Room(
                 "Kafferummet",
@@ -58,14 +66,21 @@ public class WorldBuilder {
                 "Korridoren känns lång.",
                 corridorEnemy,
                 List.of(ItemFactory.createWeapon(ItemType.STAFF, "Trollstav", 1))
-        ).withFrida(Frida.create());   // Frida dyker upp när StädHäxan är besegrad
+        ).withFrida(Frida.create())    // Frida dyker upp när StädHäxan är besegrad
+         // Gömd i städskrubben: hittas bara om man letar (spelmenyn 5). ItemType har ingen egen
+         // rustningssort, så SHIELD används. +20 försvar: närstrid och StädHäxans kast gör nästan
+         // ingen skada – men Martins kunskap går rakt igenom rustningen.
+         .withHiddenItem(new Armor(ItemType.SHIELD, STADRUSTNING, 20, 2));
 
         Room classroom = new Room(
                 "Lektionssalen",
                 "Du har nått fram. Framför dig väntar dagens stora test.",
                 finalEnemy,
                 List.of()
-        ).withJavaBook();   // hjälten tar upp Java-boken när hen kommer in
+        ).withJavaBook()    // hjälten tar upp Java-boken när hen kommer in
+         // Gömd i Lektionssalen: hittas bara om man letar (spelmenyn 5). +6 hp varje runda i striden mot Martin,
+         // eller kasta den på honom (10 i skada) – men då är den borta.
+         .withHiddenItem(new StressBall(ItemType.STRESSBALL, STRESSBOLL, STRESS_BALL_HEAL, 3));
 
         return new World(List.of(door, coffeeRoom, corridor, classroom));
     }

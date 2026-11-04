@@ -158,4 +158,26 @@ class HeroTest {
         assertEquals(bow, h.getWeapon().orElseThrow());
         assertEquals(leather, h.getArmor().orElseThrow());
     }
+
+    @Test
+    void theBowHelpsTheArrowsButNotTheFists() {
+        Hero hero = new Hero("Robert", 40, new MeleeAttack(7));
+        hero.equip(new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.BOW,
+                se.fangdjupet.items.WeaponRange.RANGED, "Pilbåge", 4, 1));
+        hero.setAttack(new MeleeAttack(7));
+        assertEquals(0, hero.getAttackBonus(), "knytnävarna blir inte bättre av en pilbåge");
+        hero.setAttack(new RangedAttack(13, new java.util.Random()));
+        assertEquals(4, hero.getAttackBonus());
+        assertTrue(hero.holds(se.fangdjupet.items.WeaponRange.RANGED));
+    }
+
+    @Test
+    void aSpearHelpsBothFistsAndThrows() {
+        Hero hero = new Hero("Robert", 40, new MeleeAttack(7));
+        hero.equip(new se.fangdjupet.items.Weapon(se.fangdjupet.items.ItemType.SPEAR,
+                se.fangdjupet.items.WeaponRange.BOTH, "Spjut", 3, 1));
+        assertEquals(3, hero.getAttackBonus());
+        hero.setAttack(new MagicAttack(4));
+        assertEquals(0, hero.getAttackBonus());
+    }
 }
