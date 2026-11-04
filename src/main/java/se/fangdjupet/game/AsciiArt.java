@@ -228,10 +228,10 @@ public final class AsciiArt {
 
     public static final String MITTEN = """
                   .---.
-                 /     \\__        VANTE
-                |       |  \\      +3 i forsvar
+                 /     \\__        ULLVANTAR
+                |       |  \\      +5 i forsvar, +10 hp
                 |       |__/
-                |       |          kvarglomd pa
+                |       |          kvarglomda pa
                 '-------'          Entredorren
                 |_______|
             """;

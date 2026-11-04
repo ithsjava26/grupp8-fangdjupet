@@ -362,7 +362,7 @@ public class GameEngine {
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
             enemy.getLine().ifPresent(line -> output.onEvent(enemy.getName() + ": \"" + line + "\""));   // fiendens replik
             if (Martin.NAME.equals(enemy.getName()) && hero.getKnowledgeDefense() > 0) {
-                output.onEvent("Du drar på dig vanten: Martins förklaringar tar " + hero.getKnowledgeDefense() + " mindre.");
+                output.onEvent("Du drar på dig ullvantarna: Martins förklaringar tar " + hero.getKnowledgeDefense() + " mindre.");
             }
         }
 
@@ -444,7 +444,7 @@ public class GameEngine {
     // När spelaren säger nej
     static String leftBehind(Item item) {
         if (WorldBuilder.VANTE.equals(item.description())) {   // dörren slår igen: hit kommer man inte tillbaka
-            return "Du låter " + item.description() + " ligga kvar. När Entrédörren slår igen bakom dig är den borta.";
+            return "Du låter " + item.description() + " ligga kvar. När Entrédörren slår igen bakom dig är de borta.";
         }
         return item instanceof Potion
                 ? "Du låter " + item.description() + " stå kvar. Den finns kvar om du letar i rummet eller kommer tillbaka."
@@ -710,6 +710,10 @@ public class GameEngine {
             case Armor armor -> {
                 hero.equip(armor);
                 output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
+                if (armor.type() == ItemType.GLOVE) {
+                    hero.warmUp();
+                    output.onEvent("Ullvantarna värmer: du har nu " + hero.getHp() + "/" + hero.getMaxHp() + " hp.");
+                }
             }
             case Weapon weapon -> {
                 equipAndAim(hero, weapon);

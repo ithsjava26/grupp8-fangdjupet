@@ -15,10 +15,10 @@ import se.fangdjupet.combat.MeleeAttack;
 import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemType;
 
-// Vanten på Entrédörren: +3 i försvar, syns i ryggsäcken och gör Martin lite lättare
+// Ullvantarna på Entrédörren: +5 i försvar, +10 hp, syns i ryggsäcken och gör Martin lite lättare
 class VanteTest {
 
-    private static final Armor VANTE = new Armor(ItemType.GLOVE, WorldBuilder.VANTE, 3, 1);
+    private static final Armor VANTE = new Armor(ItemType.GLOVE, WorldBuilder.VANTE, 5, 1);
     private static final Armor STADRUSTNING = new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2);
 
     private final Hero hero = GameEngine.newHero("Robin", 40);
@@ -29,8 +29,8 @@ class VanteTest {
 
         assertEquals("Skoldörren", door.getName());
         assertEquals(List.of(VANTE), door.getItems());
-        assertEquals("Här ligger: Vante (+3 i försvar)", GameEngine.itemHere(VANTE));
-        assertEquals("Plocka upp Vante? (j/n): ", GameEngine.takeQuestion(VANTE));
+        assertEquals("Här ligger: Ullvantar (+5 i försvar)", GameEngine.itemHere(VANTE));
+        assertEquals("Plocka upp Ullvantar? (j/n): ", GameEngine.takeQuestion(VANTE));
         assertTrue(AsciiArt.forItem(VANTE).isPresent(), "vanten har en egen bild");
         assertTrue(GameEngine.leftBehind(VANTE).contains("slår igen"), "säger man nej går den inte att hämta senare");
     }
@@ -42,7 +42,7 @@ class VanteTest {
 
         hero.equip(VANTE);
 
-        assertEquals(bare - 3, door.attack(hero));
+        assertEquals(bare - 5, door.attack(hero));
         assertTrue(hero.getInventory().getAll().contains(VANTE));
     }
 
@@ -67,6 +67,36 @@ class VanteTest {
 
         assertEquals(20, hero.getDefense(), "Städrustningen sitter på");
         assertEquals(5, Martin.create().attack(hero), "vanten i ryggsäcken hjälper ändå");
+    }
+
+    @Test
+    void ullvantarnaGer50Hp() {
+        hero.warmUp();
+
+        assertEquals(50, hero.getMaxHp());
+        assertEquals(50, hero.getHp());
+    }
+
+    @Test
+    void hogreTaketGarAttHelaUppTill() {
+        hero.warmUp();
+        hero.takeDamage(30);
+
+        hero.heal(100);
+
+        assertEquals(50, hero.getHp());
+    }
+
+    @Test
+    void sparfilenGerInte10HpTill() {
+        hero.equip(VANTE);
+        hero.warmUp();
+        hero.takeDamage(8);
+
+        Hero loaded = GameEngine.heroFrom(GameEngine.stateOf(hero, GameEngine.newWorld(new Random(1))));
+
+        assertEquals(50, loaded.getMaxHp());
+        assertEquals(42, loaded.getHp());
     }
 
     @Test

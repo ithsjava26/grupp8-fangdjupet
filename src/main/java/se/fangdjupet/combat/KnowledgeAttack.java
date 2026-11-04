@@ -58,7 +58,7 @@ public class KnowledgeAttack implements AttackStrategy {
         return new KnowledgeAttack(name, 0, 0, 0, heal, null);
     }
 
-    // Krävs av AttackStrategy. Försvaret räknas inte – kunskap går rakt igenom. Bara vanten dämpar den.
+    // Krävs av AttackStrategy. Försvaret räknas inte – kunskap går rakt igenom. Bara ullvantarna dämpar den.
     @Override
     public int calculateDamage(Character attacker, Character target) {
         int damage = coin == null || coin.nextBoolean() ? power : lowPower;   // krona = det gick bra, klave = det gick dåligt

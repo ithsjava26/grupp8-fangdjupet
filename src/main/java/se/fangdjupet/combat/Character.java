@@ -5,7 +5,7 @@ package se.fangdjupet.combat;
 public abstract class Character {
     // private = bara klassen själv kommer åt fälten (inkapsling). Andra går via metoderna.
     private final String name;          // final = sätts en gång i konstruktorn, ändras aldrig
-    private final int maxHp;            // taket för hp
+    private int maxHp;                  // taket för hp – höjs bara av raiseMaxHp
     private int hp;                     // ändras i striden – därför inte final
     private AttackStrategy attack;      // karaktären HAR en strategi (komposition, inte arv)
 
@@ -23,7 +23,7 @@ public abstract class Character {
         this.attack = attack;
     }
 
-    // Getters: läsa fälten utifrån. Inga setters för name/maxHp – de ska inte ändras.
+    // Getters: läsa fälten utifrån. Inga setters för name/maxHp – maxHp ändras bara av raiseMaxHp.
     public String getName() {
         return name;
     }
@@ -56,6 +56,13 @@ public abstract class Character {
         hp += Math.min(amount, maxHp - hp);              // räknar aldrig hp + amount – ingen overflow
     }
 
+    // Höjer taket och fyller på lika mycket, så det nya livet går att använda direkt
+    protected void raiseMaxHp(int amount) {
+        amount = Math.max(0, amount);
+        maxHp += amount;
+        hp += amount;
+    }
+
     // Strategin som används just nu – t.ex. för att visa attackens name() i loggen
     public AttackStrategy getAttack() {
         return attack;
@@ -81,7 +88,7 @@ public abstract class Character {
 
     public abstract int getDefense();       // Hero: rustningen. Enemy: halva nivån.
 
-    // Kunskap går rakt igenom rustningen. Det här är det enda som tar udden av den (Hero: vanten).
+    // Kunskap går rakt igenom rustningen. Det här är det enda som tar udden av den (Hero: ullvantarna).
     public int getKnowledgeDefense() {
         return 0;
     }

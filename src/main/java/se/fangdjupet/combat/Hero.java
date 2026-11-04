@@ -105,9 +105,17 @@ public class Hero extends Character {
         return pickedUp.contains(range);
     }
 
-    // Vanten från Entrédörren: så mycket mindre tar Martins förklaringar. Den räknas från ryggsäcken,
-    // så den hjälper även när Städrustningen har tagit rustningens plats.
+    // Ullvantarna från Entrédörren: så mycket mindre tar Martins förklaringar. De räknas från ryggsäcken,
+    // så de hjälper även när Städrustningen har tagit rustningens plats.
     public static final int GLOVE_VS_KNOWLEDGE = 2;
+
+    // Så mycket mer hälsa ullvantarna ger: 40 blir 50
+    public static final int GLOVE_HP = 10;
+
+    // Bara när ullvantarna plockas upp. En sparfil har redan det höjda maxHp, så equip får inte göra det här.
+    public void warmUp() {
+        raiseMaxHp(GLOVE_HP);
+    }
 
     @Override
     public int getKnowledgeDefense() {
