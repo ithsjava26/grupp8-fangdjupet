@@ -12,10 +12,10 @@ pull requests och granskning.
 
 **Köra spelet:** kör `Main` i IntelliJ (gröna play-knappen), eller i terminalen:
 ```
-mvn -q compile
-java -cp target/classes se.fangdjupet.Main
+mvn -q package
+java -jar target/fangdjupet-1.0.jar
 ```
-Kräver JDK 27 (se *Kom igång* nedan). Testerna körs med `mvn test`.
+Kräver JDK 27 (se *Kom igång* nedan). Starta jar-filen från en terminal: spelet körs i konsolen, så ett dubbelklick visar inget fönster. `mvn package` kör också testerna, och de körs ensamma med `mvn test`.
 
 
 ## Kom igång
