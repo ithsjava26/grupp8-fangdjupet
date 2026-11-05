@@ -17,6 +17,31 @@ class AnimatedConsoleLoggerTest {
     private final AnimatedConsoleLogger logger = new AnimatedConsoleLogger(out::append, pauses::add);
 
     @Test
+    void winningInATerminalPlaysTheFilmAndGivesTheCursorBack() {
+        logger.redrawing().onEvent("Robert vinner Fångdjupet!");
+        String film = out.toString();
+        assertTrue(film.startsWith("\u001B[?25l"), "markören göms");
+        assertEquals(Ascii3d.FRAMES - 1, film.split("\u001B\\[" + Ascii3d.HEIGHT + "A", -1).length - 1);
+        assertTrue(film.contains("\u001B[?25h"), "markören kommer tillbaka");
+        assertTrue(film.endsWith("Robert vinner Fångdjupet!\n"), "raden står kvar efter filmen");
+    }
+
+    @Test
+    void winningWithoutATerminalShowsOnlyTheLastPicture() {
+        logger.onEvent("Robert vinner Fångdjupet!");
+        String film = out.toString();
+        assertTrue(film.contains(Ascii3d.film().getLast()));
+        assertFalse(film.contains("\u001B[" + Ascii3d.HEIGHT + "A"), "IntelliJ kan inte hoppa upp");
+        assertFalse(film.contains("\u001B[?25l"));
+    }
+
+    @Test
+    void winningAFightGetsNoTrophy() {
+        logger.redrawing().onEvent("Robert vinner mot Troll!");
+        assertFalse(out.toString().contains("\u001B[" + Ascii3d.HEIGHT + "A"));
+    }
+
+    @Test
     void shallNotPassGetsLightningAndBigWords() {
         logger.onEvent("Trollkarl: \"Thou shall not pass!\"");
         String film = out.toString();
