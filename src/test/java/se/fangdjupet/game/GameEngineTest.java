@@ -237,6 +237,18 @@ class GameEngineTest {
     }
 
     @Test
+    void bowAndStaffStayInTheEquipmentInTheLastRoom() {
+        Hero hero = GameEngine.newHero("Robert", 40);
+        World world = GameEngine.newWorld(new Random(1));
+        GameEngine.fastForward(hero, world, 3);   // pilbågen och staven från rummen före
+        hero.pickUpJavaBook();                    // i Lektionssalen hjälper bara kunskap
+
+        assertTrue(GameEngine.equipment(hero).contains("Ryggsäck: Svärd, Pilbåge, Trollstav"),
+                GameEngine.equipment(hero).toString());
+        assertEquals(List.of(AsciiArt.SWORD, AsciiArt.BOW, AsciiArt.STAFF), GameEngine.weaponArt(hero));
+    }
+
+    @Test
     void fastForwardFillsTheBackpackAgain() {
         Hero hero = GameEngine.newHero("Robert", 40);
         World world = GameEngine.newWorld(new Random(1));

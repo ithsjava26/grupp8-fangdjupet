@@ -304,12 +304,20 @@ public class GameEngine {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
         IO.print(ConsoleStyle.gearEnd());   // stänger panelen i en riktig konsol
-        // Bilder på allt hjälten bär: vapnet (t.ex. pilbågen), rustningen (t.ex. Städrustningen),
+        // Bilder på allt hjälten bär: vapnen (svärdet, pilbågen, staven), rustningen (t.ex. Städrustningen),
         // Java-boken och stressbollen
-        hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+        weaponArt(hero).forEach(art -> AsciiArt.show(output, art));
         hero.getArmor().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
         if (hero.hasJavaBook()) AsciiArt.show(output, AsciiArt.JAVA_BOOK);
         hero.getStressBall().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+    }
+
+    // Bilderna på vapnen i ryggsäcken, inte bara det i handen. Mot Martin hjälper bara kunskap,
+    // men hjälten bär pilbågen och staven ändå.
+    static List<String> weaponArt(Hero hero) {
+        return hero.getInventory().getAll(Weapon.class).stream()
+                .flatMap(weapon -> AsciiArt.forItem(weapon).stream())
+                .toList();
     }
 
     // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
