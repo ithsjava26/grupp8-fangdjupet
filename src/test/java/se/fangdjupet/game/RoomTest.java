@@ -270,4 +270,30 @@ class RoomTest {
         assertTrue(room.hasSomethingToFind(), "Leta i rummet blir gul");
         assertEquals("en kopp kaffe", room.getItems().getFirst().description());
     }
+
+    @Test
+    void aClearedRoomHasNoEnemiesInAnyWave() {
+        Room room = coffeeRoom(enemy("JavaFläcken")).thenTogether(enemy("Troll"), enemy("Trollkarl"));
+        room.markCleared();
+        assertFalse(room.hasLivingEnemy());
+        assertTrue(room.getEnemies().isEmpty());
+    }
+
+    @Test
+    void aClearedRoomOffersNoCoffeeOrBunAgain() {
+        se.fangdjupet.items.Potion coffee = new se.fangdjupet.items.Potion(ItemType.POTION, "en kopp kaffe", 30, 1);
+        Room room = coffeeRoom(enemy("JavaFläcken")).withRefreshment("Kaffe!", coffee).withReward("Bulle!", coffee);
+        room.markCleared();
+        assertTrue(room.takeRefreshment().isEmpty());
+        assertTrue(room.takeReward().isEmpty());
+    }
+
+    @Test
+    void aClearedRoomKeepsItsItems() {
+        Armor armor = new Armor(ItemType.SHIELD, "Städrustning", 20, 2);
+        Room room = new Room("Korridoren", "Lång.", enemy("StädHäxan"), List.of(armor)).withHiddenItem(armor);
+        room.markCleared();
+        assertEquals(List.of(armor), room.getItems());
+        assertEquals(List.of(armor), room.search());
+    }
 }

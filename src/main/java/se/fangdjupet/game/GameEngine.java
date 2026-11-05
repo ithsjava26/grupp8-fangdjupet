@@ -270,7 +270,8 @@ public class GameEngine {
         }
     }
 
-    // Går till det sparade rummet. Det hjälten redan har tas bort ur världen, så Städrustningen inte går att
+    // Går till det sparade rummet. Rummen före är avklarade, så de rensas: världen byggs ju om från början.
+    // Det sparade rummet börjar om. Det hjälten redan har tas bort ur världen, så Städrustningen inte går att
     // hitta två gånger, och det hen lämnade ligger kvar i rummen. Svärdet finns alltid i ryggsäcken, så en
     // sparning utan föremål är en gammal sparfil: då hämtas vapnen från rummen före (fastForward).
     static boolean resume(Hero hero, World world, GameState state) {
@@ -281,16 +282,18 @@ public class GameEngine {
             world.getRooms().forEach(room -> room.forget(item));
         }
         while (world.getCurrentRoomIndex() < state.nextRoom()) {
+            world.getCurrentRoom().markCleared();
             if (!world.moveForward()) return false;
         }
         return true;
     }
 
     // En gammal sparfil, utan föremål: går fram till det sparade rummet. Rummen före är redan avklarade:
-    // fienderna där hoppas över, men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
+    // de rensas, men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
     static boolean fastForward(Hero hero, World world, int roomIndex) {
         while (world.getCurrentRoomIndex() < roomIndex) {
             pickUpAll(hero, world.getCurrentRoom());
+            world.getCurrentRoom().markCleared();
             if (!world.moveForward()) return false;
         }
         return true;

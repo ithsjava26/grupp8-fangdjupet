@@ -377,6 +377,53 @@ class GameEngineTest {
     }
 
     @Test
+    void theRoomsBeforeTheSaveStayCleared() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        for (Room room : world.getRooms().subList(0, 3)) {
+            assertFalse(room.hasLivingEnemy(), room.getName() + " ska vara rensat");
+        }
+        assertEquals('x', GameEngine.mapSymbol(world, 1));
+        assertEquals('x', GameEngine.mapSymbol(world, 2));
+    }
+
+    @Test
+    void theSavedRoomStartsOver() {
+        GameState state = new GameState("Robert", 40, 25, 2, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertEquals(List.of("StädHäxan"), world.getCurrentRoom().getEnemies().stream().map(Enemy::getName).toList());
+    }
+
+    @Test
+    void theEntranceStaysLockedAfterALoad() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertTrue(world.isEntranceLocked());
+        assertEquals('#', GameEngine.mapSymbol(world, 0));
+    }
+
+    @Test
+    void whatWasHiddenInAClearedRoomCanStillBeFound() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertEquals(List.of(WorldBuilder.STADRUSTNING),
+                world.getRooms().get(2).search().stream().map(se.fangdjupet.items.Item::description).toList());
+    }
+
+    @Test
+    void anOldSaveAlsoClearsTheRoomsBefore() {
+        GameState state = new GameState("Robert", 40, 25, 2);
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertFalse(world.getRooms().get(1).hasLivingEnemy());
+        assertTrue(world.getCurrentRoom().hasLivingEnemy(), "StädHäxan väntar – rummet börjar om");
+    }
+
+    @Test
     void anOldSaveStillGetsTheWeaponsFromTheRooms() {
         GameState state = new GameState("Robert", 40, 25, 2);
         Hero hero = GameEngine.heroFrom(state);
