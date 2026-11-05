@@ -171,6 +171,67 @@ class HeroTest {
         assertTrue(hero.holds(se.fangdjupet.items.WeaponRange.RANGED));
     }
 
+    // ── Ryggsäcken: allt hjälten plockar upp hamnar i hens Inventory ──
+
+    private static final Weapon SWORD = new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Svärd", 1, 1);
+    private static final Weapon BOW = new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 4, 1);
+
+    @Test
+    void aNewHeroHasAnEmptyBackpack() {
+        assertTrue(hero().getInventory().isEmpty());
+    }
+
+    @Test
+    void aReplacedWeaponStaysInTheBackpack() {
+        Hero h = hero();
+        h.equip(SWORD);
+        h.equip(BOW);
+        assertEquals(BOW, h.getWeapon().orElseThrow());
+        assertEquals(java.util.List.of(SWORD, BOW), h.getInventory().getAll());
+    }
+
+    @Test
+    void theSameWeaponIsOnlyInTheBackpackOnce() {
+        Hero h = hero();
+        h.equip(BOW);
+        h.equip(BOW);
+        assertEquals(1, h.getInventory().size());
+    }
+
+    @Test
+    void armorGoesIntoTheBackpack() {
+        Hero h = hero();
+        Armor armor = new Armor(ItemType.SHIELD, "Sköld", 2, 1);
+        h.equip(armor);
+        assertEquals(java.util.List.of(armor), h.getInventory().getAll());
+    }
+
+    @Test
+    void aFullBackpackGrowsSoEverythingTheHeroCarriesIsThere() {
+        Hero h = hero();
+        h.getInventory().setCapacity(1);
+        h.equip(SWORD);
+        h.equip(BOW);
+        assertEquals(BOW, h.getWeapon().orElseThrow());
+        assertEquals(java.util.List.of(SWORD, BOW), h.getInventory().getAll());
+    }
+
+    @Test
+    void takingOffArmorWithNullLeavesTheBackpackAlone() {
+        Hero h = hero();
+        h.equip((Armor) null);
+        assertTrue(h.getInventory().isEmpty());
+    }
+
+    @Test
+    void aThrownStressBallLeavesTheBackpack() {
+        Hero h = hero();
+        h.pickUp(new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, "Stressboll", 6, 3));
+        assertEquals(1, h.getInventory().size());
+        h.throwAwayStressBall();
+        assertTrue(h.getInventory().isEmpty());
+    }
+
     @Test
     void aSpearHelpsBothFistsAndThrows() {
         Hero hero = new Hero("Robert", 40, new MeleeAttack(7));

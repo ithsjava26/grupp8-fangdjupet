@@ -28,6 +28,7 @@ public final class AttackMenu {
             List<AttackStrategy> knowledge = new ArrayList<>(Martin.heroChoices());
             knowledge.add(hero.getJavaBookAttack());   // 5. Citera från Java-boken, kapitel 18 / 20 ...
             if (hero.getStressBall().isPresent()) knowledge.add(StressBallThrow.THROW);   // 6. Kasta stressbollen
+            if (hero.getBrasklapp().isPresent()) knowledge.add(BrasklappAttack.DROP_TABLE);   // Fridas brasklapp, en gång
             if (hero.hasUsbStick()) knowledge.add(UsbVirusAttack.PLUG_IN);                 // 6/7. Smyg in USB-minnet (ett försök)
             return List.copyOf(knowledge);
         }
@@ -109,6 +110,7 @@ public final class AttackMenu {
             case JavaBookAttack b -> "  (" + JavaBookAttack.POWER + " i skada, " + JavaBookAttack.SLIP_PERCENT + " % risk att du slinter på sidan)";
             case UsbVirusAttack u -> "  (" + UsbVirusAttack.SUCCESS_PERCENT + " % chans: viruset tar över datorn och du vinner direkt – annars tar Martin USB-minnet)";
             case LavaLampSmash s -> "  (Martin får +" + Martin.LAVA_LAMP_HEAL + " hp varje runda så länge den står – ingen skada, det tar din tur)";
+            case BrasklappAttack b -> "  (" + BrasklappAttack.POWER + " i skada, missar aldrig – men bara en gång)";
             case StressBallThrow t -> "  (" + StressBallThrow.POWER + " i skada om den träffar – sedan är bollen borta: ingen +" + WorldBuilder.STRESS_BALL_HEAL + " hp per runda)";
             default -> "";
         };

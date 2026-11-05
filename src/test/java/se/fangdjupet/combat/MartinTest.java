@@ -31,6 +31,53 @@ class MartinTest {
     }
 
     @Test
+    void martinGetsAngrierTheMoreDamageHeTakes() {
+        Boss martin = Martin.create();
+        Hero h = new Hero("Robert", 40, new MeleeAttack(10));
+
+        martin.takeDamage(50);
+        assertEquals("Utterly explained", martin.getAttack().name());
+        assertEquals(10, martin.attack(h));
+
+        martin.takeDamage(20);
+        assertEquals("Persistently explained", martin.getAttack().name());
+        assertEquals(12, martin.attack(h));
+
+        martin.takeDamage(15);
+        assertEquals("Angrily explained", martin.getAttack().name());
+        assertEquals(15, martin.attack(h));
+    }
+
+    @Test
+    void aHardHitCanSkipAStep() {
+        Boss martin = Martin.create();
+
+        martin.takeDamage(90);
+
+        assertEquals("Angrily explained", martin.getAttack().name());
+    }
+
+    @Test
+    void theLavaLampDoesNotCalmHimDown() {
+        Boss martin = Martin.create();
+        martin.takeDamage(70);
+
+        martin.heal(20);
+
+        assertEquals("Persistently explained", martin.getAttack().name());
+    }
+
+    @Test
+    void anEnragedMartinStillGetsAngrier() {
+        Boss martin = Martin.create();
+        Martin.enrage(martin);
+
+        martin.takeDamage(85);
+
+        assertEquals("Angrily explained", martin.getAttack().name());
+    }
+
+    @Test
     void phaseTwoHitsHarderThanPhaseOne() {
         Boss martin = Martin.create();
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
@@ -60,7 +107,7 @@ class MartinTest {
 
     @Test
     void theJavaBookAloneIsNotEnoughAgainst100Hp() {
-        // Utan slump: boken (14) behöver 8 citat mot 100 hp, och Martin hinner förklara 7 + 7 + 7 + 15 + 15 = 51 > 40
+        // Utan slump: boken (14) behöver 8 citat mot 100 hp, och Martin hinner förklara 7 + 7 + 7 + 10 + 10 = 51 > 40
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         assertNotSame(h, new Battle(message -> { }, Hero::getJavaBookAttack).fight(h, Martin.create()));
@@ -69,7 +116,7 @@ class MartinTest {
     @Test
     void theBookTheStressBallAndScreenSharingBeatMartin() {
         // Utan slump: boken, stressbollen (+6 varje runda) och Dela skärm (+12) när hp är 15 eller lägre.
-        // Bollen och skärmen läker 18 – lite mer än Martins 15 i fas 2 – så hjälten hinner citera klart.
+        // Bollen och skärmen läker 18 – mer än Martins 15 som hårdast – så hjälten hinner citera klart.
         Hero h = new Hero("Robert", 40, new MeleeAttack(10));
         h.pickUpJavaBook();
         h.pickUp(new se.fangdjupet.items.StressBall(se.fangdjupet.items.ItemType.STRESSBALL, "Stressboll", 6, 3));
@@ -107,7 +154,7 @@ class MartinTest {
         assertTrue(martin.isEnraged());
         assertEquals(8, martin.getAttack().calculateDamage(martin, dummy));        // fas 1: 8 i stället för 7
         martin.takeDamage(50);                                                      // halva livet: fas 2
-        assertEquals(15, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: kvar på 15
+        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));       // fas 2: som vanligt
     }
 
     @Test
@@ -131,7 +178,7 @@ class MartinTest {
         Boss martin = Martin.create();
         martin.takeDamage(60);
         Martin.enrage(martin);
-        assertEquals(15, martin.getAttack().calculateDamage(martin, dummy));
+        assertEquals(10, martin.getAttack().calculateDamage(martin, dummy));
     }
 
     @Test

@@ -134,6 +134,12 @@ public final class RetroSpeaker implements Speaker {
                 tone("sine", 55, t, 0.25, 0.8).from(180, 0.1).sfx();
                 noise(t, 0.2, 0.5, 'l', 400, 0, 1).crushed();
             }
+            case "thunder" -> {   // trollkarlen: blixten, åskan som mullrar och staven som dunsar i golvet
+                noise(t, 0.12, 0.8, 'h', 5000, 0, 1).crushed();
+                noise(t + 0.05, 1.1, 0.7, 'l', 420, 60, 1).crushed();
+                tone("sine", 42, t + 0.9, 0.7, 0.95).from(130, 0.12).sfx();
+                noise(t + 0.9, 0.45, 0.6, 'l', 800, 0, 1).crushed();
+            }
             case "zap" -> {    // trollkarlen: elektriskt surr
                 tone("sawtooth", 2000, t, 0.2, 0.22).from(200, 0.15).vibrato(40, 200).crushed();
                 tone("square", 2600, t + 0.05, 0.12, 0.06).sfx();

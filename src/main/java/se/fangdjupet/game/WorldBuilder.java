@@ -19,7 +19,9 @@ public class WorldBuilder {
 
     // Rustningen som ligger gömd i städskrubben – namnet används också för bilden i AsciiArt
     public static final String STADRUSTNING = "Städrustning";
+    public static final String ULLVANTAR = "Ullvantar";
     public static final String STRESSBOLL = "Stressboll";
+    public static final String SHALL_NOT_PASS = "Thou shall not pass!";   // trollkarlens replik: blixt och åska när han säger den
     public static final int STRESS_BALL_HEAL = 6;   // stressbollen i fickan: så mycket hp ger den varje runda mot Martin
 
     public World build(
@@ -38,7 +40,9 @@ public class WorldBuilder {
                 "Skoldörren",
                 "Du står utanför skolan.",
                 doorEnemy,
-                List.of()
+                // Hänger på Entrédörren: man kan ta dem före striden. Går hjälten in utan dem är de borta,
+                // för dörren slår igen bakom hen.
+                List.of(new Armor(ItemType.GLOVE, ULLVANTAR, 5, 1))
         );
 
         // De riktiga fienderna: trollet och trollkarlen gömmer sig i kafferummet och
@@ -46,7 +50,7 @@ public class WorldBuilder {
         // Trollet slår hårt (9 + nivån), trollkarlen tål två pilar och trollar 7 rakt igenom rustningen
         Enemy troll = new Enemy("Troll", 12, new MeleeAttack(9), 2);
         Enemy wizard = new Enemy("Trollkarl", 24, new MagicAttack(7), 2)
-                .withLine("Thou shall not pass!");
+                .withLine(SHALL_NOT_PASS);
         Room coffeeRoom = new Room(
                 "Kafferummet",
                 "Det luktar kaffe.",

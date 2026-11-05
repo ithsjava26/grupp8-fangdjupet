@@ -147,6 +147,14 @@ public class Room {
         return getEnemy() != null;
     }
 
+    // Rummet är avklarat i en sparning: fienderna kommer inte tillbaka, och kaffet och kanelbullen är redan
+    // erbjudna. Föremål som ligger kvar eller är gömda finns kvar. Utan strid dyker Frida inte heller upp igen.
+    public void markCleared() {
+        waves.clear();
+        refreshment = null;
+        reward = null;
+    }
+
     // Ställer Frida i rummet, t.ex. new Room(...).withFrida(Frida.create())
     public Room withFrida(Frida frida) {
         this.frida = frida;
@@ -162,6 +170,13 @@ public class Room {
     public void leaveItem(Item item) {
         if (item == null) throw new IllegalArgumentException("item must not be null");
         items.add(item);
+    }
+
+    // Hjälten har redan föremålet från en sparning, så det ska varken ligga här eller vara gömt här.
+    // Vi jämför namnet: bonusen slumpas när världen byggs, så det nya föremålet är inte lika med det sparade.
+    public void forget(Item item) {
+        items.removeIf(here -> here.description().equals(item.description()));
+        hidden.removeIf(here -> here.description().equals(item.description()));
     }
 
     // Tar bort föremålet från rummet – true om det fanns där

@@ -19,6 +19,9 @@ public class Main {
         // filmer på en rad – om inte animationen är avstängd (-Dfangdjupet.animation=av, som webben gör)
         AnimatedConsoleLogger animated = AnimatedConsoleLogger.enabled() ? new AnimatedConsoleLogger() : null;
         se.fangdjupet.game.ConsoleStyle.enable(animated != null);   // tydligare grafik med färger, bara i en riktig konsol
+        // Webbens färger om terminalen klarar dem, annars de 16 vanliga (-Dfangdjupet.farger=24 eller 16 bestämmer)
+        se.fangdjupet.game.ConsoleStyle.trueColor(animated != null && se.fangdjupet.game.ConsoleStyle.supportsTrueColor(
+                System::getenv, System.getProperty("fangdjupet.farger")));
         GameEventListener console = animated != null ? animated : new ConsoleEventLogger();
         AsciiArt.show(console, AsciiArt.TITLE);
 
@@ -35,7 +38,7 @@ public class Main {
             eventBus.register(sound);
             game.onInput(sound::keyPressed);
         });
-        if (animated != null) animated.followAttack(game::heroAttack);   // pilen och magin ser olika ut
+        if (animated != null) animated.followAttack(game::heroAttack).followHero(game::heroName);   // pilen, magin och stridspanelen
         eventBus.register(console);
         eventBus.register(new FileLogger(Path.of("fangdjupet.log")));
         game.run();

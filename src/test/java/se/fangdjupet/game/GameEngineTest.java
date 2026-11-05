@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import se.fangdjupet.combat.Enemy;
 import se.fangdjupet.combat.Hero;
+import se.fangdjupet.combat.MagicAttack;
 import se.fangdjupet.combat.MeleeAttack;
 import se.fangdjupet.items.Armor;
 import se.fangdjupet.items.ItemType;
@@ -227,6 +228,37 @@ class GameEngineTest {
     }
 
     @Test
+    void equipmentShowsTheBackpack() {
+        Hero robert = robert();
+        robert.equip(new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Svärd", 1, 1));
+        GameEngine.pickUpAll(robert, new Room("Kafferummet", "Det luktar kaffe.", enemy("JavaFläcken"), List.of(bow)));
+        assertTrue(GameEngine.equipment(robert).contains("Ryggsäck: Svärd, Pilbåge"),
+                GameEngine.equipment(robert).toString());
+    }
+
+    @Test
+    void bowAndStaffStayInTheEquipmentInTheLastRoom() {
+        Hero hero = GameEngine.newHero("Robert", 40);
+        World world = GameEngine.newWorld(new Random(1));
+        GameEngine.fastForward(hero, world, 3);   // pilbågen och staven från rummen före
+        hero.pickUpJavaBook();                    // i Lektionssalen hjälper bara kunskap
+
+        assertTrue(GameEngine.equipment(hero).contains("Ryggsäck: Svärd, Pilbåge, Trollstav"),
+                GameEngine.equipment(hero).toString());
+        assertEquals(List.of(AsciiArt.SWORD, AsciiArt.BOW, AsciiArt.STAFF), GameEngine.weaponArt(hero));
+    }
+
+    @Test
+    void fastForwardFillsTheBackpackAgain() {
+        Hero hero = GameEngine.newHero("Robert", 40);
+        World world = GameEngine.newWorld(new Random(1));
+        GameEngine.fastForward(hero, world, 2);
+        assertEquals(hero.getWeapon().orElseThrow().description(),
+                hero.getInventory().getAll().getLast().description());
+        assertTrue(hero.getInventory().size() >= 2, hero.getInventory().getAll().toString());
+    }
+
+    @Test
     void equipmentShowsTheJavaBook() {
         Hero robert = robert();
         robert.pickUpJavaBook();
@@ -293,6 +325,142 @@ class GameEngineTest {
         assertTrue(GameEngine.fastForward(hero, loadedWorld, loaded.nextRoom()));
         assertEquals(33, hero.getHp());
         assertEquals("Korridoren och städskrubben", loadedWorld.getCurrentRoom().getName());
+    }
+
+    // ── Ryggsäcken i sparfilen ──
+
+    private static final Weapon SAVED_SWORD = new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Svärd", 1, 1);
+    private static final Weapon SAVED_BOW = new Weapon(ItemType.BOW, WeaponRange.RANGED, "Pilbåge", 9, 1);
+    private static final Armor SAVED_ARMOR = new Armor(ItemType.SHIELD, WorldBuilder.STADRUSTNING, 20, 2);
+    private static final se.fangdjupet.items.StressBall SAVED_BALL =
+            new se.fangdjupet.items.StressBall(ItemType.STRESSBALL, WorldBuilder.STRESSBOLL, 6, 3);
+
+    private GameState saveWith(se.fangdjupet.items.Item... items) {
+        return new GameState("Robert", 40, 25, 2, List.of(items));
+    }
+
+    @Test
+    void theSaveHoldsTheBackpack() {
+        Hero robert = robert();
+        robert.equip(SAVED_BOW);
+        robert.equip(SAVED_ARMOR);
+        robert.pickUp(SAVED_BALL);
+        assertEquals(List.of(SAVED_BOW, SAVED_ARMOR, SAVED_BALL),
+                GameEngine.stateOf(robert, GameEngine.newWorld(new Random(1))).items());
+    }
+
+    @Test
+    void aLoadedHeroGetsEverythingBack() {
+        Hero hero = GameEngine.heroFrom(saveWith(SAVED_SWORD, SAVED_BOW, SAVED_ARMOR, SAVED_BALL));
+        assertEquals(SAVED_BOW, hero.getWeapon().orElseThrow());
+        assertEquals(SAVED_ARMOR, hero.getArmor().orElseThrow());
+        assertEquals(SAVED_BALL, hero.getStressBall().orElseThrow());
+        assertEquals(List.of(SAVED_SWORD, SAVED_BOW, SAVED_ARMOR, SAVED_BALL), hero.getInventory().getAll());
+        assertEquals(25, hero.getHp());
+    }
+
+    @Test
+    void aLoadedHeroKeepsTheAttacksOfTheOldWeapons() {
+        Weapon staff = new Weapon(ItemType.STAFF, WeaponRange.MAGIC, "Trollstav", 2, 1);
+        Hero hero = GameEngine.heroFrom(saveWith(SAVED_SWORD, SAVED_BOW, staff));
+        assertEquals(staff, hero.getWeapon().orElseThrow());
+        assertTrue(hero.hasPickedUp(WeaponRange.RANGED));
+        assertTrue(hero.getAttack() instanceof MagicAttack);
+    }
+
+    @Test
+    void whatTheHeroHasIsGoneFromTheWorld() {
+        GameState state = saveWith(SAVED_SWORD, SAVED_BOW, SAVED_ARMOR);
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertEquals("Korridoren och städskrubben", world.getCurrentRoom().getName());
+        assertTrue(world.getRooms().get(1).getItems().isEmpty(), "Pilbågen ska inte ligga kvar");
+        assertTrue(world.getCurrentRoom().search().isEmpty(), "Städrustningen ska inte gå att hitta igen");
+    }
+
+    @Test
+    void whatTheHeroLeftBehindStaysInTheRoom() {
+        GameState state = saveWith(SAVED_SWORD);
+        Hero hero = GameEngine.heroFrom(state);
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(hero, world, state));
+        assertEquals(1, world.getRooms().get(1).getItems().size());
+        assertEquals(SAVED_SWORD, hero.getWeapon().orElseThrow());
+    }
+
+    @Test
+    void theRoomsBeforeTheSaveStayCleared() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        for (Room room : world.getRooms().subList(0, 3)) {
+            assertFalse(room.hasLivingEnemy(), room.getName() + " ska vara rensat");
+        }
+        assertEquals('x', GameEngine.mapSymbol(world, 1));
+        assertEquals('x', GameEngine.mapSymbol(world, 2));
+    }
+
+    @Test
+    void theSavedRoomStartsOver() {
+        GameState state = new GameState("Robert", 40, 25, 2, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertEquals(List.of("StädHäxan"), world.getCurrentRoom().getEnemies().stream().map(Enemy::getName).toList());
+    }
+
+    @Test
+    void theEntranceStaysLockedAfterALoad() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertTrue(world.isEntranceLocked());
+        assertEquals('#', GameEngine.mapSymbol(world, 0));
+    }
+
+    @Test
+    void whatWasHiddenInAClearedRoomCanStillBeFound() {
+        GameState state = new GameState("Robert", 40, 25, 3, List.of(SAVED_SWORD));
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertEquals(List.of(WorldBuilder.STADRUSTNING),
+                world.getRooms().get(2).search().stream().map(se.fangdjupet.items.Item::description).toList());
+    }
+
+    @Test
+    void anOldSaveAlsoClearsTheRoomsBefore() {
+        GameState state = new GameState("Robert", 40, 25, 2);
+        World world = GameEngine.newWorld(new Random(1));
+        assertTrue(GameEngine.resume(GameEngine.heroFrom(state), world, state));
+        assertFalse(world.getRooms().get(1).hasLivingEnemy());
+        assertTrue(world.getCurrentRoom().hasLivingEnemy(), "StädHäxan väntar – rummet börjar om");
+    }
+
+    @Test
+    void anOldSaveStillGetsTheWeaponsFromTheRooms() {
+        GameState state = new GameState("Robert", 40, 25, 2);
+        Hero hero = GameEngine.heroFrom(state);
+        assertTrue(GameEngine.resume(hero, GameEngine.newWorld(new Random(1)), state));
+        assertEquals("Pilbåge", hero.getWeapon().orElseThrow().description());
+    }
+
+    @Test
+    void resumeToARoomThatDoesNotExistFails() {
+        GameState state = new GameState("Robert", 40, 25, 99, List.of(SAVED_SWORD));
+        assertFalse(GameEngine.resume(GameEngine.heroFrom(state), GameEngine.newWorld(new Random(1)), state));
+    }
+
+    @Test
+    void theBackpackSurvivesTheSaveFile(@TempDir Path dir) throws IOException {
+        Hero robert = GameEngine.newHero("Robert", 40);
+        robert.equip(SAVED_BOW);
+        robert.equip(SAVED_ARMOR);
+        robert.pickUp(SAVED_BALL);
+        GameSaveFileHandler saves = new GameSaveFileHandler(dir);
+        saves.save(GameEngine.stateOf(robert, GameEngine.newWorld(new Random(1))), GameEngine.SAVE_SLOT);
+
+        Hero hero = GameEngine.heroFrom(saves.load(GameEngine.SAVE_SLOT));
+        assertEquals(robert.getInventory().getAll(), hero.getInventory().getAll());
+        assertEquals(GameEngine.equipment(robert), GameEngine.equipment(hero));
     }
 
     // ── Leta i rummet (spelmenyn 5) och Städrustningen ──

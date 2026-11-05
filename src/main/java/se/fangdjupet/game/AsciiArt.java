@@ -136,19 +136,41 @@ public final class AsciiArt {
                 '--'
             """;
 
+    // Trollet och trollkarlen är lika stora som StädHäxan. Bilderna ändrar inget i striden.
     public static final String TROLL = """
-                ,   ,
-               (o . o)
-               /( - )\\      TROLL
-                /   \\
+                            ,,,,,,,
+                          .'       '.
+                      _  /  O     O  \\  _
+                     ( \\|      ^      |/ )
+                      \\_|   \\_____/   |_/
+                        \\   V V V V  /         TROLL
+                 .---.   '._______.'
+                /#####\\ ___/     \\___          tung klubba,
+                |#####|/             \\         tjock skalle
+                \\#####/  ___   ___    \\
+                 |###|__/   \\ /   \\    \\
+                  |#|   |    |    |\\___)
+                  |#|   |____|____|
+                        /    |    \\
+                       (_____|_____)
             """;
 
     public static final String WIZARD = """
-                  /\\
-                 /**\\
-                (o  o)      TROLLKARL
-                /|~~|\\      "Thou shall
-                 /  \\        not pass!"
+                            /\\
+                           /**\\
+                          / ** \\
+                         /  **  \\       *
+                     ___/________\\___  /|\\
+                         ( o  o )       |
+                          \\ ~~ /        |      TROLLKARL
+                          /||||\\        |      "Thou shall
+                       __/ |||| \\______/|       not pass!"
+                      /    ||||         |
+                     /  /|      |       |
+                    (__/ |      |       |
+                         |  **  |       |
+                        /        \\      |
+                       /__________\\     |
             """;
 
     // StädHäxan: elak, med häxhatt, långt hår, arga ögonbryn och huggtänder. Svinto i ena handen, sprayflaskan i den andra.
@@ -219,6 +241,23 @@ public final class AsciiArt {
             """;
 
     // Städrustningen som ligger gömd i städskrubben: gummiförkläde, hink som hjälm och moppen
+    public static final String BRASKLAPP = """
+                 ______________________
+                |  boolean isAlive;    |    BRASKLAPP
+                |  DROP TABLE martin;  |    25 i skada,
+                |______________________|    en enda gang
+            """;
+
+    public static final String ULLVANTAR = """
+                  .---.
+                 /     \\__        ULLVANTAR
+                |       |  \\      +5 i forsvar, +10 hp
+                |       |__/
+                |       |          kvarglomda pa
+                '-------'          Entredorren
+                |_______|
+            """;
+
     public static final String CLEANING_ARMOR = """
                  _______
                 |_HINK__|
@@ -341,7 +380,9 @@ public final class AsciiArt {
             Map.entry("Pilbåge", BOW),
             Map.entry("Trollstav", STAFF),
             Map.entry(WorldBuilder.STRESSBOLL, STRESS_BALL),
-            Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR));
+            Map.entry(WorldBuilder.STADRUSTNING, CLEANING_ARMOR),
+            Map.entry(WorldBuilder.ULLVANTAR, ULLVANTAR),
+            Map.entry("Brasklapp", BRASKLAPP));
 
     // Bilden för en fiende, ett föremål eller en person, eller tomt om den saknar bild:
     //   AsciiArt.forName(enemy.getName()).ifPresent(art -> AsciiArt.show(output, art));
@@ -358,6 +399,8 @@ public final class AsciiArt {
             ItemType.STAFF, STAFF,
             ItemType.SHIELD, SHIELD,
             ItemType.HELMET, HELMET,
+            ItemType.GLOVE, ULLVANTAR,
+            ItemType.NOTE, BRASKLAPP,
             ItemType.POTION, POTION,
             ItemType.STRESSBALL, STRESS_BALL);
 

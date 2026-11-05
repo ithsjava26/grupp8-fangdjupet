@@ -199,6 +199,7 @@ class SoundListenerTest {
                 {"Du låter Pilbåge ligga kvar. Den finns kvar om du kommer tillbaka.", "drop"},
                 {"Visa hjältens utrustning.", "bag"},
                 {"Tack för att du spelade!", "bye"},
+                {"Trollkarl: \"Thou shall not pass!\"", "thunder"},
                 {"Frida: \"Du ser trött ut!\"", "talk"},
                 {"Lektor Martin: \"Let me explain Hello World to you...\"", "blah"},
         };

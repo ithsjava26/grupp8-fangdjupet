@@ -9,8 +9,28 @@ class BossTest {
     // Två attacker som går att känna igen: fas 1 gör 3, fas 2 gör 9
     private final AttackStrategy phaseOne = (a, t) -> 3;
     private final AttackStrategy phaseTwo = (a, t) -> 9;
+    private final AttackStrategy rage = (a, t) -> 12;
 
     // En boss med 80 hp – halva livet är 40
+    @Test
+    void rageMustComeAfterPhaseTwoAndHighestHpFirst() {
+        assertThrows(IllegalArgumentException.class, () -> boss().withRage(40, rage));
+        assertThrows(IllegalArgumentException.class, () -> boss().withRage(0, rage));
+        assertThrows(IllegalArgumentException.class, () -> boss().withRage(20, null));
+        assertThrows(IllegalArgumentException.class, () -> boss().withRage(10, rage).withRage(20, rage));
+    }
+
+    @Test
+    void rageReplacesPhaseTwoOnlyAtItsHp() {
+        Boss b = boss().withRage(20, rage);
+
+        b.takeDamage(40);
+        assertSame(phaseTwo, b.getAttack());
+
+        b.takeDamage(20);
+        assertSame(rage, b.getAttack());
+    }
+
     private Boss boss() {
         return new Boss("Martin", 80, phaseOne, phaseTwo, 5);
     }

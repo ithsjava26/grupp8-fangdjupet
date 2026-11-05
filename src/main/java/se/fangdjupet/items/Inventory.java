@@ -55,6 +55,14 @@ public class Inventory {
     }
 
     public void setCapacity(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("Capacity must be positive");
+        }
+
+        if (capacity < items.size()) {
+            throw new IllegalArgumentException("Capacity cannot be less than the number of items");
+        }
+
         this.capacity = capacity;
     }
 

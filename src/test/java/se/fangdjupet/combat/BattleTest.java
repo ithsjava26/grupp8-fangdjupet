@@ -695,6 +695,8 @@ class BattleTest {
         new Battle(log::add).withAttackArt().fight(hero(500, 5), Martin.create());
         assertEquals(1, log.stream().filter(AttackArt.MARTIN_EXPLAINS.stripTrailing()::equals).count());
         assertEquals(1, log.stream().filter(AttackArt.MARTIN_UTTERLY.stripTrailing()::equals).count());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_PERSISTENTLY.stripTrailing()::equals).count());
+        assertEquals(1, log.stream().filter(AttackArt.MARTIN_ANGRILY.stripTrailing()::equals).count());
     }
 
     @Test

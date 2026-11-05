@@ -3,6 +3,7 @@ package se.fangdjupet.game;
 import se.fangdjupet.combat.*;
 
 import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Brasklapp;
 import se.fangdjupet.items.Item;
 import se.fangdjupet.items.ItemType;
 import se.fangdjupet.items.Potion;
@@ -57,6 +58,11 @@ public class GameEngine {
     }
 
     // Hjältens attack just nu, om ett äventyr pågår – ljudet låter olika för magi, avstånd och närstrid
+    // Hjältens namn, tomt innan äventyret har börjat (stridspanelen i konsolen)
+    public Optional<String> heroName() {
+        return Optional.ofNullable(hero).map(Hero::getName);
+    }
+
     public Optional<AttackStrategy> heroAttack() {
         return Optional.ofNullable(hero).map(Hero::getAttack);
     }
@@ -79,9 +85,16 @@ public class GameEngine {
     }
 
     private void showMenu() {
-        if (world != null) IO.println(ConsoleStyle.map(roomMap(world)));   // kartan över rummen syns hela tiden i spelet
-        else IO.println(AsciiArt.SCHOOL.stripTrailing()); // skolbyggnaden, bara ovanför huvudmenyn
-        IO.println(ConsoleStyle.menu(menu(world == null ? null : world.getCurrentRoom())));   // färger bara i en riktig konsol
+        if (world != null) {
+            if (ConsoleStyle.enabled()) {   // statusraden: rummet, hp och attacken, bara i en riktig konsol
+                IO.println(ConsoleStyle.status(world.getCurrentRoom().getName(), HpBar.status(hero, 10),
+                        AttackMenu.label(hero.getAttack())));
+            }
+            IO.println(ConsoleStyle.panel(ConsoleStyle.map(roomMap(world))));   // kartan syns hela tiden i spelet
+        } else {
+            IO.println(AsciiArt.SCHOOL.stripTrailing());   // skolbyggnaden, bara ovanför huvudmenyn
+        }
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(menu(world == null ? null : world.getCurrentRoom()))));   // färger bara i en riktig konsol
         IO.print(ConsoleStyle.prompt("Välj ett alternativ: "));
     }
 
@@ -205,7 +218,7 @@ public class GameEngine {
 
         Hero loadedHero = heroFrom(state);
         World loadedWorld = newWorld(random);
-        if (!loadedHero.isAlive() || !fastForward(loadedHero, loadedWorld, state.nextRoom())) {
+        if (!loadedHero.isAlive() || !resume(loadedHero, loadedWorld, state)) {
             output.onEvent("Sparfilen går inte att använda: hjälten är död eller rummet finns inte.");
             return;
         }
@@ -217,7 +230,7 @@ public class GameEngine {
         showCurrentRoom();
     }
 
-    // Spelmenyn 4: sparar hjältens namn, hp och rummet på sparplats 1 (en gammal sparning skrivs över)
+    // Spelmenyn 4: sparar hjältens namn, hp, rummet och ryggsäcken på sparplats 1 (en gammal sparning skrivs över)
     private void saveAdventure() {
         Room room = world.getRooms().get(world.getFurthestRoomIndex());   // där hjälten fortsätter
         try {
@@ -229,40 +242,82 @@ public class GameEngine {
         }
     }
 
-    // Det som sparas: namn, maxHp, hp och numret på rummet längst fram som hjälten har nått (0 = Skoldörren).
+    // Det som sparas: namn, maxHp, hp, ryggsäcken och numret på rummet längst fram som hjälten har nått (0 = Skoldörren).
     // Har hjälten gått tillbaka till Kafferummet från Korridoren fortsätter hen ändå i Korridoren –
     // rummen före är rensade, annars hade hjälten inte kommit dit.
     static GameState stateOf(Hero hero, World world) {
-        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex());
+        return new GameState(hero.getName(), hero.getMaxHp(), hero.getHp(), world.getFurthestRoomIndex(),
+                hero.getInventory().getAll());
     }
 
-    // Hjälten från en sparning: svärdet som i ett nytt äventyr, och det hp hen hade när det sparades
+    // Hjälten från en sparning: svärdet som i ett nytt äventyr, det hp hen hade och allt i ryggsäcken
     static Hero heroFrom(GameState state) {
         Hero hero = newHero(state.heroName(), state.heroMaxHp());
         hero.takeDamage(state.heroMaxHp() - state.heroHp());
+        state.items().forEach(item -> giveBack(hero, item));
         return hero;
     }
 
-    // Går fram till det sparade rummet. Rummen före är redan avklarade: fienderna där hoppas över,
-    // men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
-    static boolean fastForward(Hero hero, World world, int roomIndex) {
-        while (world.getCurrentRoomIndex() < roomIndex) {
-            pickUpAll(hero, world.getCurrentRoom());
+    // Föremålen kommer i den ordning hjälten fick dem: varje vapen låser upp sin attack, och det sista
+    // hamnar i handen – samma vapen som när det sparades, eftersom man inte kan byta tillbaka till ett gammalt.
+    private static void giveBack(Hero hero, Item item) {
+        switch (item) {
+            case Weapon weapon -> equipAndAim(hero, weapon);
+            case Armor armor -> hero.equip(armor);
+            case StressBall ball -> hero.pickUp(ball);
+            case Brasklapp note -> hero.takeBrasklapp(note);
+            case Potion potion -> { }   // drycker dricks direkt och ligger aldrig i ryggsäcken
+        }
+    }
+
+    // Går till det sparade rummet. Rummen före är avklarade, så de rensas: världen byggs ju om från början.
+    // Det sparade rummet börjar om. Det hjälten redan har tas bort ur världen, så Städrustningen inte går att
+    // hitta två gånger, och det hen lämnade ligger kvar i rummen. Svärdet finns alltid i ryggsäcken, så en
+    // sparning utan föremål är en gammal sparfil: då hämtas vapnen från rummen före (fastForward).
+    static boolean resume(Hero hero, World world, GameState state) {
+        if (state.items().isEmpty()) {
+            return fastForward(hero, world, state.nextRoom());
+        }
+        for (Item item : hero.getInventory().getAll()) {
+            world.getRooms().forEach(room -> room.forget(item));
+        }
+        while (world.getCurrentRoomIndex() < state.nextRoom()) {
+            world.getCurrentRoom().markCleared();
             if (!world.moveForward()) return false;
         }
         return true;
     }
 
-    // Spelmenyn 3: hp, vapen, rustning, attack och Java-boken
+    // En gammal sparfil, utan föremål: går fram till det sparade rummet. Rummen före är redan avklarade:
+    // de rensas, men vapnen som låg där tar hjälten med sig. false om rummet inte finns i världen.
+    static boolean fastForward(Hero hero, World world, int roomIndex) {
+        while (world.getCurrentRoomIndex() < roomIndex) {
+            pickUpAll(hero, world.getCurrentRoom());
+            world.getCurrentRoom().markCleared();
+            if (!world.moveForward()) return false;
+        }
+        return true;
+    }
+
+    // Spelmenyn 3: hp, vapen, rustning, attack, Java-boken och ryggsäcken
     private void showEquipment() {
         output.onEvent("Visa hjältens utrustning.");
         equipment(hero).forEach(output::onEvent);
-        // Bilder på allt hjälten bär: vapnet (t.ex. pilbågen), rustningen (t.ex. Städrustningen),
+        IO.print(ConsoleStyle.gearEnd());   // stänger panelen i en riktig konsol
+        // Bilder på allt hjälten bär: vapnen (svärdet, pilbågen, staven), rustningen (t.ex. Städrustningen),
         // Java-boken och stressbollen
-        hero.getWeapon().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+        weaponArt(hero).forEach(art -> AsciiArt.show(output, art));
         hero.getArmor().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
         if (hero.hasJavaBook()) AsciiArt.show(output, AsciiArt.JAVA_BOOK);
         hero.getStressBall().flatMap(AsciiArt::forItem).ifPresent(art -> AsciiArt.show(output, art));
+    }
+
+    // Bilderna på vapnen i ryggsäcken, inte bara det i handen. Mot Martin hjälper bara kunskap,
+    // men hjälten bär pilbågen och staven ändå.
+    static List<String> weaponArt(Hero hero) {
+        return hero.getInventory().getAll(Weapon.class).stream()
+                .flatMap(weapon -> AsciiArt.forItem(weapon).stream())
+                .toList();
     }
 
     // Raderna i "Visa hjältens utrustning", t.ex. "Vapen: Pilbåge (+4 i skada)"
@@ -281,6 +336,10 @@ public class GameEngine {
         }
         hero.getStressBall().ifPresent(ball -> lines.add("Stressboll: i fickan (+" + ball.hpPerTurn()
                 + " hp per runda, eller kasta den på Martin)"));
+        List<Item> backpack = hero.getInventory().getAll();
+        if (!backpack.isEmpty()) {
+            lines.add("Ryggsäck: " + backpack.stream().map(Item::description).collect(Collectors.joining(", ")));
+        }
         return lines;
     }
 
@@ -313,6 +372,9 @@ public class GameEngine {
             showArt(enemy.getName());                                  // t.ex. Martins porträtt
             output.onEvent("Fiende " + enemy.getName() + " dyker upp!");
             enemy.getLine().ifPresent(line -> output.onEvent(enemy.getName() + ": \"" + line + "\""));   // fiendens replik
+            if (Martin.NAME.equals(enemy.getName()) && hero.getKnowledgeDefense() > 0) {
+                output.onEvent("Du drar på dig ullvantarna: Martins förklaringar tar " + hero.getKnowledgeDefense() + " mindre.");
+            }
         }
 
         // Battle sköter striden och loggen; spelaren väljer attack inför varje runda
@@ -374,7 +436,7 @@ public class GameEngine {
         output.onEvent(AsciiArt.yellow(refreshment.line()));
         showArt(potion.description());                 // kaffekoppen eller kanelbullen
         output.onEvent(HpBar.status(hero, 10));
-        IO.print(AsciiArt.yellow(takeQuestion(potion)));
+        IO.print(ConsoleStyle.tint(AsciiArt.yellow(takeQuestion(potion))));
         if (wantsIt(readln())) {
             drinkRefreshment(refreshment);
         } else {
@@ -392,6 +454,9 @@ public class GameEngine {
 
     // När spelaren säger nej
     static String leftBehind(Item item) {
+        if (WorldBuilder.ULLVANTAR.equals(item.description())) {   // dörren slår igen: hit kommer man inte tillbaka
+            return "Du låter " + item.description() + " ligga kvar. När Entrédörren slår igen bakom dig är de borta.";
+        }
         return item instanceof Potion
                 ? "Du låter " + item.description() + " stå kvar. Den finns kvar om du letar i rummet eller kommer tillbaka."
                 : "Du låter " + item.description() + " ligga kvar. Den finns kvar om du kommer tillbaka.";
@@ -418,6 +483,11 @@ public class GameEngine {
             output.onEvent(hero.getName() + " dricker " + potion.description() + " (+" + (hero.getHp() - before) + " hp)");
             output.onEvent(HpBar.status(hero, 10));
         }
+        output.onEvent(frida.getName() + ": \"" + Frida.SURPRISE + "\"");
+        Brasklapp note = frida.brasklapp();
+        AsciiArt.forItem(note).ifPresent(art -> AsciiArt.show(output, art));
+        output.onEvent(Frida.NOTE_GIVEN);
+        hero.takeBrasklapp(note);
     }
 
     // Spelmenyn 2: går till nästa rum – men bara när rummets fiender är besegrade
@@ -428,8 +498,8 @@ public class GameEngine {
         }
 
         // Spelaren väljer själv: kartan och rummen med siffror, Enter = stanna kvar
-        IO.println(ConsoleStyle.map(roomMap(world)));
-        IO.println(ConsoleStyle.menu(roomChoices(world)));
+        IO.println(ConsoleStyle.panel(ConsoleStyle.map(roomMap(world))));
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(roomChoices(world)), "Rum"));
         IO.print(ConsoleStyle.prompt("Välj rum (Enter = stanna kvar): "));
         goTo(readln().trim());
     }
@@ -643,10 +713,18 @@ public class GameEngine {
 
     // Hjälten tar föremålet: vapnet i handen, rustningen på sig, drycken dricks direkt
     private void take(Item item) {
-        switch (item) {   // Item är sealed: Weapon, Armor, Potion eller StressBall – inget default behövs
+        switch (item) {   // Item är sealed: alla sorter måste stå här, så inget default behövs
+            case Brasklapp note -> {
+                hero.takeBrasklapp(note);
+                output.onEvent("Du stoppar " + note.description() + " i fickan: den går att läsa upp mot Martin, en gång.");
+            }
             case Armor armor -> {
                 hero.equip(armor);
                 output.onEvent("Du tar på dig " + armor.description() + ": +" + armor.defense() + " i försvar.");
+                if (armor.type() == ItemType.GLOVE) {
+                    hero.warmUp();
+                    output.onEvent("Ullvantarna värmer: du har nu " + hero.getHp() + "/" + hero.getMaxHp() + " hp.");
+                }
             }
             case Weapon weapon -> {
                 equipAndAim(hero, weapon);
@@ -675,6 +753,7 @@ public class GameEngine {
             case Armor a -> "+" + a.defense() + " i försvar";
             case Potion p -> "+" + p.healAmount() + " hp";
             case StressBall b -> "+" + b.hpPerTurn() + " hp per runda";
+            case Brasklapp n -> n.power() + " i skada mot Martin";
         };
         return "Här ligger: " + item.description() + " (" + bonus + ")";
     }
@@ -712,7 +791,7 @@ public class GameEngine {
         for (Item item : items) {
             output.onEvent(AsciiArt.yellow(itemHere(item)));
             AsciiArt.forItem(item).ifPresent(art -> AsciiArt.show(output, art));   // på namnet, annars på sorten
-            IO.print(AsciiArt.yellow(takeQuestion(item)));
+            IO.print(ConsoleStyle.tint(AsciiArt.yellow(takeQuestion(item))));
             if (wantsIt(readln())) {
                 room.removeItem(item);
                 if (!(item instanceof Potion)) output.onEvent("Du plockar upp: " + item.description());
@@ -735,7 +814,8 @@ public class GameEngine {
         Enemy foe = currentFoes.stream().filter(Enemy::isAlive).findFirst().orElse(null);
         List<AttackStrategy> options = AttackMenu.options(hero, foe);
         IO.println(ConsoleStyle.prompt("Välj attack (Enter = behåll):"));
-        AttackMenu.lines(hero, options).forEach(line -> IO.println(ConsoleStyle.menu(line)));   // pilbågens och stavens attack gulmarkerade
+        // pilbågens och stavens attack gulmarkerade
+        IO.println(ConsoleStyle.panel(ConsoleStyle.menu(String.join("\n", AttackMenu.lines(hero, options))), "Attacker"));
         IO.print(ConsoleStyle.prompt("Ditt val: "));
         return AttackMenu.choose(options, readln());
     }

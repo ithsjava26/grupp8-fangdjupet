@@ -72,22 +72,23 @@ class InventoryTest {
     void getAllPotions() {
         Potion potion1 = new Potion(ItemType.POTION, "Potion 1", 20, 1);
         Potion potion2 = new Potion(ItemType.POTION, "Potion 2", 30, 1);
+        Weapon weapon = new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 10, 1);
         inventory.add(potion1);
         inventory.add(potion2);
+        inventory.add(weapon);
         List<Potion> potions = inventory.getAll(Potion.class);
-        assertEquals(2, potions.size());
-        assertTrue(potions.contains(potion1));
-        assertTrue(potions.contains(potion2));
+        assertEquals(List.of(potion1, potion2), potions);
     }
 
     @Test
     void findByType() {
         Potion potion = new Potion(
                 ItemType.POTION, "Health potion", 20, 1);
+        Weapon weapon = new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Sword", 10, 1);
         inventory.add(potion);
+        inventory.add(weapon);
         List<Item> result = inventory.findByType(ItemType.POTION);
-        assertEquals(1, result.size());
-        assertEquals(potion, result.get(0));
+        assertEquals(List.of(potion), result);
     }
 
     @Test
@@ -108,5 +109,54 @@ class InventoryTest {
     @Test
     void invalidCapacityThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> new Inventory(0));
+    }
+
+    @Test
+    void setCapacityMakesRoomForMoreItems() {
+        inventory.add(new Potion(ItemType.POTION, "Potion 1", 10, 1));
+        inventory.add(new Potion(ItemType.POTION, "Potion 2", 20, 1));
+        inventory.add(new Potion(ItemType.POTION, "Potion 3", 30, 1));
+        inventory.setCapacity(4);
+        assertFalse(inventory.isFull());
+        assertTrue(inventory.add(new Potion(ItemType.POTION, "Potion 4", 40, 1)));
+    }
+
+    @Test
+    void setCapacityCanEqualNumberOfItems() {
+        inventory.add(new Potion(ItemType.POTION, "Potion 1", 10, 1));
+        inventory.setCapacity(1);
+        assertTrue(inventory.isFull());
+    }
+
+    @Test
+    void setCapacityRejectsNonPositiveValues() {
+        assertThrows(IllegalArgumentException.class, () -> inventory.setCapacity(0));
+        assertThrows(IllegalArgumentException.class, () -> inventory.setCapacity(-1));
+        assertFalse(inventory.isFull());
+    }
+
+    @Test
+    void setCapacityBelowNumberOfItemsThrowsAndKeepsCapacity() {
+        inventory.add(new Potion(ItemType.POTION, "Potion 1", 10, 1));
+        inventory.add(new Potion(ItemType.POTION, "Potion 2", 20, 1));
+        assertThrows(IllegalArgumentException.class, () -> inventory.setCapacity(1));
+        assertFalse(inventory.isFull());
+        assertTrue(inventory.add(new Potion(ItemType.POTION, "Potion 3", 30, 1)));
+    }
+
+    @Test
+    void strongestWeaponReturnsHighestDamageBonus() {
+        Weapon weak = new Weapon(ItemType.SWORD, WeaponRange.MELEE, "Weak sword", 2, 1);
+        Weapon strong = new Weapon(ItemType.BOW, WeaponRange.RANGED, "Strong bow", 8, 1);
+        inventory.add(weak);
+        inventory.add(strong);
+        inventory.add(new Potion(ItemType.POTION, "Health potion", 20, 1));
+        assertEquals(strong, inventory.strongestWeapon().orElseThrow());
+    }
+
+    @Test
+    void strongestWeaponIsEmptyWithoutWeapons() {
+        inventory.add(new Potion(ItemType.POTION, "Health potion", 20, 1));
+        assertTrue(inventory.strongestWeapon().isEmpty());
     }
 }

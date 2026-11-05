@@ -29,10 +29,14 @@ public final class Martin {
         return NAME + " ser att du " + CANT.get(random.nextInt(CANT.size())) + " och blir arg! Han förklarar hårdare.";
     }
 
-    // Martins styrka: hp och förklaringarna (fas 1, och fas 2 från halva livet). Arg = i Städrustningen.
+    // Martins styrka: hp och förklaringarna. Ju mer skada han har tagit, desto argare blir han:
+    // fas 1, fas 2 från halva livet (Utterly) och två steg till (Persistently och Angrily).
+    // Arg = i Städrustningen eller med stressbollen.
     public static final int HP = 100;
-    static final int EXPLAIN = 7, EXPLAIN_HARDER = 15;        // fas 2: mer än dubbelt så hårt som fas 1
-    static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 15;
+    static final int EXPLAIN = 7, EXPLAIN_HARDER = 10;
+    static final int ANGRY_EXPLAIN = 8, ANGRY_EXPLAIN_HARDER = 10;
+    static final int PERSISTENT_EXPLAIN = 12, PERSISTENT_HP = 30;   // 30 hp kvar: han ger sig inte
+    static final int FURIOUS_EXPLAIN = 15, FURIOUS_HP = 15;         // 15 hp kvar: mer än Dela skärm helar, även med ullvantarna
 
     // En ny Martin varje gång: 100 hp, nivå 3. Han förklarar med KnowledgeAttack och
     // byter till den tyngre förklaringen vid halva livet (Boss sköter bytet).
@@ -44,6 +48,8 @@ public final class Martin {
         // withLine returnerar en Enemy, inte en Boss – därför sparas bossen i en variabel först
         martin.withLine("Let me explain Hello World to you...");
         martin.withTaunts(QUESTIONS);
+        martin.withRage(PERSISTENT_HP, new KnowledgeAttack("Persistently explained", PERSISTENT_EXPLAIN));
+        martin.withRage(FURIOUS_HP, new KnowledgeAttack("Angrily explained", FURIOUS_EXPLAIN));
         martin.withLavaLamp(LAVA_LAMP_HEAL);   // i fas 2: lavalampan på katedern, +3 hp varje runda tills den krossas
         return martin;
     }
@@ -65,7 +71,7 @@ public final class Martin {
             "Varför ska fälten vara private?",
             "Tredje normalformen? Inga transitiva beroenden!");
 
-    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (fas 2 är kvar på 15).
+    // Kommer hjälten i Städrustningen blir Martin lite svårare: fas 1 gör 8 i skada i stället för 7 (resten är som förut).
     // Kunskap går ändå rakt igenom rustningen, så försvaret hjälper inte mot honom.
     // Förklaringarna heter likadant, så AttackArt visar samma bilder.
     public static final String ENRAGED_LINE = "Städrustning? Den implementerar inte Shield-interfacet – kunskap kompilerar rakt igenom!";

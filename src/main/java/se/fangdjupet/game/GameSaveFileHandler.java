@@ -1,11 +1,21 @@
 package se.fangdjupet.game;
 
+import se.fangdjupet.items.Armor;
+import se.fangdjupet.items.Brasklapp;
+import se.fangdjupet.items.Item;
+import se.fangdjupet.items.ItemType;
+import se.fangdjupet.items.Potion;
+import se.fangdjupet.items.StressBall;
+import se.fangdjupet.items.Weapon;
+import se.fangdjupet.items.WeaponRange;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -14,7 +24,10 @@ import java.util.stream.Stream;
 // GameEngine sparar på plats 1 (spelmenyn 4) och läser in den igen (huvudmenyn 2).
 public class GameSaveFileHandler {
 
+    // Föremålen är valfria nycklar (item.0, item.1 ...), så gamla sparfiler har samma version och går att läsa
     private static final String SAVE_VERSION = "1";
+    private static final String ITEM_KEY = "item.";
+    private static final int ITEM_FIELDS = 6;
     private final Path saveDirectory;
 
     public GameSaveFileHandler(Path saveDirectory) {
@@ -38,6 +51,9 @@ public class GameSaveFileHandler {
         properties.setProperty("heroMaxHp", Integer.toString(state.heroMaxHp()));
         properties.setProperty("heroHp", Integer.toString(state.heroHp()));
         properties.setProperty("nextRoom", Integer.toString(state.nextRoom()));
+        for (int i = 0; i < state.items().size(); i++) {
+            properties.setProperty(ITEM_KEY + i, encode(state.items().get(i)));
+        }
 
         // Skriv först till en temporär fil, så att den gamla sparfilen finns kvar
         // ända tills den nya är färdigskriven.
@@ -84,11 +100,65 @@ public class GameSaveFileHandler {
                     required(properties, "heroName"),
                     Integer.parseInt(required(properties, "heroMaxHp")),
                     Integer.parseInt(required(properties, "heroHp")),
-                    Integer.parseInt(required(properties, "nextRoom"))
+                    Integer.parseInt(required(properties, "nextRoom")),
+                    readItems(properties)
             );
         } catch (IllegalArgumentException e) {
             throw new SaveFileException("Sparfilen innehåller ogiltiga data", e);
         }
+    }
+
+    // item.0, item.1 ... tills numret saknas. En gammal sparfil har inga, och då blir listan tom.
+    // Finns fler item-nycklar än vi läste har filen en lucka, och då är den trasig.
+    private List<Item> readItems(Properties properties) {
+        List<Item> items = new ArrayList<>();
+        for (int i = 0; properties.getProperty(ITEM_KEY + i) != null; i++) {
+            items.add(decode(properties.getProperty(ITEM_KEY + i)));
+        }
+        long saved = properties.stringPropertyNames().stream().filter(key -> key.startsWith(ITEM_KEY)).count();
+        if (saved != items.size()) {
+            throw new IllegalArgumentException("Ett föremål saknas i sparfilen");
+        }
+        return items;
+    }
+
+    // En rad per föremål, t.ex. weapon;BOW;RANGED;4;1;Pilbåge: sort, typ, räckvidd (- utan räckvidd), styrka,
+    // nivå och namn. Bonusen sparas eftersom den slumpas. Namnet ligger sist, så det får innehålla semikolon.
+    private static String encode(Item item) {
+        return switch (item) {
+            case Weapon w -> line("weapon", w, w.range().name(), w.damageBonus());
+            case Armor a -> line("armor", a, "-", a.defense());
+            case Potion p -> line("potion", p, "-", p.healAmount());
+            case StressBall b -> line("stressball", b, "-", b.hpPerTurn());
+            case Brasklapp n -> line("brasklapp", n, "-", n.power());
+        };
+    }
+
+    private static String line(String kind, Item item, String range, int power) {
+        return String.join(";", kind, item.type().name(), range, Integer.toString(power),
+                Integer.toString(item.level()), item.description());
+    }
+
+    // Tvärtom mot encode. En trasig rad ger IllegalArgumentException, som load gör om till SaveFileException.
+    private static Item decode(String line) {
+        String[] fields = line.split(";", ITEM_FIELDS);
+        if (fields.length != ITEM_FIELDS) {
+            throw new IllegalArgumentException("Trasigt föremål: " + line);
+        }
+
+        ItemType type = ItemType.valueOf(fields[1]);
+        int power = Integer.parseInt(fields[3]);
+        int level = Integer.parseInt(fields[4]);
+        String description = fields[5];
+
+        return switch (fields[0]) {
+            case "weapon" -> new Weapon(type, WeaponRange.valueOf(fields[2]), description, power, level);
+            case "armor" -> new Armor(type, description, power, level);
+            case "potion" -> new Potion(type, description, power, level);
+            case "stressball" -> new StressBall(type, description, power, level);
+            case "brasklapp" -> new Brasklapp(type, description, power, level);
+            default -> throw new IllegalArgumentException("Okänd sorts föremål: " + fields[0]);
+        };
     }
 
     public List<Integer> listSaveSlots() throws IOException {

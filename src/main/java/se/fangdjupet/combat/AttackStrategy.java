@@ -28,6 +28,8 @@ public interface AttackStrategy {
     default String missVerb() { return "missar"; }
     // Vinner attacken direkt när den lyckas (USB-minnet)? Då varierar Battle inte skadan, och målet faller alltid.
     default boolean instantWin() { return false; }
+    // Exakt skada, utan slumpens ±1: USB-minnet (allt hp) och brasklappen (25)
+    default boolean exactDamage() { return instantWin(); }
     // Anropas efter hjältens försök, lyckat eller inte – t.ex. är USB-minnet borta efteråt
     default void used(Hero hero) { }
 }
