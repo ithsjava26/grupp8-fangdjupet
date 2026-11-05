@@ -5,6 +5,7 @@ import se.fangdjupet.combat.MagicAttack;
 import se.fangdjupet.combat.MeleeAttack;
 import se.fangdjupet.combat.RangedAttack;
 import se.fangdjupet.game.GameEventListener;
+import se.fangdjupet.game.WorldBuilder;
 
 import java.util.List;
 import java.util.Optional;
@@ -120,6 +121,7 @@ public final class SoundListener implements GameEventListener {
         if (t.startsWith("Du låter ")) return "drop";
         if (t.equals("Visa hjältens utrustning.")) return "bag";
         if (t.equals("Tack för att du spelade!")) return "bye";
+        if (t.contains(WorldBuilder.SHALL_NOT_PASS)) return "thunder";   // trollkarlen: blixt och åska
         if (t.matches("[^:\"]{1,30}: \".*")) return t.startsWith(se.fangdjupet.combat.Martin.NAME) ? "blah" : "talk";   // Namn: "replik"
         return null;
     }

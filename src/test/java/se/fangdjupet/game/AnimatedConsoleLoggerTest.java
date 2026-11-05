@@ -17,6 +17,22 @@ class AnimatedConsoleLoggerTest {
     private final AnimatedConsoleLogger logger = new AnimatedConsoleLogger(out::append, pauses::add);
 
     @Test
+    void shallNotPassGetsLightningAndBigWords() {
+        logger.onEvent("Trollkarl: \"Thou shall not pass!\"");
+        String film = out.toString();
+        assertTrue(film.contains("\u001B[7m"), "blixten");
+        assertTrue(film.contains("Trollkarl: \"Thou shall not pass!\""), "repliken skrivs som vanligt");
+        assertTrue(film.contains("T H O U   S H A L L   N O T   P A S S !"), "orden stort");
+    }
+
+    @Test
+    void otherSpeechGetsNoLightning() {
+        logger.onEvent("Frida: \"Du ser trött ut!\"");
+        assertFalse(out.toString().contains("\u001B[7m"));
+        assertFalse(out.toString().contains("T H O U"));
+    }
+
+    @Test
     void ordinaryLinesArePrintedAtOnce() {
         logger.onEvent("Det luktar kaffe.");
         assertEquals("Det luktar kaffe.\n", out.toString());

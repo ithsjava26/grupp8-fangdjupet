@@ -94,7 +94,10 @@ public class AnimatedConsoleLogger implements GameEventListener {
             return;
         }
         if (t.matches("[^:\"]{1,30}: \".*\"")) {
+            boolean shallNotPass = t.endsWith("\"" + WorldBuilder.SHALL_NOT_PASS + "\"");
+            if (shallNotPass) play(lightning());
             typeSpeech(message);
+            if (shallNotPass) staffStrike();
             return;
         }
         if (bar.matches()) {
@@ -333,6 +336,30 @@ public class AnimatedConsoleLogger implements GameEventListener {
         if (t.contains("kemikalier") || t.contains("Vanish")) return "FZZZ!";
         if (t.contains("Martin")) return "BLA BLA BLA!";
         return "BAM!";
+    }
+
+    // Trollkarlens replik: blixten slår ner två gånger. Bara två blinkningar, så att det inte flimrar.
+    static List<String> lightning() {
+        String white = FLASH + " ".repeat(WIDTH + 12);
+        String bolt = YELLOW + "    __/\\  /\\__/\\  /\\__/\\  /\\__/\\  /\\__";
+        return List.of(white, white, bolt, bolt, "", "", "", "", "", "", white, white, bolt, bolt, "", "");
+    }
+
+    // Staven slår i golvet: en våg rullar ut från mitten
+    static List<String> shockwave() {
+        List<String> frames = new ArrayList<>();
+        for (int i = 0; i <= 12; i++) {
+            frames.add(CYAN + " ".repeat(24 - i) + "(".repeat(i) + "|" + ")".repeat(i));
+        }
+        return frames;
+    }
+
+    // Efter repliken: vågen, och sedan står orden kvar stort. Loggfilen och webben får bara repliken.
+    private void staffStrike() {
+        play(shockwave());
+        print.accept(RED + "  ==========================================\n"
+                + "    T H O U   S H A L L   N O T   P A S S !\n"
+                + "  ==========================================" + RESET + "\n");
     }
 
     static List<String> alarm(boolean boss) {
