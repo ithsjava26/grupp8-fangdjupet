@@ -136,19 +136,41 @@ public final class AsciiArt {
                 '--'
             """;
 
+    // Trollet och trollkarlen är lika stora som StädHäxan. Bilderna ändrar inget i striden.
     public static final String TROLL = """
-                ,   ,
-               (o . o)
-               /( - )\\      TROLL
-                /   \\
+                            ,,,,,,,
+                          .'       '.
+                      _  /  O     O  \\  _
+                     ( \\|      ^      |/ )
+                      \\_|   \\_____/   |_/
+                        \\   V V V V  /         TROLL
+                 .---.   '._______.'
+                /#####\\ ___/     \\___          tung klubba,
+                |#####|/             \\         tjock skalle
+                \\#####/  ___   ___    \\
+                 |###|__/   \\ /   \\    \\
+                  |#|   |    |    |\\___)
+                  |#|   |____|____|
+                        /    |    \\
+                       (_____|_____)
             """;
 
     public static final String WIZARD = """
-                  /\\
-                 /**\\
-                (o  o)      TROLLKARL
-                /|~~|\\      "Thou shall
-                 /  \\        not pass!"
+                            /\\
+                           /**\\
+                          / ** \\
+                         /  **  \\       *
+                     ___/________\\___  /|\\
+                         ( o  o )       |
+                          \\ ~~ /        |      TROLLKARL
+                          /||||\\        |      "Thou shall
+                       __/ |||| \\______/|       not pass!"
+                      /    ||||         |
+                     /  /|      |       |
+                    (__/ |      |       |
+                         |  **  |       |
+                        /        \\      |
+                       /__________\\     |
             """;
 
     // StädHäxan: elak, med häxhatt, långt hår, arga ögonbryn och huggtänder. Svinto i ena handen, sprayflaskan i den andra.

@@ -50,6 +50,15 @@ class AsciiArtTest {
     }
 
     @Test
+    void trollAndWizardAreAsBigAsTheWitch() {
+        long witch = AsciiArt.WITCH.lines().count();
+        assertTrue(AsciiArt.TROLL.lines().count() >= witch, "trollet är för litet");
+        assertTrue(AsciiArt.WIZARD.lines().count() >= witch, "trollkarlen är för liten");
+        assertTrue(AsciiArt.TROLL.lines().allMatch(line -> line.startsWith(" ")), "webben känner igen bilder på blanksteget");
+        assertTrue(AsciiArt.WIZARD.lines().allMatch(line -> line.startsWith(" ")), "webben känner igen bilder på blanksteget");
+    }
+
+    @Test
     void eachThingHasItsOwnPicture() {
         long distinct = THING_NAMES.stream().map(n -> AsciiArt.forName(n).orElseThrow()).distinct().count();
         assertEquals(THING_NAMES.size(), distinct);
