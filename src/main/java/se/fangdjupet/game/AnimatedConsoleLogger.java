@@ -26,10 +26,12 @@ public class AnimatedConsoleLogger implements GameEventListener {
     static final int FRAME_MS = 38;   // paus mellan bilderna i en film
     static final int DOT_MS = 170;    // paus mellan prickarna när man letar
     static final int WIDTH = 44;      // så bred är filmen på raden
+    static final int FILM_MS = 65;    // paus mellan bilderna i vinstfilmen
 
     private static final String YELLOW = "\u001B[33m", RED = "\u001B[31m", CYAN = "\u001B[36m",
             MAGENTA = "\u001B[35m", GREEN = "\u001B[32m", RESET = "\u001B[0m";
     private static final String FLASH = "\u001B[7m";   // omvända färger: hela raden blinkar till
+    private static final String HIDE_CURSOR = "\u001B[?25l", SHOW_CURSOR = "\u001B[?25h";
     private static final String GEAR_TITLE = "Visa hjältens utrustning.";
     private static final Pattern HP_BAR = Pattern.compile("(.+?)  \\[([#-]+)\\] (\\d+)/(\\d+)");
     private static final Pattern GEAR_ROW = Pattern.compile("(Vapen|Rustning|Attack|Java-boken|Stressboll|Ryggsäck): .+");
@@ -45,9 +47,12 @@ public class AnimatedConsoleLogger implements GameEventListener {
     private final Map<String, String> enemyBars = new HashMap<>();   // senaste hp-raden för varje fiende
     private String foe;   // fienden i panelen: den som slogs sist
     private boolean inGearPanel;            // mellan rubriken och sista raden i "Visa hjältens utrustning"
+    private boolean redraw;                 // går det att hoppa upp och rita om rader (en riktig terminal)?
 
     public AnimatedConsoleLogger() {
         this(IO::print, AnimatedConsoleLogger::sleep, true);
+        java.io.Console console = System.console();
+        redraw = console != null && console.isTerminal();
     }
 
     // För testerna: fånga utskriften och pauserna i stället för att vänta på riktigt
@@ -61,6 +66,12 @@ public class AnimatedConsoleLogger implements GameEventListener {
         this.print = style ? text -> print.accept(ConsoleStyle.tint(text)) : print;
         this.pause = pause;
         this.style = style;
+    }
+
+    // För testerna: låtsas att konsolen kan rita om rader
+    AnimatedConsoleLogger redrawing() {
+        redraw = true;
+        return this;
     }
 
     // Hjältens namn (GameEngine.heroName): då hamnar hjälten till vänster i stridspanelen
@@ -119,7 +130,10 @@ public class AnimatedConsoleLogger implements GameEventListener {
         } else if (t.startsWith("Fiende ") && t.endsWith(" dyker upp!")) {
             forgetFight();
             play(alarm(t.contains("Martin")));
-        } else if (t.matches(".+ vinner (mot .+|Fångdjupet)!")) {
+        } else if (t.endsWith(" vinner Fångdjupet!")) {
+            forgetFight();
+            spinTrophy();
+        } else if (t.matches(".+ vinner mot .+!")) {
             forgetFight();
             play(stars());
         } else if (t.contains("besegrades av")) {
@@ -208,6 +222,23 @@ public class AnimatedConsoleLogger implements GameEventListener {
             pause.accept(FRAME_MS);
         }
         print.accept("\r" + " ".repeat(WIDTH + 12) + "\r");   // sudda filmen, sedan kommer den vanliga raden
+    }
+
+    // Vinsten: skolan och pokalen snurrar i 3D (Ascii3d). Filmen ritar om flera rader, och det klarar en
+    // terminal men inte IntelliJs konsol. Där visas bara sista bilden, och den står kvar i båda fallen.
+    private void spinTrophy() {
+        List<String> frames = Ascii3d.film();
+        if (!redraw) {
+            print.accept(frames.getLast() + "\n");
+            return;
+        }
+        print.accept(HIDE_CURSOR);
+        for (int i = 0; i < frames.size(); i++) {
+            if (i > 0) print.accept("\u001B[" + Ascii3d.HEIGHT + "A\r");   // tillbaka upp till bildens första rad
+            print.accept(frames.get(i) + "\n");
+            pause.accept(FILM_MS);
+        }
+        print.accept(SHOW_CURSOR);
     }
 
     // Hjältens slag: filmen efter vad som hände
